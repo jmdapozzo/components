@@ -1,0 +1,9 @@
+menu "MacDap Management"
+
+    config REST_SERVICE_ENDPOINT
+        string "Connection"
+        default "https://my-domain.com"
+        help
+            Service point connection url.
+
+endmenu

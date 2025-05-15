@@ -1,0 +1,47 @@
+menu "MacDap Token Manager"
+
+    config TOKEN_MANAGER_ENDPOINT
+        string "Domain"
+        default "https://my-domain.com"
+        help
+            The domain is the URL where the authorization server is hosted.
+            It must be https:// and it must not contain a trailing slash.
+            It must also contain the protocol, which is https://.
+
+        config TOKEN_MANAGER_API_REQUEST
+            string "API Request"
+            default "/endpoint"
+            help
+                The API Request is the endpoint where the authorization request is posted.
+                It must contain a leading slash but not a trailing slash.
+
+        config TOKEN_MANAGER_CLIENT_ID
+        string "Public client identifier"
+        default "MY_CLIENT_ID"
+        help
+            The client_id is a public identifier for apps.
+            Even though it’s public, it’s best that it isn’t guessable by third parties,
+            so many implementations use something like a 32-character hex string.
+            If the client ID is guessable, it makes it slightly easier to craft
+            phishing attacks against arbitrary applications.
+            It must also be unique across all clients that the authorization server handles.
+
+    config TOKEN_MANAGER_SECRET
+        string "Client secret"
+        default "MY_SECRET"
+        help
+            The client_secret is a secret known only to the application and the authorization server.
+            It is essential the application’s own password. It must be sufficiently random to not be guessable,
+            which means you should avoid using common UUID libraries which often take into account
+            the timestamp or MAC address of the server generating it. A great way to generate
+            a secure secret is to use a cryptographically-secure library to generate a 256-bit value
+            and then convert it to a hexadecimal representation.
+
+    config TOKEN_MANAGER_AUDIENCE
+        string "Audience"
+        default "MY_AUDIENCE"
+        help
+            The audience (presented as the aud claim in the access token) defines the intended consumer
+            of the token. This is typically the resource server (API, in the dashboard) that a
+            client (Application) would like to access.
+endmenu

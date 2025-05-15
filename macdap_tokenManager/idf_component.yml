@@ -1,0 +1,5 @@
+version: "0.0.1"
+license: "MIT"
+description: "Component to get an access token from MacDap Token Manager"
+url: https://github.com/jmdapozzo/components/tree/main/macdap_tokenManager
+     
