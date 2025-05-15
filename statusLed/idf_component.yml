@@ -1,0 +1,7 @@
+version: "0.0.1"
+license: "MIT"
+description: "Status Led driver used for MacDap's projects"
+url: https://github.com/jmdapozzo/components/tree/main/statusLed
+dependencies:
+  espressif/led_strip: ">=3.0.0"
+     

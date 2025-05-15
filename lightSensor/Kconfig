@@ -1,0 +1,20 @@
+menu "MacDap Light Sensor Configuration"
+
+    choice LIGHT_SENSOR
+        prompt "Light Sensor model"
+        default LIGHT_SENSOR_BH1750
+        help
+            Select Light Sensor model
+
+        config LIGHT_SENSOR_BH1750
+            bool "BH1750"
+    endchoice
+
+    config I2C_LIGHT_SENSOR_ADDR
+        hex "I2C Light Sensor Address"
+        range 0 0x7f
+        default 0x23
+        help
+            I2C Light Sensor Address.
+
+endmenu

@@ -1,0 +1,62 @@
+menu "MacDap Display Configuration"
+
+    config LCD_CONTROLLER_GPIO_RANGE_MAX
+		int
+		default 33 if IDF_TARGET_ESP32
+		default 46 if IDF_TARGET_ESP32S2
+		default 48 if IDF_TARGET_ESP32S3
+		default 18 if IDF_TARGET_ESP32C2
+		default 19 if IDF_TARGET_ESP32C3
+		default 30 if IDF_TARGET_ESP32C6
+		default 27 if IDF_TARGET_ESP32H2
+
+
+    choice LCD_CONTROLLER
+        prompt "LCD controller model"
+        default LCD_CONTROLLER_SSD1306
+        help
+            Select LCD controller model
+
+        config LCD_CONTROLLER_SSD1306
+            bool "SSD1306"
+
+        config LCD_CONTROLLER_SH1107
+            bool "SH1107"
+    endchoice
+
+    if LCD_CONTROLLER_SSD1306
+        choice SSD1306_HEIGHT
+            prompt "SSD1306 Height in pixels"
+            default SSD1306_HEIGHT_64
+            help
+                Height of the display in pixels. a.k.a vertical resolution
+
+            config SSD1306_HEIGHT_64
+                bool "64"
+            config SSD1306_HEIGHT_32
+                bool "32"
+        endchoice
+
+        config SSD1306_HEIGHT
+            int
+            default 64 if SSD1306_HEIGHT_64
+            default 32 if SSD1306_HEIGHT_32
+    endif
+
+    config I2C_LCD_CONTROLLER_ADDR
+        hex "I2C LCD Controller Address"
+        range 0 0x7f
+        default 0x3C
+        help
+            I2C LCD Controller Address.
+
+    config GPIO_RESET
+        int "GPIO RESET pin number"
+        range -1 LCD_CONTROLLER_GPIO_RANGE_MAX
+        default -1
+        help
+            GPIO number (IOxx) to RESET.
+            When it is -1, RESET isn't performed.
+
+        
+endmenu

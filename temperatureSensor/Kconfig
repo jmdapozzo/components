@@ -1,0 +1,20 @@
+menu "MacDap Temperature Sensor Configuration"
+
+    choice TEMPERATURE_SENSOR
+        prompt "Temperature Sensor model"
+        default TEMPERATURE_SENSOR_PCT2075
+        help
+            Select Temperature Sensor model
+
+        config TEMPERATURE_SENSOR_PCT2075
+            bool "PCT2075"
+    endchoice
+
+    config I2C_TEMPERATURE_SENSOR_ADDR
+        hex "I2C Temperature Sensor Address"
+        range 0 0x7f
+        default 0x37
+        help
+            I2C Temperature Sensor Address.
+
+endmenu

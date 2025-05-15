@@ -1,0 +1,76 @@
+menu "MacDap Led Panel"
+
+	config LED_PANEL_GPIO_RANGE_MAX
+		int
+		default 33 if IDF_TARGET_ESP32
+		default 46 if IDF_TARGET_ESP32S2
+		default 48 if IDF_TARGET_ESP32S3
+		default 18 if IDF_TARGET_ESP32C2
+		default 19 if IDF_TARGET_ESP32C3
+		default 30 if IDF_TARGET_ESP32C6
+
+	choice LED_PANEL_INTERFACE
+		prompt "Interface"
+		default GPIO_LED_PANEL_INTERFACE
+		help
+			Select LED Panel Interface
+		config GPIO_LED_PANEL_INTERFACE
+			bool "GPIO Interface"
+			help
+				GPIO Interface
+		config SPI_LED_PANEL_INTERFACE
+			bool "SPI Interface"
+			help
+				SPI Interface
+	endchoice
+
+	config LED_PANEL_EN
+		int "ENABLE GPIO number"
+		default 14
+		range 0 LED_PANEL_GPIO_RANGE_MAX
+
+	config LED_PANEL_DATA
+		int "DATA GPIO number"
+		default 11
+		range 0 LED_PANEL_GPIO_RANGE_MAX
+
+	config LED_PANEL_LATCH
+		int "LATCH GPIO number"
+		default 10
+		range 0 LED_PANEL_GPIO_RANGE_MAX
+
+	config LED_PANEL_CLOCK
+		int "CLOCK GPIO number"
+		default 12
+		range 0 LED_PANEL_GPIO_RANGE_MAX
+
+	config LED_PANEL_LEDC_TIMER
+		int "LEDC timer_num"
+		default 0
+		range 0 3
+
+	config LED_PANEL_LEDC_CHANNEL
+		int "LEDC channel"
+		default 5
+		range 0 7
+
+	config LED_PANEL_LEDC_MODE
+		int "LEDC speed_mode"
+		default 0
+		range 0 1
+
+	config LED_PANEL_LEDC_DUTY_RES
+		int "LEDC duty_resolution"
+		default 13
+		range 1 13
+
+	config LED_PANEL_LEDC_FREQUENCY
+		int "LEDC freq_hz"
+		default 1000
+
+	config LED_PANEL_INITIAL_DUTY_CYCLE
+		int "LEDC Initial Duty Cycle"
+		default 0
+		range 0 100
+
+endmenu
