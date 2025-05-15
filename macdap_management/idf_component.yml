@@ -1,8 +1,4 @@
 version: "0.0.1"
-description: "Application Management used for MacDap's projects"
-url: https://jmdapozzo.github.io/firmware-updates/esp-idf/components/management
-
-version: "0.0.1"
 license: "MIT"
 description: "Application Management used for MacDap's projects"
 url: https://github.com/jmdapozzo/components/tree/main/macdap_management
