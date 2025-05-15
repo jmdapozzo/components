@@ -5,4 +5,5 @@ url: https://github.com/jmdapozzo/components/tree/main/macdap_gps
 dependencies:
   jmdapozzo/eventLoop:
       git: https://github.com/jmdapozzo/components.git
-      path: eventLoop    
+      path: macdap_eventLoop
+     
