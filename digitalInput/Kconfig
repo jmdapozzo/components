@@ -1,0 +1,8 @@
+menu "MacDap Digital Input Configuration"
+
+    config DIGITAL_INPUT_EVENT_LOG
+        bool "Log Digital Input events to console"
+        default n
+        help
+            Enabling this option will log Digital Input events to console.
+endmenu

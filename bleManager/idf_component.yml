@@ -1,0 +1,4 @@
+version: "0.0.1"
+license: "MIT"
+description: "Component to manage Bluetooth Low Energy (BLE) exchanges."
+url: https://github.com/jmdapozzo/components/tree/main/bleManager

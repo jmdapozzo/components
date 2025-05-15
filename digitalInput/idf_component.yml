@@ -1,0 +1,9 @@
+version: "0.0.1"
+license: "MIT"
+description: "Component to manage digital inputs and report through the MacDap Event Loop."
+url: https://github.com/jmdapozzo/components/tree/main/digitalInput
+dependencies:
+  jmdapozzo/eventLoop:
+      version: main
+      git: https://github.com/jmdapozzo/components.git
+      path: eventLoop
