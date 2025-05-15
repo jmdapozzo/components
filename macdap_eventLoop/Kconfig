@@ -1,0 +1,30 @@
+menu "MacDap Event Loop Configuration"
+
+    config EVENT_LOOP_LOG_ALL_EVENTS
+        bool "Log Event Loop events to the console"
+        default n
+        help
+            Enabling this option will log Event Loop events to console.
+
+    config EVENT_LOOP_QUEUE_SIZE
+        int "Queue Size"
+        range 0 2048
+        default 1024
+        help
+            Size of the event loop buffer.
+
+    config EVENT_LOOP_TASK_STACK_SIZE
+        int "Event Loop Task Stack Size"
+        range 0 4096
+        default 4096
+        help
+            Stack size for the event loop task.
+
+    config EVENT_LOOP_LOCAL_TASK_PRIORITY
+        int "Event Loop Task Priority"
+        range 0 24
+        default 2
+        help
+            Priority of local task.
+
+endmenu
