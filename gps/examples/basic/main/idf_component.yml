@@ -1,0 +1,9 @@
+dependencies:
+  jmdapozzo/gps:
+    override_path: "../../../"
+jmdapozzo/eventLoop:
+    version: main
+    git: https://github.com/jmdapozzo/components.git
+    path: eventLoop
+  # jmdapozzo/eventLoop:
+  #   override_path: "../../../"
