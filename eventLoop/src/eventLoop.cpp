@@ -9,8 +9,6 @@ esp_event_loop_handle_t m_eventLoopHandle;
 
 void onAnyEvent(void* handler_arg, esp_event_base_t base, int32_t id, void* event_data)
 {
-    EventLoop *eventLoop = static_cast<EventLoop*>(handler_arg);
-
     struct timeval tvNow;
     gettimeofday(&tvNow, NULL);
     int64_t receivedAt = (int64_t)tvNow.tv_sec * 1000000L + (int64_t)tvNow.tv_usec;
