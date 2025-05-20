@@ -1,0 +1,3 @@
+dependencies:
+  jmdapozzo/ledPanel:
+    override_path: "../../../"
