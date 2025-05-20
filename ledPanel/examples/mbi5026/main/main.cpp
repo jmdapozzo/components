@@ -12,9 +12,10 @@ extern "C" void app_main(void)
     lvgl_port_init(&lvglConfig);
 
     // macdap::LedPanel ledPanel(macdap::w16h8, CONFIG_LED_PANEL_WIDTH, CONFIG_LED_PANEL_HEIGHT);
-    macdap::LedPanel ledPanel(macdap::w16h8, 3, 2);
+    macdap::LedPanel ledPanel;
     ledPanel.setBrightness(1.00);
-    ledPanel.scrollingMessage("Hello World from MacDap");
+    ledPanel.message("-.-");
+    // ledPanel.scrollingMessage("Hello World from MacDap");
 
     while (true)
     {

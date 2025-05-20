@@ -28,37 +28,6 @@ static const char *TAG = "ledPanel (SPI)";
 
 static SemaphoreHandle_t panelBufferMutex;
 
-static uint8_t matrixPixelWidth(matrix_type_t matrixType)
-{
-    switch (matrixType)
-    {
-    case w6h8:
-        return 6;
-    case w12h8:
-        return 12;
-    case w16h8:
-        return 16;
-    case w24h8:
-        return 24;
-    default:
-        return 0;
-    }
-}
-
-static uint8_t matrixPixelHeight(matrix_type_t matrixType)
-{
-    switch (matrixType)
-    {
-    case w6h8:
-    case w12h8:
-    case w16h8:
-    case w24h8:
-        return 8;
-    default:
-        return 0;
-    }
-}
-
 static void setPixel(LedPanel* ledPanel, int32_t x, int32_t y, lv_color_t * color)
 {
     uint16_t horizontalResolution = ledPanel->getHorizontalResolution();
@@ -75,14 +44,16 @@ static void setPixel(LedPanel* ledPanel, int32_t x, int32_t y, lv_color_t * colo
 
     uint16_t index = (yReverse / PIXEL_PER_BYTE) * horizontalResolution + xReverse;
     uint8_t segment = static_cast<uint8_t>(0x80 >> (yReverse % PIXEL_PER_BYTE));
+    panelBuffer_t buffer = ledPanel->getBuffer(index);
     if (color->full == 0)
     {
-        ledPanel->setBuffer(index, ledPanel->getBuffer(index) | segment);
+        buffer.data = buffer.data | segment;
     }
     else
     {
-        ledPanel->setBuffer(index, ledPanel->getBuffer(index) & ~segment);
+        buffer.data = buffer.data & ~segment;
     }
+    ledPanel->setBuffer(index, buffer);
 }
 
 static void flushCB(lv_disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p)
@@ -106,7 +77,7 @@ static void flushCB(lv_disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t
     xSemaphoreGive(panelBufferMutex);
 }
 
-void LedPanel::Init()
+static void Init()
 {
     static bool isInitialized = false;
     if (!isInitialized)
@@ -147,16 +118,16 @@ void LedPanel::Init()
     }
 }
 
-LedPanel::LedPanel(matrix_type_t matrixType, uint8_t matrixWidth, uint8_t matrixHeight, int latchGpio)
+LedPanel::LedPanel()
 {
     ESP_LOGI(TAG, "Initializing");
 
     Init();
 
 #ifdef CONFIG_GPIO_LED_PANEL_INTERFACE
-    gpio_reset_pin(static_cast<gpio_num_t>(latchGpio));
-    gpio_set_direction(static_cast<gpio_num_t>(latchGpio), GPIO_MODE_OUTPUT);
-    gpio_set_level(static_cast<gpio_num_t>(latchGpio), LOW);
+    gpio_reset_pin(static_cast<gpio_num_t>(CONFIG_LED_PANEL_LATCH));
+    gpio_set_direction(static_cast<gpio_num_t>(CONFIG_LED_PANEL_LATCH), GPIO_MODE_OUTPUT);
+    gpio_set_level(static_cast<gpio_num_t>(CONFIG_LED_PANEL_LATCH), LOW);
 #endif
 #ifdef CONFIG_SPI_LED_PANEL_INTERFACE
     spi_device_interface_config_t spiDeviceInterfaceConfig;
@@ -170,19 +141,19 @@ LedPanel::LedPanel(matrix_type_t matrixType, uint8_t matrixWidth, uint8_t matrix
     spiDeviceInterfaceConfig.cs_ena_posttrans = 0;
     spiDeviceInterfaceConfig.clock_speed_hz = 2000000; // SPI_MASTER_FREQ_8M; //SPI_MASTER_FREQ_20M;
     spiDeviceInterfaceConfig.input_delay_ns = 0;
-    spiDeviceInterfaceConfig.spics_io_num = latchGpio;
-    spiDeviceInterfaceConfig.flags = 0;
+    spiDeviceInterfaceConfig.spics_io_num = CONFIG_LED_PANEL_LATCH;
+    spiDeviceInterfaceConfig.flags = SPI_DEVICE_NO_DUMMY;
     spiDeviceInterfaceConfig.queue_size = SPI_QUEUE_SIZE;
     spiDeviceInterfaceConfig.pre_cb = nullptr;
     spiDeviceInterfaceConfig.post_cb = nullptr;
     ESP_ERROR_CHECK(spi_bus_add_device(SPI3_HOST, &spiDeviceInterfaceConfig, &m_spi));
 #endif
 
-    m_horizontalResolution = matrixWidth * matrixPixelWidth(matrixType);
-    m_verticalResolution = matrixHeight * matrixPixelHeight(matrixType);
+    m_horizontalResolution = CONFIG_LED_PANEL_MODULE_WIDTH * CONFIG_LED_PANEL_MATRIX_WIDTH;
+    m_verticalResolution = CONFIG_LED_PANEL_MODULE_HEIGHT * CONFIG_LED_PANEL_MATRIX_HEIGHT;
 
-    m_panelBufferSize = (m_verticalResolution / PIXEL_PER_BYTE) * m_horizontalResolution * sizeof(uint8_t);
-    m_panelBuffer = static_cast<uint8_t*>(heap_caps_malloc(m_panelBufferSize, MALLOC_CAP_DMA));
+    m_panelBufferSize = (m_verticalResolution / PIXEL_PER_BYTE) * m_horizontalResolution * sizeof(panelBuffer_t);
+    m_panelBuffer = static_cast<panelBuffer_t*>(heap_caps_malloc(m_panelBufferSize, MALLOC_CAP_DMA));
     if (m_panelBuffer == nullptr)
     {
         ESP_LOGE(TAG, "Failed to allocate panelBuffer on the heap!");
@@ -207,6 +178,7 @@ LedPanel::LedPanel(matrix_type_t matrixType, uint8_t matrixWidth, uint8_t matrix
     m_displayDriver.full_refresh = true;
     m_lvDisp = lv_disp_drv_register(&m_displayDriver);
 
+#ifdef CONFIG_MBI5026_LED_PANEL_TYPE
     ledc_timer_config_t ledc_timer = {
         .speed_mode = static_cast<ledc_mode_t>(CONFIG_LED_PANEL_LEDC_MODE),
         .duty_resolution = static_cast<ledc_timer_bit_t>(CONFIG_LED_PANEL_LEDC_DUTY_RES),
@@ -233,6 +205,7 @@ LedPanel::LedPanel(matrix_type_t matrixType, uint8_t matrixWidth, uint8_t matrix
 
     ESP_ERROR_CHECK(ledc_set_duty(static_cast<ledc_mode_t>(CONFIG_LED_PANEL_LEDC_MODE), static_cast<ledc_channel_t>(CONFIG_LED_PANEL_LEDC_CHANNEL), CONFIG_LED_PANEL_INITIAL_DUTY_CYCLE));
     ESP_ERROR_CHECK(ledc_update_duty(static_cast<ledc_mode_t>(CONFIG_LED_PANEL_LEDC_MODE), static_cast<ledc_channel_t>(CONFIG_LED_PANEL_LEDC_CHANNEL)));
+#endif
 }
 
 LedPanel::~LedPanel()
@@ -256,16 +229,16 @@ uint16_t LedPanel::getVerticalResolution()
     return m_verticalResolution;
 }
 
-uint8_t LedPanel::getBuffer(uint16_t index)
+panelBuffer_t LedPanel::getBuffer(uint16_t index)
 {
     assert(index < m_panelBufferSize);
     return m_panelBuffer[index];
 }
 
-void LedPanel::setBuffer(uint16_t index, uint8_t data)
+void LedPanel::setBuffer(uint16_t index, panelBuffer_t buffer)
 {
     assert(index < m_panelBufferSize);
-    m_panelBuffer[index] = data;
+    m_panelBuffer[index] = buffer;
 }
 
 #ifdef CONFIG_GPIO_LED_PANEL_INTERFACE
@@ -277,7 +250,7 @@ static void clk()
 
 static void sendData(uint8_t data)
 {
-    for (int8_t i = 0; i < PIXEL_PER_BYTE; i++)
+    for (int8_t i = 0; i < PIXEL_PER_BYTE * sizeof(panelBuffer_t); i++)
     {
         gpio_set_level(static_cast<gpio_num_t>(CONFIG_LED_PANEL_DATA), data & 0x80);
         clk();
@@ -302,12 +275,14 @@ void LedPanel::sendBuffer()
 #ifdef CONFIG_SPI_LED_PANEL_INTERFACE
 void LedPanel::sendBuffer()
 {
+    ESP_LOG_BUFFER_HEX(TAG, m_panelBuffer, m_panelBufferSize * sizeof(panelBuffer_t));
+
     spi_transaction_t spiTransaction;
 
     spiTransaction.flags = 0;
     spiTransaction.cmd = 0;
     spiTransaction.addr = 0;
-    spiTransaction.length = m_panelBufferSize * PIXEL_PER_BYTE;
+    spiTransaction.length = m_panelBufferSize * PIXEL_PER_BYTE * sizeof(panelBuffer_t);
     spiTransaction.rxlength = 0;
     spiTransaction.user = nullptr;
     spiTransaction.tx_buffer = m_panelBuffer;
@@ -461,10 +436,14 @@ void LedPanel::setBrightness(float brightness)
         brightness = 0.0;
     }
 
+#ifdef CONFIG_MBI5026_LED_PANEL_TYPE
     uint32_t dutyCycle = ((brightness / 100.0) * (1 << CONFIG_LED_PANEL_LEDC_DUTY_RES));
     ESP_LOGD(TAG, "Setting brightness to %.2f%% (duty cycle: %ld)", brightness, dutyCycle);
     ESP_ERROR_CHECK(ledc_set_duty(static_cast<ledc_mode_t>(CONFIG_LED_PANEL_LEDC_MODE), static_cast<ledc_channel_t>(CONFIG_LED_PANEL_LEDC_CHANNEL), dutyCycle));
     ESP_ERROR_CHECK(ledc_update_duty(static_cast<ledc_mode_t>(CONFIG_LED_PANEL_LEDC_MODE), static_cast<ledc_channel_t>(CONFIG_LED_PANEL_LEDC_CHANNEL)));
+#elif CONFIG_MAX7219_LED_PANEL_TYPE
+    ESP_LOGD(TAG, "Setting brightness to %.2f%% Not yet implemented", brightness);
+#endif
 }
 
 

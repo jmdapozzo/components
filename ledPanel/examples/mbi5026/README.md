@@ -1,1 +1,1 @@
-GPS Test program to develop a component
+MBI5026 ledPanel Test program to develop a component

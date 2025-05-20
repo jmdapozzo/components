@@ -9,6 +9,21 @@ menu "MacDap Led Panel"
 		default 19 if IDF_TARGET_ESP32C3
 		default 30 if IDF_TARGET_ESP32C6
 
+	choice LED_PANEL_TYPE
+		prompt "Type"
+		default MBI5026_LED_PANEL_TYPE
+		help
+			Select LED Panel Type
+		config MBI5026_LED_PANEL_TYPE
+			bool "MBI5026 Led Panel Type"
+			help
+				MBI5026 Led Panel Type
+		config MAX7219_LED_PANEL_TYPE
+			bool "MAX7219 Led Panel Type"
+			help
+				MAX7219 Led Panel Type
+	endchoice
+
 	choice LED_PANEL_INTERFACE
 		prompt "Interface"
 		default GPIO_LED_PANEL_INTERFACE
@@ -44,33 +59,121 @@ menu "MacDap Led Panel"
 		default 12
 		range 0 LED_PANEL_GPIO_RANGE_MAX
 
-	config LED_PANEL_LEDC_TIMER
-		int "LEDC timer_num"
-		default 0
-		range 0 3
+	choice LED_PANEL_DISPLAY_TYPE
+		prompt "Display Type"
+		default MATRIX_LED_PANEL_DISPLAY_TYPE
+		help
+			Select LED Panel Display Type
+		config MATRIX_LED_PANEL_DISPLAY_TYPE
+			bool "Dot Matrix display"
+		config SEGMENT_LED_PANEL_DISPLAY_TYPE
+			bool "NOT IMPLEMENTED 7-Segment display"
+	endchoice
 
-	config LED_PANEL_LEDC_CHANNEL
-		int "LEDC channel"
-		default 5
-		range 0 7
+	if MATRIX_LED_PANEL_DISPLAY_TYPE
+		choice LED_PANEL_MATRIX
+			prompt "Matrix Module Format"
+			help
+				Select LED Panel Matrix
+			config M12_6X8_LED_PANEL_MATRIX
+				depends on MBI5026_LED_PANEL_TYPE
+				bool "6w x 8h, 12 inch, 5 led/pixel or 9 led/pixel"
+			config M6_12X8_LED_PANEL_MATRIX
+				depends on MBI5026_LED_PANEL_TYPE
+				bool "12h x 8h, 6 inch, 4 led/pixel"
+			config M6_16X8_LED_PANEL_MATRIX
+				depends on MBI5026_LED_PANEL_TYPE
+				bool "16h x 8h, 6 inch, 3 led/pixel"
+			config M4_24X8_LED_PANEL_MATRIX
+				depends on MBI5026_LED_PANEL_TYPE
+				bool "24w x 8h, 4 inch, 1 led/pixel"
+			config MAX_8X8_LED_PANEL_MATRIX
+				depends on MAX7219_LED_PANEL_TYPE
+				bool "8w x 8h, 1 led/pixel"
+			config MAX_32X8_LED_PANEL_MATRIX
+				depends on MAX7219_LED_PANEL_TYPE
+				bool "32w x 8, 1 led/pixel"
+		endchoice
 
-	config LED_PANEL_LEDC_MODE
-		int "LEDC speed_mode"
-		default 0
-		range 0 1
+		config LED_PANEL_MATRIX_WIDTH
+			int
+			default 6  if M12_6X8_LED_PANEL_MATRIX
+			default 12 if M6_12X8_LED_PANEL_MATRIX
+			default 16 if M6_16X8_LED_PANEL_MATRIX
+			default 24 if M4_24X8_LED_PANEL_MATRIX
+			default 8  if MAX_8X8_LED_PANEL_MATRIX
+			default 32 if MAX_32X8_LED_PANEL_MATRIX
 
-	config LED_PANEL_LEDC_DUTY_RES
-		int "LEDC duty_resolution"
-		default 13
-		range 1 13
+		config LED_PANEL_MATRIX_HEIGHT
+			int
+			default 8  if M12_6X8_LED_PANEL_MATRIX
+			default 8  if M6_12X8_LED_PANEL_MATRIX
+			default 8  if M6_16X8_LED_PANEL_MATRIX
+			default 8  if M4_24X8_LED_PANEL_MATRIX
+			default 8  if MAX_8X8_LED_PANEL_MATRIX
+			default 8  if MAX_32X8_LED_PANEL_MATRIX
+	endif
 
-	config LED_PANEL_LEDC_FREQUENCY
-		int "LEDC freq_hz"
-		default 1000
+	if SEGMENT_LED_PANEL_DISPLAY_TYPE
+		choice LED_PANEL_SEGMENT
+			prompt "Segment Module Format"
+			help
+				Select LED Panel Segment
+			config S4_LED_PANEL_SEGMENT
+				bool "4, 7-segment display"
+			config S6_LED_PANEL_SEGMENT
+				bool "6, 7-segment display"
+			config S8_LED_PANEL_SEGMENT
+				bool "8, 7-segment display"
+		endchoice
 
-	config LED_PANEL_INITIAL_DUTY_CYCLE
-		int "LEDC Initial Duty Cycle"
-		default 0
-		range 0 100
+		config LED_PANEL_SEGMENT_WIDTH
+			int
+			default 4 if S4_LED_PANEL_SEGMENT
+			default 6 if S6_LED_PANEL_SEGMENT
+			default 8 if S8_LED_PANEL_SEGMENT
+	endif
+
+	config LED_PANEL_MODULE_WIDTH
+		int "Panel Module Width"
+		default 1
+		range 0 10
+
+	config LED_PANEL_MODULE_HEIGHT
+		int "Panel Module Width"
+		default 1
+		range 0 10
+
+	if MBI5026_LED_PANEL_TYPE
+
+		config LED_PANEL_LEDC_TIMER
+			int "LEDC timer_num"
+			default 0
+			range 0 3
+		
+		config LED_PANEL_LEDC_CHANNEL
+			int "LEDC channel"
+			default 5
+			range 0 7
+
+		config LED_PANEL_LEDC_MODE
+			int "LEDC speed_mode"
+			default 0
+			range 0 1
+
+		config LED_PANEL_LEDC_DUTY_RES
+			int "LEDC duty_resolution"
+			default 13
+			range 1 13
+
+		config LED_PANEL_LEDC_FREQUENCY
+			int "LEDC freq_hz"
+			default 1000
+
+		config LED_PANEL_INITIAL_DUTY_CYCLE
+			int "LEDC Initial Duty Cycle"
+			default 0
+			range 0 100
+	endif
 
 endmenu
