@@ -8,4 +8,5 @@ managed_components
 dependencies.lock
 sdkconfig*
 !sdkconfig.common
+*.code-workspace
 
