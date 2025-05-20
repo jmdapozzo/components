@@ -77,52 +77,38 @@ static void flushCB(lv_disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t
     xSemaphoreGive(panelBufferMutex);
 }
 
-static void Init()
-{
-    static bool isInitialized = false;
-    if (!isInitialized)
-    {
-        // const lvgl_port_cfg_t lvglConfig = ESP_LVGL_PORT_INIT_CONFIG();
-        // lvgl_port_init(&lvglConfig);
-    
-        panelBufferMutex = xSemaphoreCreateMutex();
-        if (panelBufferMutex == nullptr)
-        {
-            ESP_LOGE(TAG, "Create panelBuffer mutex failure!");
-            return;
-        }
-
-#ifdef CONFIG_GPIO_LED_PANEL_INTERFACE
-        gpio_reset_pin(static_cast<gpio_num_t>(CONFIG_LED_PANEL_DATA));
-        gpio_set_direction(static_cast<gpio_num_t>(CONFIG_LED_PANEL_DATA), GPIO_MODE_OUTPUT);
-        gpio_set_level(static_cast<gpio_num_t>(CONFIG_LED_PANEL_DATA), LOW);
-        gpio_reset_pin(static_cast<gpio_num_t>(CONFIG_LED_PANEL_CLOCK));
-        gpio_set_direction(static_cast<gpio_num_t>(CONFIG_LED_PANEL_CLOCK), GPIO_MODE_OUTPUT);
-        gpio_set_level(static_cast<gpio_num_t>(CONFIG_LED_PANEL_CLOCK), LOW);
-#endif
-#ifdef CONFIG_SPI_LED_PANEL_INTERFACE
-        spi_bus_config_t spiBusConfig;
-        spiBusConfig.mosi_io_num = CONFIG_LED_PANEL_DATA;
-        spiBusConfig.miso_io_num = -1;
-        spiBusConfig.sclk_io_num = CONFIG_LED_PANEL_CLOCK;
-        spiBusConfig.quadwp_io_num = -1;
-        spiBusConfig.quadhd_io_num = -1;
-        spiBusConfig.max_transfer_sz = SPI_MAX_DMA_LEN;
-        spiBusConfig.flags = SPICOMMON_BUSFLAG_MASTER | SPICOMMON_BUSFLAG_GPIO_PINS | SPICOMMON_BUSFLAG_SCLK | SPICOMMON_BUSFLAG_MOSI;
-        spiBusConfig.intr_flags = 0;
-        spiBusConfig.isr_cpu_id = ESP_INTR_CPU_AFFINITY_AUTO;
-        ESP_ERROR_CHECK(spi_bus_initialize(SPI3_HOST, &spiBusConfig, SPI_DMA_CH_AUTO));
-    #endif
-    
-        isInitialized = true;
-    }
-}
-
 LedPanel::LedPanel()
 {
     ESP_LOGI(TAG, "Initializing");
 
-    Init();
+    panelBufferMutex = xSemaphoreCreateMutex();
+    if (panelBufferMutex == nullptr)
+    {
+        ESP_LOGE(TAG, "Create panelBuffer mutex failure!");
+        return;
+    }
+
+#ifdef CONFIG_GPIO_LED_PANEL_INTERFACE
+    gpio_reset_pin(static_cast<gpio_num_t>(CONFIG_LED_PANEL_DATA));
+    gpio_set_direction(static_cast<gpio_num_t>(CONFIG_LED_PANEL_DATA), GPIO_MODE_OUTPUT);
+    gpio_set_level(static_cast<gpio_num_t>(CONFIG_LED_PANEL_DATA), LOW);
+    gpio_reset_pin(static_cast<gpio_num_t>(CONFIG_LED_PANEL_CLOCK));
+    gpio_set_direction(static_cast<gpio_num_t>(CONFIG_LED_PANEL_CLOCK), GPIO_MODE_OUTPUT);
+    gpio_set_level(static_cast<gpio_num_t>(CONFIG_LED_PANEL_CLOCK), LOW);
+#endif
+#ifdef CONFIG_SPI_LED_PANEL_INTERFACE
+    spi_bus_config_t spiBusConfig;
+    spiBusConfig.mosi_io_num = CONFIG_LED_PANEL_DATA;
+    spiBusConfig.miso_io_num = -1;
+    spiBusConfig.sclk_io_num = CONFIG_LED_PANEL_CLOCK;
+    spiBusConfig.quadwp_io_num = -1;
+    spiBusConfig.quadhd_io_num = -1;
+    spiBusConfig.max_transfer_sz = SPI_MAX_DMA_LEN;
+    spiBusConfig.flags = SPICOMMON_BUSFLAG_MASTER | SPICOMMON_BUSFLAG_GPIO_PINS | SPICOMMON_BUSFLAG_SCLK | SPICOMMON_BUSFLAG_MOSI;
+    spiBusConfig.intr_flags = 0;
+    spiBusConfig.isr_cpu_id = ESP_INTR_CPU_AFFINITY_AUTO;
+    ESP_ERROR_CHECK(spi_bus_initialize(SPI3_HOST, &spiBusConfig, SPI_DMA_CH_AUTO));
+#endif
 
 #ifdef CONFIG_GPIO_LED_PANEL_INTERFACE
     gpio_reset_pin(static_cast<gpio_num_t>(CONFIG_LED_PANEL_LATCH));
