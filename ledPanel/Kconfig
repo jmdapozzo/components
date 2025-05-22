@@ -11,14 +11,14 @@ menu "MacDap Led Panel"
 
 	choice LED_PANEL_TYPE
 		prompt "Type"
-		default MBI5026_LED_PANEL_TYPE
+		default LED_PANEL_TYPE_MBI5026
 		help
 			Select LED Panel Type
-		config MBI5026_LED_PANEL_TYPE
+		config LED_PANEL_TYPE_MBI5026
 			bool "MBI5026 Led Panel Type"
 			help
 				MBI5026 Led Panel Type
-		config MAX7219_LED_PANEL_TYPE
+		config LED_PANEL_TYPE_MAX7219
 			bool "MAX7219 Led Panel Type"
 			help
 				MAX7219 Led Panel Type
@@ -26,14 +26,14 @@ menu "MacDap Led Panel"
 
 	choice LED_PANEL_INTERFACE
 		prompt "Interface"
-		default GPIO_LED_PANEL_INTERFACE
+		default LED_PANEL_INTERFACE_GPIO
 		help
 			Select LED Panel Interface
-		config GPIO_LED_PANEL_INTERFACE
+		config LED_PANEL_INTERFACE_GPIO
 			bool "GPIO Interface"
 			help
 				GPIO Interface
-		config SPI_LED_PANEL_INTERFACE
+		config LED_PANEL_INTERFACE_SPI
 			bool "SPI Interface"
 			help
 				SPI Interface
@@ -61,60 +61,60 @@ menu "MacDap Led Panel"
 
 	choice LED_PANEL_DISPLAY_TYPE
 		prompt "Display Type"
-		default MATRIX_LED_PANEL_DISPLAY_TYPE
+		default LED_PANEL_MATRIX_DISPLAY_TYPE
 		help
 			Select LED Panel Display Type
-		config MATRIX_LED_PANEL_DISPLAY_TYPE
+		config LED_PANEL_MATRIX_DISPLAY_TYPE
 			bool "Dot Matrix display"
-		config SEGMENT_LED_PANEL_DISPLAY_TYPE
+		config LED_PANEL_SEGMENT_DISPLAY_TYPE
 			bool "NOT IMPLEMENTED 7-Segment display"
 	endchoice
 
-	if MATRIX_LED_PANEL_DISPLAY_TYPE
+	if LED_PANEL_MATRIX_DISPLAY_TYPE
 		choice LED_PANEL_MATRIX
 			prompt "Matrix Module Format"
 			help
 				Select LED Panel Matrix
-			config M12_6X8_LED_PANEL_MATRIX
-				depends on MBI5026_LED_PANEL_TYPE
+			config LED_PANEL_MATRIX_M12_6X8
+				depends on LED_PANEL_TYPE_MBI5026
 				bool "6w x 8h, 12 inch, 5 led/pixel or 9 led/pixel"
-			config M6_12X8_LED_PANEL_MATRIX
-				depends on MBI5026_LED_PANEL_TYPE
+			config LED_PANEL_MATRIX_M6_12X8
+				depends on LED_PANEL_TYPE_MBI5026
 				bool "12h x 8h, 6 inch, 4 led/pixel"
-			config M6_16X8_LED_PANEL_MATRIX
-				depends on MBI5026_LED_PANEL_TYPE
+			config LED_PANEL_MATRIX_M6_16X8
+				depends on LED_PANEL_TYPE_MBI5026
 				bool "16h x 8h, 6 inch, 3 led/pixel"
-			config M4_24X8_LED_PANEL_MATRIX
-				depends on MBI5026_LED_PANEL_TYPE
+			config LED_PANEL_MATRIX_M4_24X8
+				depends on LED_PANEL_TYPE_MBI5026
 				bool "24w x 8h, 4 inch, 1 led/pixel"
-			config MAX_8X8_LED_PANEL_MATRIX
-				depends on MAX7219_LED_PANEL_TYPE
+			config LED_PANEL_MATRIX_MAX_8X8
+				depends on LED_PANEL_TYPE_MAX7219
 				bool "8w x 8h, 1 led/pixel"
-			config MAX_32X8_LED_PANEL_MATRIX
-				depends on MAX7219_LED_PANEL_TYPE
+			config LED_PANEL_MATRIX_MAX_32X8
+				depends on LED_PANEL_TYPE_MAX7219
 				bool "32w x 8, 1 led/pixel"
 		endchoice
 
 		config LED_PANEL_MATRIX_WIDTH
 			int
-			default 6  if M12_6X8_LED_PANEL_MATRIX
-			default 12 if M6_12X8_LED_PANEL_MATRIX
-			default 16 if M6_16X8_LED_PANEL_MATRIX
-			default 24 if M4_24X8_LED_PANEL_MATRIX
-			default 8  if MAX_8X8_LED_PANEL_MATRIX
-			default 32 if MAX_32X8_LED_PANEL_MATRIX
+			default 6  if LED_PANEL_MATRIX_M12_6X8
+			default 12 if LED_PANEL_MATRIX_M6_12X8
+			default 16 if LED_PANEL_MATRIX_M6_16X8
+			default 24 if LED_PANEL_MATRIX_M4_24X8
+			default 8  if LED_PANEL_MATRIX_MAX_8X8
+			default 32 if LED_PANEL_MATRIX_MAX_32X8
 
 		config LED_PANEL_MATRIX_HEIGHT
 			int
-			default 8  if M12_6X8_LED_PANEL_MATRIX
-			default 8  if M6_12X8_LED_PANEL_MATRIX
-			default 8  if M6_16X8_LED_PANEL_MATRIX
-			default 8  if M4_24X8_LED_PANEL_MATRIX
-			default 8  if MAX_8X8_LED_PANEL_MATRIX
-			default 8  if MAX_32X8_LED_PANEL_MATRIX
+			default 8  if LED_PANEL_MATRIX_M12_6X8
+			default 8  if LED_PANEL_MATRIX_M6_12X8
+			default 8  if LED_PANEL_MATRIX_M6_16X8
+			default 8  if LED_PANEL_MATRIX_M4_24X8
+			default 8  if LED_PANEL_MATRIX_MAX_8X8
+			default 8  if LED_PANEL_MATRIX_MAX_32X8
 	endif
 
-	if SEGMENT_LED_PANEL_DISPLAY_TYPE
+	if LED_PANEL_SEGMENT_DISPLAY_TYPE
 		choice LED_PANEL_SEGMENT
 			prompt "Segment Module Format"
 			help
@@ -144,7 +144,13 @@ menu "MacDap Led Panel"
 		default 1
 		range 0 10
 
-	if MBI5026_LED_PANEL_TYPE
+	config LED_PANEL_MAX7219_MODULE_CHIP_NB
+		depends on LED_PANEL_TYPE_MAX7219
+		int
+		default 1  if LED_PANEL_MATRIX_MAX_8X8
+		default 4 if LED_PANEL_MATRIX_MAX_32X8
+
+	if LED_PANEL_TYPE_MBI5026
 
 		config LED_PANEL_LEDC_TIMER
 			int "LEDC timer_num"

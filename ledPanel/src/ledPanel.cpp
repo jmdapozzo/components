@@ -15,13 +15,23 @@ using namespace macdap;
 #define TASK_STACK_SIZE 6144
 #define TASK_PRIORITY 4
 
-#ifdef CONFIG_GPIO_LED_PANEL_INTERFACE
+#ifdef CONFIG_LED_PANEL_INTERFACE_GPIO
 #define LOW 0
 #define HIGH 1
 static const char *TAG = "ledPanel (GPIO)";
-#elif CONFIG_SPI_LED_PANEL_INTERFACE
+#elif CONFIG_LED_PANEL_INTERFACE_SPI
 #define SPI_QUEUE_SIZE 10
 static const char *TAG = "ledPanel (SPI)";
+#endif
+
+#ifdef CONFIG_LED_PANEL_TYPE_MAX7219
+#define ALL_DIGITS       8
+#define REG_DIGIT_0      (1 << 8)
+#define REG_DECODE_MODE  (9 << 8)
+#define REG_INTENSITY    (10 << 8)
+#define REG_SCAN_LIMIT   (11 << 8)
+#define REG_SHUTDOWN     (12 << 8)
+#define REG_DISPLAY_TEST (15 << 8)
 #endif
 
 #define PIXEL_PER_BYTE 8
@@ -88,7 +98,7 @@ LedPanel::LedPanel()
         return;
     }
 
-#ifdef CONFIG_GPIO_LED_PANEL_INTERFACE
+#ifdef CONFIG_LED_PANEL_INTERFACE_GPIO
     gpio_reset_pin(static_cast<gpio_num_t>(CONFIG_LED_PANEL_DATA));
     gpio_set_direction(static_cast<gpio_num_t>(CONFIG_LED_PANEL_DATA), GPIO_MODE_OUTPUT);
     gpio_set_level(static_cast<gpio_num_t>(CONFIG_LED_PANEL_DATA), LOW);
@@ -96,42 +106,44 @@ LedPanel::LedPanel()
     gpio_set_direction(static_cast<gpio_num_t>(CONFIG_LED_PANEL_CLOCK), GPIO_MODE_OUTPUT);
     gpio_set_level(static_cast<gpio_num_t>(CONFIG_LED_PANEL_CLOCK), LOW);
 #endif
-#ifdef CONFIG_SPI_LED_PANEL_INTERFACE
-    spi_bus_config_t spiBusConfig;
-    spiBusConfig.mosi_io_num = CONFIG_LED_PANEL_DATA;
-    spiBusConfig.miso_io_num = -1;
-    spiBusConfig.sclk_io_num = CONFIG_LED_PANEL_CLOCK;
-    spiBusConfig.quadwp_io_num = -1;
-    spiBusConfig.quadhd_io_num = -1;
-    spiBusConfig.max_transfer_sz = SPI_MAX_DMA_LEN;
-    spiBusConfig.flags = SPICOMMON_BUSFLAG_MASTER | SPICOMMON_BUSFLAG_GPIO_PINS | SPICOMMON_BUSFLAG_SCLK | SPICOMMON_BUSFLAG_MOSI;
-    spiBusConfig.intr_flags = 0;
-    spiBusConfig.isr_cpu_id = ESP_INTR_CPU_AFFINITY_AUTO;
+#ifdef CONFIG_LED_PANEL_INTERFACE_SPI
+    spi_bus_config_t spiBusConfig = {
+        .mosi_io_num = CONFIG_LED_PANEL_DATA,
+        .miso_io_num = -1,
+        .sclk_io_num = CONFIG_LED_PANEL_CLOCK,
+        .quadwp_io_num = -1,
+        .quadhd_io_num = -1,
+        .max_transfer_sz = SPI_MAX_DMA_LEN,
+        .flags = SPICOMMON_BUSFLAG_MASTER | SPICOMMON_BUSFLAG_GPIO_PINS | SPICOMMON_BUSFLAG_SCLK | SPICOMMON_BUSFLAG_MOSI,
+        .isr_cpu_id = ESP_INTR_CPU_AFFINITY_AUTO,
+        .intr_flags = 0
+    };
     ESP_ERROR_CHECK(spi_bus_initialize(SPI3_HOST, &spiBusConfig, SPI_DMA_CH_AUTO));
 #endif
 
-#ifdef CONFIG_GPIO_LED_PANEL_INTERFACE
+#ifdef CONFIG_LED_PANEL_INTERFACE_GPIO
     gpio_reset_pin(static_cast<gpio_num_t>(CONFIG_LED_PANEL_LATCH));
     gpio_set_direction(static_cast<gpio_num_t>(CONFIG_LED_PANEL_LATCH), GPIO_MODE_OUTPUT);
     gpio_set_level(static_cast<gpio_num_t>(CONFIG_LED_PANEL_LATCH), LOW);
 #endif
-#ifdef CONFIG_SPI_LED_PANEL_INTERFACE
-    spi_device_interface_config_t spiDeviceInterfaceConfig;
-    spiDeviceInterfaceConfig.command_bits = 0;
-    spiDeviceInterfaceConfig.address_bits = 0;
-    spiDeviceInterfaceConfig.dummy_bits = 0;
-    spiDeviceInterfaceConfig.mode = 0;
-    spiDeviceInterfaceConfig.clock_source = SPI_CLK_SRC_DEFAULT;
-    spiDeviceInterfaceConfig.duty_cycle_pos = 0;
-    spiDeviceInterfaceConfig.cs_ena_pretrans = 0;
-    spiDeviceInterfaceConfig.cs_ena_posttrans = 0;
-    spiDeviceInterfaceConfig.clock_speed_hz = 2000000; // SPI_MASTER_FREQ_8M; //SPI_MASTER_FREQ_20M;
-    spiDeviceInterfaceConfig.input_delay_ns = 0;
-    spiDeviceInterfaceConfig.spics_io_num = CONFIG_LED_PANEL_LATCH;
-    spiDeviceInterfaceConfig.flags = SPI_DEVICE_NO_DUMMY;
-    spiDeviceInterfaceConfig.queue_size = SPI_QUEUE_SIZE;
-    spiDeviceInterfaceConfig.pre_cb = nullptr;
-    spiDeviceInterfaceConfig.post_cb = nullptr;
+#ifdef CONFIG_LED_PANEL_INTERFACE_SPI
+    spi_device_interface_config_t spiDeviceInterfaceConfig = {
+        .command_bits = 0,
+        .address_bits = 0,
+        .dummy_bits = 0,
+        .mode = 0,
+        .clock_source = SPI_CLK_SRC_DEFAULT,
+        .duty_cycle_pos = 0,
+        .cs_ena_pretrans = 0,
+        .cs_ena_posttrans = 0,
+        .clock_speed_hz = 2000000, // SPI_MASTER_FREQ_8M; //SPI_MASTER_FREQ_20M;
+        .input_delay_ns = 0,
+        .spics_io_num = CONFIG_LED_PANEL_LATCH,
+        .flags = SPI_DEVICE_NO_DUMMY,
+        .queue_size = SPI_QUEUE_SIZE,
+        .pre_cb = nullptr,
+        .post_cb = nullptr
+    };
     ESP_ERROR_CHECK(spi_bus_add_device(SPI3_HOST, &spiDeviceInterfaceConfig, &m_spi));
 #endif
 
@@ -164,7 +176,7 @@ LedPanel::LedPanel()
     m_displayDriver.full_refresh = true;
     m_lvDisp = lv_disp_drv_register(&m_displayDriver);
 
-#ifdef CONFIG_MBI5026_LED_PANEL_TYPE
+#ifdef CONFIG_LED_PANEL_TYPE_MBI5026
     ledc_timer_config_t ledc_timer = {
         .speed_mode = static_cast<ledc_mode_t>(CONFIG_LED_PANEL_LEDC_MODE),
         .duty_resolution = static_cast<ledc_timer_bit_t>(CONFIG_LED_PANEL_LEDC_DUTY_RES),
@@ -191,14 +203,57 @@ LedPanel::LedPanel()
 
     ESP_ERROR_CHECK(ledc_set_duty(static_cast<ledc_mode_t>(CONFIG_LED_PANEL_LEDC_MODE), static_cast<ledc_channel_t>(CONFIG_LED_PANEL_LEDC_CHANNEL), CONFIG_LED_PANEL_INITIAL_DUTY_CYCLE));
     ESP_ERROR_CHECK(ledc_update_duty(static_cast<ledc_mode_t>(CONFIG_LED_PANEL_LEDC_MODE), static_cast<ledc_channel_t>(CONFIG_LED_PANEL_LEDC_CHANNEL)));
+#elif CONFIG_LED_PANEL_TYPE_MAX7219
+
+    for (int i = 0; i < CONFIG_LED_PANEL_MODULE_WIDTH * CONFIG_LED_PANEL_MAX7219_MODULE_CHIP_NB; i++)
+    {
+        m_panelBuffer[i].command = REG_SHUTDOWN;
+        m_panelBuffer[i].data = 0;
+    }
+    sendBuffer(m_panelBuffer, CONFIG_LED_PANEL_MODULE_WIDTH * CONFIG_LED_PANEL_MAX7219_MODULE_CHIP_NB);
+
+    for (int i = 0; i < CONFIG_LED_PANEL_MODULE_WIDTH * CONFIG_LED_PANEL_MAX7219_MODULE_CHIP_NB; i++)
+    {
+        m_panelBuffer[i].command = REG_DISPLAY_TEST;
+        m_panelBuffer[i].data = 0;
+    }
+    sendBuffer(m_panelBuffer, CONFIG_LED_PANEL_MODULE_WIDTH * CONFIG_LED_PANEL_MAX7219_MODULE_CHIP_NB);
+
+    for (int i = 0; i < CONFIG_LED_PANEL_MODULE_WIDTH * CONFIG_LED_PANEL_MAX7219_MODULE_CHIP_NB; i++)
+    {
+        m_panelBuffer[i].command = REG_SCAN_LIMIT;
+        m_panelBuffer[i].data = ALL_DIGITS - 1;
+    }
+    sendBuffer(m_panelBuffer, CONFIG_LED_PANEL_MODULE_WIDTH * CONFIG_LED_PANEL_MAX7219_MODULE_CHIP_NB);
+
+    for (int i = 0; i < CONFIG_LED_PANEL_MODULE_WIDTH * CONFIG_LED_PANEL_MAX7219_MODULE_CHIP_NB; i++)
+    {
+        m_panelBuffer[i].command = REG_DECODE_MODE;
+        m_panelBuffer[i].data = 0;
+    }
+    sendBuffer(m_panelBuffer, CONFIG_LED_PANEL_MODULE_WIDTH * CONFIG_LED_PANEL_MAX7219_MODULE_CHIP_NB);
+
+    for (int i = 0; i < CONFIG_LED_PANEL_MODULE_WIDTH * CONFIG_LED_PANEL_MAX7219_MODULE_CHIP_NB; i++)
+    {
+        m_panelBuffer[i].command = REG_INTENSITY;
+        m_panelBuffer[i].data = 0;
+    }
+    sendBuffer(m_panelBuffer, CONFIG_LED_PANEL_MODULE_WIDTH * CONFIG_LED_PANEL_MAX7219_MODULE_CHIP_NB);
+
+    for (int i = 0; i < CONFIG_LED_PANEL_MODULE_WIDTH * CONFIG_LED_PANEL_MAX7219_MODULE_CHIP_NB; i++)
+    {
+        m_panelBuffer[i].command = REG_SHUTDOWN;
+        m_panelBuffer[i].data = 1;
+    }
+    sendBuffer(m_panelBuffer, CONFIG_LED_PANEL_MODULE_WIDTH * CONFIG_LED_PANEL_MAX7219_MODULE_CHIP_NB);
 #endif
 }
 
 LedPanel::~LedPanel()
 {
-#ifdef CONFIG_GPIO_LED_PANEL_INTERFACE
+#ifdef CONFIG_LED_PANEL_INTERFACE_GPIO
 #endif
-#ifdef CONFIG_SPI_LED_PANEL_INTERFACE
+#ifdef CONFIG_LED_PANEL_INTERFACE_SPI
     vSemaphoreDelete(panelBufferMutex);
     spi_bus_remove_device(m_spi);
     spi_bus_free(SPI3_HOST);
@@ -227,7 +282,7 @@ void LedPanel::setBuffer(uint16_t index, panelBuffer_t buffer)
     m_panelBuffer[index] = buffer;
 }
 
-#ifdef CONFIG_GPIO_LED_PANEL_INTERFACE
+#ifdef CONFIG_LED_PANEL_INTERFACE_GPIO
 static void clk()
 {
     gpio_set_level(static_cast<gpio_num_t>(CONFIG_LED_PANEL_CLOCK), HIGH);
@@ -244,12 +299,12 @@ static void sendData(uint8_t data)
     }
 }
 
-void LedPanel::sendBuffer()
+void LedPanel::sendBuffer(panelBuffer_t* panelBuffer, size_t panelBufferSize)
 {
-    uint8_t *currentData = m_panelBuffer;
+    uint8_t *currentData = panelBuffer;
 
     gpio_set_level(static_cast<gpio_num_t>(CONFIG_LED_PANEL_LATCH), LOW);
-    for (int8_t i = 0; i < m_panelBufferSize; i++)
+    for (int8_t i = 0; i < panelBufferSize; i++)
     {
         sendData(*currentData);
         currentData++;
@@ -258,25 +313,29 @@ void LedPanel::sendBuffer()
 }
 #endif
 
-#ifdef CONFIG_SPI_LED_PANEL_INTERFACE
-void LedPanel::sendBuffer()
+#ifdef CONFIG_LED_PANEL_INTERFACE_SPI
+void LedPanel::sendBuffer(panelBuffer_t* panelBuffer, size_t panelBufferSize)
 {
-    ESP_LOG_BUFFER_HEX(TAG, m_panelBuffer, m_panelBufferSize * sizeof(panelBuffer_t));
+    ESP_LOG_BUFFER_HEX(TAG, panelBuffer, panelBufferSize * sizeof(panelBuffer_t));
 
-    spi_transaction_t spiTransaction;
-
-    spiTransaction.flags = 0;
-    spiTransaction.cmd = 0;
-    spiTransaction.addr = 0;
-    spiTransaction.length = m_panelBufferSize * PIXEL_PER_BYTE * sizeof(panelBuffer_t);
-    spiTransaction.rxlength = 0;
-    spiTransaction.user = nullptr;
-    spiTransaction.tx_buffer = m_panelBuffer;
-    spiTransaction.rx_buffer = nullptr;
-
+    spi_transaction_t spiTransaction = {
+        .flags = 0,
+        .cmd = 0,
+        .addr = 0,
+        .length = panelBufferSize * PIXEL_PER_BYTE * sizeof(panelBuffer_t),
+        .rxlength = 0,
+        .user = nullptr,
+        .tx_buffer = panelBuffer,
+        .rx_buffer = nullptr
+    };
     ESP_ERROR_CHECK(spi_device_transmit(m_spi, &spiTransaction));
 }
 #endif
+
+void LedPanel::sendBuffer()
+{
+    sendBuffer(m_panelBuffer, m_panelBufferSize);
+}
 
 lv_disp_t *LedPanel::getLvDisp()
 {
@@ -422,12 +481,12 @@ void LedPanel::setBrightness(float brightness)
         brightness = 0.0;
     }
 
-#ifdef CONFIG_MBI5026_LED_PANEL_TYPE
+#ifdef CONFIG_LED_PANEL_TYPE_MBI5026
     uint32_t dutyCycle = ((brightness / 100.0) * (1 << CONFIG_LED_PANEL_LEDC_DUTY_RES));
     ESP_LOGD(TAG, "Setting brightness to %.2f%% (duty cycle: %ld)", brightness, dutyCycle);
     ESP_ERROR_CHECK(ledc_set_duty(static_cast<ledc_mode_t>(CONFIG_LED_PANEL_LEDC_MODE), static_cast<ledc_channel_t>(CONFIG_LED_PANEL_LEDC_CHANNEL), dutyCycle));
     ESP_ERROR_CHECK(ledc_update_duty(static_cast<ledc_mode_t>(CONFIG_LED_PANEL_LEDC_MODE), static_cast<ledc_channel_t>(CONFIG_LED_PANEL_LEDC_CHANNEL)));
-#elif CONFIG_MAX7219_LED_PANEL_TYPE
+#elif CONFIG_LED_PANEL_TYPE_MAX7219
     ESP_LOGD(TAG, "Setting brightness to %.2f%% Not yet implemented", brightness);
 #endif
 }
