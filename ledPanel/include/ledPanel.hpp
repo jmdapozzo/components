@@ -18,8 +18,8 @@ extern "C"
     } panelBuffer_t;
 #elif CONFIG_LED_PANEL_TYPE_MAX7219
     typedef struct {
-        int8_t data;
-        int8_t command;
+        uint8_t command;
+        uint8_t data;
     } panelBuffer_t;
 #endif
 

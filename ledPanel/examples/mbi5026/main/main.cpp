@@ -2,7 +2,7 @@
 #include <esp_log.h>
 #include <ledPanel.hpp>
 
-static const char *TAG = "main";
+static const char *TAG = "mbi5026";
 
 extern "C" void app_main(void)
 {
@@ -13,13 +13,11 @@ extern "C" void app_main(void)
 
     macdap::LedPanel &ledPanel = macdap::LedPanel::getInstance();
     ledPanel.setBrightness(1.00);
-    ledPanel.message("-.-");
-    //ledPanel.scrollingMessage("-.-\no.o\nx.x\n\n");
-    //ledPanel.scrollingMessage("Hello World from MacDap");
+    ledPanel.scrollingMessage("Hello World from MacDap");
 
+    ESP_LOGI(TAG, "LED Panel Test Program");
     while (true)
     {
-        ESP_LOGI(TAG, "LED Panel Test Program");
         vTaskDelay(pdMS_TO_TICKS(500));
     }
 }
