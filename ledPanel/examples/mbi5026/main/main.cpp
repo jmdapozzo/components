@@ -13,7 +13,9 @@ extern "C" void app_main(void)
 
     macdap::LedPanel &ledPanel = macdap::LedPanel::getInstance();
     ledPanel.setBrightness(1.00);
-    ledPanel.scrollingMessage("Hello World from MacDap");
+    // ledPanel.test();
+    ledPanel.message("1234");
+    // ledPanel.scrollingMessage("Hello World from MacDap");
 
     ESP_LOGI(TAG, "LED Panel Test Program");
     while (true)

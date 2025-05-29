@@ -140,7 +140,7 @@ menu "MacDap Led Panel"
 		range 0 10
 
 	config LED_PANEL_MODULE_HEIGHT
-		int "Panel Module Width"
+		int "Panel Module Height"
 		default 1
 		range 0 10
 

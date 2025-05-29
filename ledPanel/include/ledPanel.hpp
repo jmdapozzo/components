@@ -62,6 +62,7 @@ extern "C"
         void greeting(const char *projectName, const char *version);
         void message(const char *message);
         void scrollingMessage(const char *message);
+        void test();
     };
 }
 #ifdef __cplusplus

@@ -15,6 +15,9 @@ extern "C" void app_main(void)
     // ledPanel.setBrightness(1.00);
     // ledPanel.scrollingMessage("Hello World from MacDap");
     ledPanel.message("12345678");
+    // ledPanel.message("1234");
+    // ledPanel.message(".");
+    // ledPanel.test();
 
     ESP_LOGI(TAG, "LED Panel Test Program");
     while (true)
