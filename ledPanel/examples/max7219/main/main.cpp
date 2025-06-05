@@ -16,12 +16,15 @@ extern "C" void app_main(void)
     // ledPanel.scrollingMessage("Hello World from MacDap");
     ledPanel.message("12345678");
     // ledPanel.message("1234");
-    // ledPanel.message(".");
+    // ledPanel.message("-.-");
     // ledPanel.test();
 
     ESP_LOGI(TAG, "LED Panel Test Program");
+    uint8_t brightness = 0;
     while (true)
     {
+        // ledPanel.setBrightness(brightness);
         vTaskDelay(pdMS_TO_TICKS(1000));
+        brightness = (brightness + 10) % 100;
     }
 }

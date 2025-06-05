@@ -12,15 +12,12 @@ extern "C"
 
     namespace macdap
     {
-#ifdef CONFIG_LED_PANEL_TYPE_MBI5026
-    typedef struct {
-        int8_t data;
-    } panelBuffer_t;
-#elif CONFIG_LED_PANEL_TYPE_MAX7219
+
+#ifdef CONFIG_LED_PANEL_TYPE_MAX7219
     typedef struct {
         uint8_t command;
         uint8_t data;
-    } panelBuffer_t;
+    } Max7219Buffer_t;
 #endif
 
     class LedPanel
@@ -33,7 +30,11 @@ extern "C"
         uint16_t m_horizontalResolution;
         uint16_t m_verticalResolution;
         size_t m_panelBufferSize;
-        panelBuffer_t* m_panelBuffer;
+        uint8_t* m_panelBuffer;
+#ifdef CONFIG_LED_PANEL_TYPE_MAX7219
+        size_t m_max7219BufferLen;
+        Max7219Buffer_t* m_max7219Buffer;
+#endif
 #ifdef CONFIG_LED_PANEL_INTERFACE_SPI
         spi_device_handle_t m_spi;
 #endif
@@ -50,9 +51,9 @@ extern "C"
         }
         uint16_t getHorizontalResolution();
         uint16_t getVerticalResolution();
-        panelBuffer_t getBuffer(uint16_t index);
-        void setBuffer(uint16_t index, panelBuffer_t buffer);
-        void sendBuffer(panelBuffer_t* panelBuffer, size_t panelBufferSize);
+        uint8_t getBuffer(uint16_t index);
+        void setBuffer(uint16_t index, uint8_t data);
+        void sendBuffer(void *buffer, size_t bufferSize);
         void sendBuffer();
         void setBrightness(float brightness);
         lv_disp_t *getLvDisp();

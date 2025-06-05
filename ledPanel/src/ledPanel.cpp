@@ -2,6 +2,7 @@
 #include <logo.h>
 #include <font.h>
 #include <string.h>
+#include <cmath>
 #include <esp_log.h>
 #include <esp_check.h>
 #include <driver/ledc.h>
@@ -9,11 +10,6 @@
 #include "esp_heap_caps.h"
 
 using namespace macdap;
-
-#define TIMER_PERIOD_MS 5
-#define TASK_MAX_SLEEP_MS 500
-#define TASK_STACK_SIZE 6144
-#define TASK_PRIORITY 4
 
 #ifdef CONFIG_LED_PANEL_INTERFACE_GPIO
 #define LOW 0
@@ -26,6 +22,8 @@ static const char *TAG = "ledPanel (SPI)";
 
 #ifdef CONFIG_LED_PANEL_TYPE_MAX7219
 #define ALL_DIGITS       8
+#define ALL_BITS         8
+#define MAX_INTENSITY    15
 #define REG_DIGIT_0      (0x01)
 #define REG_DECODE_MODE  (0x09)
 #define REG_INTENSITY    (0x0A)
@@ -36,7 +34,7 @@ static const char *TAG = "ledPanel (SPI)";
 
 #define PIXEL_PER_BYTE 8
 
-static SemaphoreHandle_t panelBufferMutex;
+static SemaphoreHandle_t _panelBufferMutex;
 
 static void setPixel(LedPanel* ledPanel, int32_t x, int32_t y, lv_color_t * color)
 {
@@ -52,24 +50,17 @@ static void setPixel(LedPanel* ledPanel, int32_t x, int32_t y, lv_color_t * colo
     int16_t xReverse = horizontalResolution - 1 - x;
     int16_t yReverse = verticalResolution - 1 - y;
 
-#ifdef CONFIG_LED_PANEL_TYPE_MBI5026
     uint16_t bufferIndex = (yReverse / PIXEL_PER_BYTE) * horizontalResolution + xReverse;
     uint8_t segment = static_cast<uint8_t>(0x80 >> (yReverse % PIXEL_PER_BYTE));
-    panelBuffer_t buffer = ledPanel->getBuffer(bufferIndex);
-#elif CONFIG_LED_PANEL_TYPE_MAX7219
-    uint16_t bufferIndex = ((yReverse * CONFIG_LED_PANEL_MAX7219_MODULE_CHIP_NB * CONFIG_LED_PANEL_MODULE_WIDTH) + (xReverse / PIXEL_PER_BYTE));
-    panelBuffer_t buffer = ledPanel->getBuffer(bufferIndex);
-    buffer.command = REG_DIGIT_0 + yReverse % PIXEL_PER_BYTE;
-    uint8_t segment = static_cast<uint8_t>(0x80 >> (xReverse % PIXEL_PER_BYTE));
-#endif
+    uint8_t buffer = ledPanel->getBuffer(bufferIndex);
 
     if (color->full == 0)
     {
-        buffer.data = buffer.data | segment;
+        buffer = buffer | segment;
     }
     else
     {
-        buffer.data = buffer.data & ~segment;
+        buffer = buffer & ~segment;
     }
     ledPanel->setBuffer(bufferIndex, buffer);
 }
@@ -78,7 +69,7 @@ static void flushCB(lv_disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t
 {
     LedPanel* ledPanel = static_cast<LedPanel*>(disp_drv->user_data);
 
-    xSemaphoreTake(panelBufferMutex, portMAX_DELAY);
+    xSemaphoreTake(_panelBufferMutex, portMAX_DELAY);
 
     lv_color_t color_black = lv_color_black(); 
     lv_color_t color_white = lv_color_white();
@@ -88,31 +79,24 @@ static void flushCB(lv_disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t
     int32_t x, y;
     for(y = area->y1; y <= area->y2; y++) {
         for(x = area->x1; x <= area->x2; x++) {
-            // setPixel(ledPanel, x, y, color_p);
-            // setPixel(ledPanel, x, y, &color_black);
-            // setPixel(ledPanel, x, y, &color_white);
-            // if (((x == 0) && (y == 0)) || ((x == horizontalResolution-1) && (y == verticalResolution-1)))
-            if (((x == 0) && (y == 0)) /*|| ((x == horizontalResolution-1) && (y == verticalResolution-1))*/)
-                setPixel(ledPanel, x, y, &color_black);
-            else
-                setPixel(ledPanel, x, y, &color_white);
+            setPixel(ledPanel, x, y, color_p);
             color_p++;
         }
     }
-    
+
     ledPanel->sendBuffer();
 
     lv_disp_flush_ready(disp_drv);
 
-    xSemaphoreGive(panelBufferMutex);
+    xSemaphoreGive(_panelBufferMutex);
 }
 
 LedPanel::LedPanel()
 {
     ESP_LOGI(TAG, "Initializing");
 
-    panelBufferMutex = xSemaphoreCreateMutex();
-    if (panelBufferMutex == nullptr)
+    _panelBufferMutex = xSemaphoreCreateMutex();
+    if (_panelBufferMutex == nullptr)
     {
         ESP_LOGE(TAG, "Create panelBuffer mutex failure!");
         return;
@@ -156,7 +140,7 @@ LedPanel::LedPanel()
         .duty_cycle_pos = 0,
         .cs_ena_pretrans = 0,
         .cs_ena_posttrans = 0,
-        .clock_speed_hz = 2000000, // SPI_MASTER_FREQ_8M; //SPI_MASTER_FREQ_20M;
+        .clock_speed_hz = CONFIG_LED_PANEL_INTERFACE_SPI_CLOCK_SPEED,
         .input_delay_ns = 0,
         .spics_io_num = CONFIG_LED_PANEL_LATCH,
         .flags = SPI_DEVICE_NO_DUMMY,
@@ -170,9 +154,8 @@ LedPanel::LedPanel()
     m_horizontalResolution = CONFIG_LED_PANEL_MODULE_WIDTH * CONFIG_LED_PANEL_MATRIX_WIDTH;
     m_verticalResolution = CONFIG_LED_PANEL_MODULE_HEIGHT * CONFIG_LED_PANEL_MATRIX_HEIGHT;
 
-    m_panelBufferSize = (m_verticalResolution / PIXEL_PER_BYTE) * m_horizontalResolution;
-    m_panelBuffer = static_cast<panelBuffer_t*>(heap_caps_malloc(m_panelBufferSize * sizeof(panelBuffer_t), MALLOC_CAP_DMA));
-    memset(m_panelBuffer, 0, m_panelBufferSize * sizeof(panelBuffer_t));
+    m_panelBufferSize = (m_verticalResolution / PIXEL_PER_BYTE) * m_horizontalResolution * sizeof(uint8_t);
+    m_panelBuffer = static_cast<uint8_t*>(heap_caps_malloc(m_panelBufferSize, MALLOC_CAP_DMA));
     if (m_panelBuffer == nullptr)
     {
         ESP_LOGE(TAG, "Failed to allocate panelBuffer on the heap!");
@@ -227,63 +210,71 @@ LedPanel::LedPanel()
 
 #elif CONFIG_LED_PANEL_TYPE_MAX7219
 
-    xSemaphoreTake(panelBufferMutex, portMAX_DELAY);
+    xSemaphoreTake(_panelBufferMutex, portMAX_DELAY);
 
-    for (int chip = 0; chip < CONFIG_LED_PANEL_MODULE_WIDTH * CONFIG_LED_PANEL_MODULE_HEIGHT * CONFIG_LED_PANEL_MAX7219_MODULE_CHIP_NB; chip++)
+    m_max7219BufferLen = CONFIG_LED_PANEL_MODULE_WIDTH * CONFIG_LED_PANEL_MODULE_HEIGHT * CONFIG_LED_PANEL_MAX7219_MODULE_CHIP_NB;
+    m_max7219Buffer = static_cast<Max7219Buffer_t*>(heap_caps_malloc(m_max7219BufferLen * sizeof(Max7219Buffer_t), MALLOC_CAP_DMA));
+    if (m_max7219Buffer == nullptr)
     {
-        m_panelBuffer[chip].command = REG_SHUTDOWN;
-        m_panelBuffer[chip].data = 0;
+        ESP_LOGE(TAG, "Failed to allocate m_max7219Buffer on the heap!");
+        xSemaphoreGive(_panelBufferMutex);
+        return;
     }
-    sendBuffer(m_panelBuffer, CONFIG_LED_PANEL_MODULE_WIDTH * CONFIG_LED_PANEL_MODULE_HEIGHT * CONFIG_LED_PANEL_MAX7219_MODULE_CHIP_NB);
 
-    for (int chip = 0; chip < CONFIG_LED_PANEL_MODULE_WIDTH * CONFIG_LED_PANEL_MODULE_HEIGHT * CONFIG_LED_PANEL_MAX7219_MODULE_CHIP_NB; chip++)
+    for (int chip = 0; chip < m_max7219BufferLen; chip++)
     {
-        m_panelBuffer[chip].command = REG_DISPLAY_TEST;
-        m_panelBuffer[chip].data = 0;
+        m_max7219Buffer[chip].command = REG_SHUTDOWN;
+        m_max7219Buffer[chip].data = 0;
     }
-    sendBuffer(m_panelBuffer, CONFIG_LED_PANEL_MODULE_WIDTH * CONFIG_LED_PANEL_MODULE_HEIGHT * CONFIG_LED_PANEL_MAX7219_MODULE_CHIP_NB);
+    sendBuffer(m_max7219Buffer, m_max7219BufferLen * sizeof(Max7219Buffer_t));
 
-    for (int chip = 0; chip < CONFIG_LED_PANEL_MODULE_WIDTH * CONFIG_LED_PANEL_MODULE_HEIGHT * CONFIG_LED_PANEL_MAX7219_MODULE_CHIP_NB; chip++)
+    for (int chip = 0; chip < m_max7219BufferLen; chip++)
     {
-        m_panelBuffer[chip].command = REG_SCAN_LIMIT;
-        m_panelBuffer[chip].data = ALL_DIGITS - 1;
+        m_max7219Buffer[chip].command = REG_DISPLAY_TEST;
+        m_max7219Buffer[chip].data = 0;
     }
-    sendBuffer(m_panelBuffer, CONFIG_LED_PANEL_MODULE_WIDTH * CONFIG_LED_PANEL_MODULE_HEIGHT * CONFIG_LED_PANEL_MAX7219_MODULE_CHIP_NB);
+    sendBuffer(m_max7219Buffer, m_max7219BufferLen * sizeof(Max7219Buffer_t));
 
-    for (int chip = 0; chip < CONFIG_LED_PANEL_MODULE_WIDTH * CONFIG_LED_PANEL_MODULE_HEIGHT * CONFIG_LED_PANEL_MAX7219_MODULE_CHIP_NB; chip++)
+    for (int chip = 0; chip < m_max7219BufferLen; chip++)
     {
-        m_panelBuffer[chip].command = REG_DECODE_MODE;
-        m_panelBuffer[chip].data = 0;
+        m_max7219Buffer[chip].command = REG_SCAN_LIMIT;
+        m_max7219Buffer[chip].data = ALL_DIGITS - 1;
     }
-    sendBuffer(m_panelBuffer, CONFIG_LED_PANEL_MODULE_WIDTH * CONFIG_LED_PANEL_MODULE_HEIGHT * CONFIG_LED_PANEL_MAX7219_MODULE_CHIP_NB);
+    sendBuffer(m_max7219Buffer, m_max7219BufferLen * sizeof(Max7219Buffer_t));
+
+    for (int chip = 0; chip < m_max7219BufferLen; chip++)
+    {
+        m_max7219Buffer[chip].command = REG_DECODE_MODE;
+        m_max7219Buffer[chip].data = 0;
+    }
+    sendBuffer(m_max7219Buffer, m_max7219BufferLen * sizeof(Max7219Buffer_t));
 
     for (int digit = 0; digit < ALL_DIGITS; digit++)
     {
-        for (int chip = 0; chip < CONFIG_LED_PANEL_MODULE_WIDTH * CONFIG_LED_PANEL_MODULE_HEIGHT * CONFIG_LED_PANEL_MAX7219_MODULE_CHIP_NB; chip++)
+        for (int chip = 0; chip < m_max7219BufferLen; chip++)
         {
-            m_panelBuffer[chip].command = REG_DIGIT_0 + digit;
-            m_panelBuffer[chip].data = 0;
+            m_max7219Buffer[chip].command = REG_DIGIT_0 + digit;
+            m_max7219Buffer[chip].data = 0;
         }
-        sendBuffer(m_panelBuffer, CONFIG_LED_PANEL_MODULE_WIDTH * CONFIG_LED_PANEL_MODULE_HEIGHT * CONFIG_LED_PANEL_MAX7219_MODULE_CHIP_NB);
+        sendBuffer(m_max7219Buffer, m_max7219BufferLen * sizeof(Max7219Buffer_t));
     }
 
-    for (int chip = 0; chip < CONFIG_LED_PANEL_MODULE_WIDTH * CONFIG_LED_PANEL_MODULE_HEIGHT * CONFIG_LED_PANEL_MAX7219_MODULE_CHIP_NB; chip++)
+    for (int chip = 0; chip < m_max7219BufferLen; chip++)
     {
-        m_panelBuffer[chip].command = REG_INTENSITY;
-        m_panelBuffer[chip].data = 0;
+        m_max7219Buffer[chip].command = REG_INTENSITY;
+        m_max7219Buffer[chip].data = 0;
     }
-    sendBuffer(m_panelBuffer, CONFIG_LED_PANEL_MODULE_WIDTH * CONFIG_LED_PANEL_MODULE_HEIGHT * CONFIG_LED_PANEL_MAX7219_MODULE_CHIP_NB);
+    sendBuffer(m_max7219Buffer, m_max7219BufferLen * sizeof(Max7219Buffer_t));
 
-    vTaskDelay(pdMS_TO_TICKS(1000));
-
-    for (int chip = 0; chip < CONFIG_LED_PANEL_MODULE_WIDTH * CONFIG_LED_PANEL_MODULE_HEIGHT * CONFIG_LED_PANEL_MAX7219_MODULE_CHIP_NB; chip++)
+    for (int chip = 0; chip < m_max7219BufferLen; chip++)
     {
-        m_panelBuffer[chip].command = REG_SHUTDOWN;
-        m_panelBuffer[chip].data = 1;
+        m_max7219Buffer[chip].command = REG_SHUTDOWN;
+        m_max7219Buffer[chip].data = 1;
     }
-    sendBuffer(m_panelBuffer, CONFIG_LED_PANEL_MODULE_WIDTH * CONFIG_LED_PANEL_MODULE_HEIGHT * CONFIG_LED_PANEL_MAX7219_MODULE_CHIP_NB);
+    sendBuffer(m_max7219Buffer, m_max7219BufferLen * sizeof(Max7219Buffer_t));
 
-    xSemaphoreGive(panelBufferMutex);
+    heap_caps_free(m_max7219Buffer);
+    xSemaphoreGive(_panelBufferMutex);
 
 #endif
 }
@@ -293,7 +284,7 @@ LedPanel::~LedPanel()
 #ifdef CONFIG_LED_PANEL_INTERFACE_GPIO
 #endif
 #ifdef CONFIG_LED_PANEL_INTERFACE_SPI
-    vSemaphoreDelete(panelBufferMutex);
+    vSemaphoreDelete(_panelBufferMutex);
     spi_bus_remove_device(m_spi);
     spi_bus_free(SPI3_HOST);
 #endif
@@ -309,13 +300,13 @@ uint16_t LedPanel::getVerticalResolution()
     return m_verticalResolution;
 }
 
-panelBuffer_t LedPanel::getBuffer(uint16_t index)
+uint8_t LedPanel::getBuffer(uint16_t index)
 {
     assert(index < m_panelBufferSize);
     return m_panelBuffer[index];
 }
 
-void LedPanel::setBuffer(uint16_t index, panelBuffer_t buffer)
+void LedPanel::setBuffer(uint16_t index, uint8_t buffer)
 {
     assert(index < m_panelBufferSize);
     m_panelBuffer[index] = buffer;
@@ -330,7 +321,7 @@ static void clk()
 
 static void sendData(uint8_t data)
 {
-    for (int8_t pixel = 0; pixel < PIXEL_PER_BYTE * sizeof(panelBuffer_t); pixel++)
+    for (int8_t pixel = 0; pixel < PIXEL_PER_BYTE; pixel++)
     {
         gpio_set_level(static_cast<gpio_num_t>(CONFIG_LED_PANEL_DATA), data & 0x80);
         clk();
@@ -338,12 +329,12 @@ static void sendData(uint8_t data)
     }
 }
 
-void LedPanel::sendBuffer(panelBuffer_t* panelBuffer, size_t panelBufferSize)
+void LedPanel::sendBuffer(void *buffer, size_t bufferSize)
 {
-    uint8_t *currentData = panelBuffer;
+    void *currentData = buffer;
 
     gpio_set_level(static_cast<gpio_num_t>(CONFIG_LED_PANEL_LATCH), LOW);
-    for (int8_t bufferIndex = 0; bufferIndex < panelBufferSize; bufferIndex++)
+    for (int8_t bufferIndex = 0; bufferIndex < bufferSize; bufferIndex++)
     {
         sendData(*currentData);
         currentData++;
@@ -353,16 +344,18 @@ void LedPanel::sendBuffer(panelBuffer_t* panelBuffer, size_t panelBufferSize)
 #endif
 
 #ifdef CONFIG_LED_PANEL_INTERFACE_SPI
-void LedPanel::sendBuffer(panelBuffer_t* panelBuffer, size_t panelBufferSize)
+void LedPanel::sendBuffer(void *buffer, size_t bufferSize)
 {
+    // ESP_LOG_BUFFER_HEX(TAG, buffer, bufferSize);
+
     spi_transaction_t spiTransaction = {
         .flags = 0,
         .cmd = 0,
         .addr = 0,
-        .length = panelBufferSize * PIXEL_PER_BYTE * sizeof(panelBuffer_t),
+        .length = bufferSize * PIXEL_PER_BYTE,
         .rxlength = 0,
         .user = nullptr,
-        .tx_buffer = panelBuffer,
+        .tx_buffer = buffer,
         .rx_buffer = nullptr
     };
     ESP_ERROR_CHECK(spi_device_transmit(m_spi, &spiTransaction));
@@ -371,16 +364,43 @@ void LedPanel::sendBuffer(panelBuffer_t* panelBuffer, size_t panelBufferSize)
 
 void LedPanel::sendBuffer()
 {
-    ESP_LOG_BUFFER_HEX(TAG, m_panelBuffer, m_panelBufferSize * sizeof(panelBuffer_t));
-#ifdef CONFIG_LED_PANEL_TYPE_MBI5026
+    // ESP_LOG_BUFFER_HEX(TAG, m_panelBuffer, m_panelBufferSize);
+    // ESP_LOGI(TAG, "--- %d", CONFIG_LED_PANEL_INTERFACE_SPI_CLOCK_SPEED);
+
+    #ifdef CONFIG_LED_PANEL_TYPE_MBI5026
     sendBuffer(m_panelBuffer, m_panelBufferSize);
 #elif CONFIG_LED_PANEL_TYPE_MAX7219
-    uint16_t bufferIndex = 0;
-    for (uint16_t digit = 0; digit < ALL_DIGITS; digit++)
+
+    for (int regDigit = 0; regDigit < ALL_DIGITS; regDigit++)
     {
-        sendBuffer(&m_panelBuffer[bufferIndex], CONFIG_LED_PANEL_MODULE_WIDTH * CONFIG_LED_PANEL_MODULE_HEIGHT * CONFIG_LED_PANEL_MAX7219_MODULE_CHIP_NB);
-        bufferIndex += CONFIG_LED_PANEL_MODULE_WIDTH * CONFIG_LED_PANEL_MODULE_HEIGHT * CONFIG_LED_PANEL_MAX7219_MODULE_CHIP_NB;
-    };
+        if (m_max7219Buffer == nullptr)
+        {
+            ESP_LOGE(TAG, "Failed to allocate m_max7219Buffer on the heap!");
+            return;
+        }
+        lv_memset_00(m_max7219Buffer, m_max7219BufferLen * sizeof(Max7219Buffer_t));
+        uint8_t *panelBuffer = m_panelBuffer;
+        for (int chip = 0; chip < m_max7219BufferLen; chip++)
+        {
+            m_max7219Buffer[chip].command = REG_DIGIT_0 + regDigit;
+            uint8_t segment = 0x80;
+            for (uint8_t xBit = 0; xBit < ALL_BITS; xBit++)
+            {
+                if (*panelBuffer & (0x80 >> regDigit))
+                {
+                    m_max7219Buffer[chip].data |= segment;
+                }
+                else
+                {
+                    m_max7219Buffer[chip].data &= ~segment;
+                }
+                segment >>= 1;
+                panelBuffer++;
+            }
+        }
+        sendBuffer(m_max7219Buffer, m_max7219BufferLen * sizeof(Max7219Buffer_t));
+    }
+
 #endif
 }
 
@@ -530,11 +550,18 @@ void LedPanel::setBrightness(float brightness)
 
 #ifdef CONFIG_LED_PANEL_TYPE_MBI5026
     uint32_t dutyCycle = ((brightness / 100.0) * (1 << CONFIG_LED_PANEL_LEDC_DUTY_RES));
-    ESP_LOGD(TAG, "Setting brightness to %.2f%% (duty cycle: %ld)", brightness, dutyCycle);
     ESP_ERROR_CHECK(ledc_set_duty(static_cast<ledc_mode_t>(CONFIG_LED_PANEL_LEDC_MODE), static_cast<ledc_channel_t>(CONFIG_LED_PANEL_LEDC_CHANNEL), dutyCycle));
     ESP_ERROR_CHECK(ledc_update_duty(static_cast<ledc_mode_t>(CONFIG_LED_PANEL_LEDC_MODE), static_cast<ledc_channel_t>(CONFIG_LED_PANEL_LEDC_CHANNEL)));
 #elif CONFIG_LED_PANEL_TYPE_MAX7219
-    ESP_LOGD(TAG, "Setting brightness to %.2f%% Not yet implemented", brightness);
+    uint8_t dutyCycle = static_cast<uint8_t>(roundf((brightness / 100.0f) * MAX_INTENSITY));
+    for (int chip = 0; chip < m_max7219BufferLen; chip++)
+    {
+        m_max7219Buffer[chip].command = REG_INTENSITY;
+        m_max7219Buffer[chip].data = dutyCycle;
+    }
+    xSemaphoreTake(_panelBufferMutex, portMAX_DELAY);
+    sendBuffer(m_max7219Buffer, m_max7219BufferLen * sizeof(Max7219Buffer_t));
+    xSemaphoreGive(_panelBufferMutex);
 #endif
 }
 

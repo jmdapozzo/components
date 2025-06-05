@@ -39,6 +39,12 @@ menu "MacDap Led Panel"
 				SPI Interface
 	endchoice
 
+	config LED_PANEL_INTERFACE_SPI_CLOCK_SPEED
+		depends on LED_PANEL_INTERFACE_SPI
+		int
+		default 2000000  if LED_PANEL_TYPE_MBI5026
+		default 10000000 if LED_PANEL_TYPE_MAX7219
+
 	config LED_PANEL_EN
 		int "ENABLE GPIO number"
 		default 14

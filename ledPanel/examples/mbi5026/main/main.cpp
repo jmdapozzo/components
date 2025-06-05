@@ -12,14 +12,19 @@ extern "C" void app_main(void)
     lvgl_port_init(&lvglConfig);
 
     macdap::LedPanel &ledPanel = macdap::LedPanel::getInstance();
-    ledPanel.setBrightness(1.00);
+    ledPanel.setBrightness(1.0);
     // ledPanel.test();
-    ledPanel.message("1234");
-    // ledPanel.scrollingMessage("Hello World from MacDap");
+    // ledPanel.message("1234");
+    ledPanel.scrollingMessage("Hello World from MacDap");
 
     ESP_LOGI(TAG, "LED Panel Test Program");
+    float brightness = 0.0;
     while (true)
     {
-        vTaskDelay(pdMS_TO_TICKS(500));
+        // ledPanel.setBrightness(brightness);
+        vTaskDelay(pdMS_TO_TICKS(1000));
+        brightness += 10.0;
+        if (brightness > 100.0)
+            brightness = 0;
     }
 }
