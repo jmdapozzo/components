@@ -47,7 +47,7 @@ menu "MacDap Led Panel"
 
 	config LED_PANEL_EN
 		int "ENABLE GPIO number"
-		default 14
+		default 13
 		range 0 LED_PANEL_GPIO_RANGE_MAX
 
 	config LED_PANEL_DATA
