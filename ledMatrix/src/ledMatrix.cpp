@@ -1,4 +1,4 @@
-#include "ESP32-HUB75-MatrixPanel-I2S-DMA.h"
+#include "ledMatrix.h"
 
 #if defined(SPIRAM_DMA_BUFFER)
 // Sprite_TM saves the day again...
@@ -517,7 +517,7 @@ void MatrixPanel_I2S_DMA::clearFrameBuffer(bool _buff_id)
 		if (m_cfg.driver == HUB75_I2S_CFG::SM5266P)
 		{
 			// modifications here for row shift register type SM5266P
-			// https://github.com/mrfaptastic/ESP32-HUB75-MatrixPanel-I2S-DMA/issues/164
+			// https://github.com/mrfaptastic/ledMatrix/issues/164
 			row[x_pixel] = abcde & (0x18 << BITS_ADDR_OFFSET); // mask out the bottom 3 bits which are the clk di bk inputs
 		}
 		else if (m_cfg.driver == HUB75_I2S_CFG::DP3246_SM5368) 
@@ -547,7 +547,7 @@ void MatrixPanel_I2S_DMA::clearFrameBuffer(bool _buff_id)
       if (m_cfg.driver == HUB75_I2S_CFG::SM5266P)
       {
         // modifications here for row shift register type SM5266P
-        // https://github.com/mrfaptastic/ESP32-HUB75-MatrixPanel-I2S-DMA/issues/164
+        // https://github.com/mrfaptastic/ledMatrix/issues/164
         row[x_pixel] = abcde & (0x18 << BITS_ADDR_OFFSET); // mask out the bottom 3 bits which are the clk di bk inputs
       }
       else if (m_cfg.driver == HUB75_I2S_CFG::DP3246_SM5368) 
@@ -562,7 +562,7 @@ void MatrixPanel_I2S_DMA::clearFrameBuffer(bool _buff_id)
     } while (x_pixel);
 
     // modifications here for row shift register type SM5266P
-    // https://github.com/mrfaptastic/ESP32-HUB75-MatrixPanel-I2S-DMA/issues/164
+    // https://github.com/mrfaptastic/ledMatrix/issues/164
     if (m_cfg.driver == HUB75_I2S_CFG::SM5266P)
     {
       uint16_t serialCount;

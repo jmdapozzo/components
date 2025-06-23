@@ -359,7 +359,7 @@ struct HUB75_I2S_CFG
    *  EO   ¯¯¯¯¯¯\___
    *
    *  1 - data lines are clocked with positive edge (default now as of 10 June 2021)
-   *  https://github.com/mrfaptastic/ESP32-HUB75-MatrixPanel-I2S-DMA/issues/130
+   *  https://github.com/mrfaptastic/ledMatrix/issues/130
    *  Clk  \_/¯\_/¯\
    *  LAT  __/¯¯¯\__
    *  EO   ¯¯¯¯¯¯\__
@@ -934,7 +934,7 @@ private:
   int brightness = 128;        // If you get ghosting... reduce brightness level. ((60/64)*255) seems to be the limit before ghosting on a 64 pixel wide physical panel for some panels.
   int lsbMsbTransitionBit = 0; // For colour depth calculations
 
-  /* ESP32-HUB75-MatrixPanel-I2S-DMA functioning constants
+  /* ledMatrix functioning constants
    * we should not those once object instance initialized it's DMA structs
    * they weree const, but this lead to bugs, when the default constructor was called.
    * So now they could be changed, but shouldn't. Maybe put a cpp lock around it, so it can't be changed after initialisation

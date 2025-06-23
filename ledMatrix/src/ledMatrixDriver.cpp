@@ -11,7 +11,7 @@
     #define LOW 0
     #define HIGH 1
 #endif
-#include "ESP32-HUB75-MatrixPanel-I2S-DMA.h"
+#include "ledMatrix.h"
 
 #define CLK_PULSE          gpio_set_level((gpio_num_t) _cfg.gpio.clk, HIGH); gpio_set_level((gpio_num_t) _cfg.gpio.clk, LOW);
 
@@ -34,7 +34,7 @@ void MatrixPanel_I2S_DMA::shiftDriver(const HUB75_I2S_CFG& _cfg){
     case HUB75_I2S_CFG::MBI5124:
         /* MBI5124 chips must be clocked with positive-edge, since it's LAT signal
         * resets on clock's rising edge while high
-        * https://github.com/mrfaptastic/ESP32-HUB75-MatrixPanel-I2S-DMA/files/5952216/5a542453754da.pdf
+        * https://github.com/mrfaptastic/ledMatrix/files/5952216/5a542453754da.pdf
         */
         m_cfg.clkphase=true;
         break;

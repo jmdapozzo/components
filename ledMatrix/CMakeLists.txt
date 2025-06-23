@@ -1,5 +1,5 @@
 # HUB75 RGB LED matrix library utilizing ESP32 DMA Engine
-# https://github.com/mrfaptastic/ESP32-HUB75-MatrixPanel-I2S-DMA
+# https://github.com/mrfaptastic/ledMatrix
 # MIT License
 
 cmake_minimum_required(VERSION 3.5)
@@ -20,7 +20,7 @@ if(${target} STREQUAL "esp32s3")
   endif()
 endif()
 
-idf_component_register(SRCS "src/platforms/esp32/esp32_i2s_parallel_dma.cpp" "src/ESP32-HUB75-MatrixPanel-I2S-DMA.cpp" "src/ESP32-HUB75-MatrixPanel-leddrivers.cpp" ${extra_srcs}
+idf_component_register(SRCS "src/platforms/esp32/esp32_i2s_parallel_dma.cpp" "src/ledMatrix.cpp" "src/ledMatrixDriver.cpp" ${extra_srcs}
                        INCLUDE_DIRS "./src"
                        )
 
@@ -62,6 +62,6 @@ endif()
 # target_compile_options(${COMPONENT_TARGET} PUBLIC -DNO_GFX -DNO_FAST_FUNCTIONS)
 
 # All options can be found here:
-# https://github.com/mrfaptastic/ESP32-HUB75-MatrixPanel-I2S-DMA/blob/master/doc/BuildOptions.md
+# https://github.com/mrfaptastic/ledMatrix/blob/master/doc/BuildOptions.md
 
-project(ESP32-HUB75-MatrixPanel-I2S-DMA)
+project(ledMatrix)
