@@ -1,0 +1,3 @@
+dependencies:
+  jmdapozzo/ledMatrix:
+    override_path: "../../../"
