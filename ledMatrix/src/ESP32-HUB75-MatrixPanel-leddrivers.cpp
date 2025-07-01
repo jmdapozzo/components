@@ -11,7 +11,7 @@
     #define LOW 0
     #define HIGH 1
 #endif
-#include "ledMatrix.h"
+#include "ESP32-HUB75-MatrixPanel-I2S-DMA.h"
 
 #define CLK_PULSE          gpio_set_level((gpio_num_t) _cfg.gpio.clk, HIGH); gpio_set_level((gpio_num_t) _cfg.gpio.clk, LOW);
 

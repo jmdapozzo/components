@@ -1,9 +1,13 @@
 #pragma once
 
-// #include "esp_err.h"
-// #include "driver/spi_master.h"
-// #include <lvgl.h>
-// #include <esp_lvgl_port.h>
+#include <vector>
+#include <memory>
+#include <esp_err.h>
+#include <esp_log.h>
+#include "esp_attr.h"
+#include "esp_heap_caps.h"
+#include <lvgl.h>
+#include <esp_lvgl_port.h>
 
 // namespace macdap
 // {
@@ -49,17 +53,11 @@
 
 /***************************************************************************************/
 /* Core ESP32 hardware / idf includes!                                                 */
-#include <vector>
-#include <memory>
-#include <esp_err.h>
-#include <esp_log.h>
-#include "esp_attr.h"
-#include "esp_heap_caps.h"
 
 #define NO_GFX
 
 // #include <Arduino.h>
-#include "platforms/platform_detect.hpp"
+#include "../src/platforms/platform_detect.hpp"
 
 #ifdef USE_GFX_LITE
   // Slimmed version of Adafruit GFX + FastLED: https://github.com/mrcodetastic/GFX_Lite
@@ -90,17 +88,17 @@
  * All of this is memory permitting of course (dependant on your sketch etc.) ...
  *
  */
-#ifndef MATRIX_WIDTH
-#define MATRIX_WIDTH 64 // Single panel of 64 pixel width
-#endif
+// #ifndef MATRIX_WIDTH
+// #define MATRIX_WIDTH 64 // Single panel of 64 pixel width
+// #endif
 
-#ifndef MATRIX_HEIGHT
-#define MATRIX_HEIGHT 32 // CHANGE THIS VALUE to 64 IF USING 64px HIGH panel(s) with E PIN
-#endif
+// #ifndef MATRIX_HEIGHT
+// #define MATRIX_HEIGHT 32 // CHANGE THIS VALUE to 64 IF USING 64px HIGH panel(s) with E PIN
+// #endif
 
-#ifndef CHAIN_LENGTH
-#define CHAIN_LENGTH 1 // Number of modules chained together, i.e. 4 panels chained result in virtualmatrix 64x4=256 px long
-#endif
+// #ifndef CHAIN_LENGTH
+// #define CHAIN_LENGTH 1 // Number of modules chained together, i.e. 4 panels chained result in virtualmatrix 64x4=256 px long
+// #endif
 
 // Interesting Fact: We end up using a uint16_t to send data in parallel to the HUB75... but
 //                   given we only map to 14 physical output wires/bits, we waste 2 bits.
@@ -373,13 +371,24 @@ struct HUB75_I2S_CFG
 
   // struct constructor
   HUB75_I2S_CFG(
-      uint16_t _w = MATRIX_WIDTH,
-      uint16_t _h = MATRIX_HEIGHT,
-      uint16_t _chain = CHAIN_LENGTH,
+      uint16_t _w = CONFIG_LED_MATRIX_PIXEL_WIDTH,
+      uint16_t _h = CONFIG_LED_MATRIX_PIXEL_HEIGHT,
+      uint16_t _chain = CONFIG_LED_MATRIX_MODULE_WIDTH * CONFIG_LED_MATRIX_MODULE_HEIGHT,
       i2s_pins _pinmap = {
-          R1_PIN_DEFAULT, G1_PIN_DEFAULT, B1_PIN_DEFAULT, R2_PIN_DEFAULT, G2_PIN_DEFAULT, B2_PIN_DEFAULT,
-          A_PIN_DEFAULT, B_PIN_DEFAULT, C_PIN_DEFAULT, D_PIN_DEFAULT, E_PIN_DEFAULT,
-          LAT_PIN_DEFAULT, OE_PIN_DEFAULT, CLK_PIN_DEFAULT},
+          CONFIG_LED_MATRIX_HUB75_R1,
+          CONFIG_LED_MATRIX_HUB75_G1,
+          CONFIG_LED_MATRIX_HUB75_B1,
+          CONFIG_LED_MATRIX_HUB75_R2,
+          CONFIG_LED_MATRIX_HUB75_G2,
+          CONFIG_LED_MATRIX_HUB75_B2,
+          CONFIG_LED_MATRIX_HUB75_ADDRA,
+          CONFIG_LED_MATRIX_HUB75_ADDRB,
+          CONFIG_LED_MATRIX_HUB75_ADDRC,
+          CONFIG_LED_MATRIX_HUB75_ADDRD,
+          CONFIG_LED_MATRIX_HUB75_ADDRE,
+          CONFIG_LED_MATRIX_HUB75_LAT,
+          CONFIG_LED_MATRIX_HUB75_OE1,
+          CONFIG_LED_MATRIX_HUB75_CLK},
       shift_driver _drv = SHIFTREG, 
       bool _dbuff = false, 
       clk_speed _i2sspeed = HZ_8M,
@@ -552,7 +561,7 @@ public:
   /*
    *  overload for compatibility
    */
-  bool begin(int r1, int g1 = G1_PIN_DEFAULT, int b1 = B1_PIN_DEFAULT, int r2 = R2_PIN_DEFAULT, int g2 = G2_PIN_DEFAULT, int b2 = B2_PIN_DEFAULT, int a = A_PIN_DEFAULT, int b = B_PIN_DEFAULT, int c = C_PIN_DEFAULT, int d = D_PIN_DEFAULT, int e = E_PIN_DEFAULT, int lat = LAT_PIN_DEFAULT, int oe = OE_PIN_DEFAULT, int clk = CLK_PIN_DEFAULT);
+  bool begin(int r1, int g1, int b1, int r2, int g2, int b2, int a, int b, int c, int d, int e, int lat, int oe, int clk);
   bool begin(const HUB75_I2S_CFG &cfg);
 
   // Adafruit's BASIC DRAW API (565 colour format)

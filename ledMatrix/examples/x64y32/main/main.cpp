@@ -1,41 +1,231 @@
-#include "ledMatrix.h"
+#include "ledMatrix.hpp"
+#include <esp_log.h>
+#include <logo.h>
 
 static const char *TAG = "x64y32";
-MatrixPanel_I2S_DMA *dma_display = nullptr;
+static lv_obj_t *scr;
+lv_coord_t _width;
+lv_coord_t _height;
+
+void clear()
+{
+    if (lvgl_port_lock(0))
+    {
+        lv_obj_clean(scr);
+        lvgl_port_unlock();
+    }
+}
+
+void background(lv_palette_t color)
+{
+    if (lvgl_port_lock(0))
+    {
+        lv_obj_set_style_bg_color(scr,lv_palette_main(color),LV_PART_MAIN);
+        lvgl_port_unlock();
+    }
+}
+
+void greeting(const char *projectName, const char *version)
+{
+    static lv_obj_t *logo;
+    static lv_obj_t *labelProjectName;
+
+    if (lvgl_port_lock(0)) 
+    {
+        lv_obj_set_style_text_font(scr, &lv_font_montserrat_14, 0);
+    
+        logo = lv_img_create(scr);
+        lv_img_set_src(logo, &logo32x32);
+        lv_obj_align(logo, LV_ALIGN_LEFT_MID, 0, 0);
+    
+        lvgl_port_unlock();
+    
+        vTaskDelay(pdMS_TO_TICKS(3000));
+
+        lv_obj_clean(scr);
+
+        labelProjectName = lv_label_create(scr);
+        lv_label_set_text(labelProjectName, projectName);
+        lv_obj_align(labelProjectName, LV_ALIGN_TOP_LEFT, 0, 0);
+
+        lv_obj_t * labelVersion = lv_label_create(scr);
+        lv_label_set_text(labelVersion, version);
+        lv_obj_align(labelVersion, LV_ALIGN_BOTTOM_LEFT, 0, 0);
+
+        lvgl_port_unlock();
+    }
+}
+
+void message(const char *message)
+{
+    static lv_obj_t *label = nullptr;
+
+    if (lvgl_port_lock(0))
+    {
+        // lv_obj_set_style_bg_color(scr,lv_palette_main(LV_PALETTE_NONE),LV_PART_MAIN);
+
+        static lv_style_t style;
+        lv_style_init(&style);
+        lv_style_set_text_font(&style, &lv_font_montserrat_20);
+        lv_style_set_text_color(&style, lv_palette_main(LV_PALETTE_GREEN));
+        lv_style_set_align(&style, LV_ALIGN_CENTER);
+
+        label = lv_label_create(scr);
+        lv_obj_add_style(label, &style, 0);
+
+        lv_label_set_text(label, message);
+        lvgl_port_unlock();
+    }
+}
+
+void scrollingMessage(const char *message)
+{
+    static lv_obj_t *label = nullptr;
+
+    if (lvgl_port_lock(0))
+    {
+      static lv_style_t style;
+      lv_style_init(&style);
+      lv_style_set_text_font(&style, &lv_font_montserrat_18);
+      // lv_style_set_text_color(&style, lv_palette_main(LV_PALETTE_NONE));
+      lv_style_set_text_color(&style, lv_palette_main(LV_PALETTE_GREEN));
+      lv_style_set_anim_speed(&style, 10);
+      lv_style_set_align(&style, LV_ALIGN_BOTTOM_MID);
+      
+      label = lv_label_create(scr);
+      lv_obj_add_style(label, &style, 0);
+      lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL_CIRCULAR);
+      lv_obj_set_width(label, _width);
+      lv_label_set_text(label, message);
+
+      lvgl_port_unlock();
+    }
+}
+
+void scrollingMessage2(const char *message)
+{
+    static lv_obj_t *label = nullptr;
+
+    if (lvgl_port_lock(0))
+    {
+      static lv_style_t style;
+      lv_style_init(&style);
+      lv_style_set_text_font(&style, &lv_font_montserrat_14);
+      // lv_style_set_text_color(&style, lv_palette_main(LV_PALETTE_NONE));
+      lv_style_set_text_color(&style, lv_palette_main(LV_PALETTE_RED));
+      lv_style_set_anim_speed(&style, 20);
+      lv_style_set_align(&style, LV_ALIGN_TOP_RIGHT);
+      
+      label = lv_label_create(scr);
+      lv_obj_add_style(label, &style, 0);
+      lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL_CIRCULAR);
+      lv_obj_set_width(label, _width);
+      lv_label_set_text(label, message);
+
+      lvgl_port_unlock();
+    }
+}
+
+void qrcode(void)
+{
+    lv_color_t bg_color = lv_palette_lighten(LV_PALETTE_NONE, 5);
+    lv_color_t fg_color = lv_palette_darken(LV_PALETTE_BLUE, 4);
+
+    lv_obj_t * qr = lv_qrcode_create(scr, 32, fg_color, bg_color);
+
+    /*Set data*/
+    const char * data = "https://lvgl.io";
+    lv_qrcode_update(qr, data, strlen(data));
+    lv_obj_center(qr);
+    lv_obj_align(qr, LV_ALIGN_LEFT_MID, 0, 0);
+
+    /*Add a border with bg_color*/
+    lv_obj_set_style_border_color(qr, bg_color, 0);
+    lv_obj_set_style_border_width(qr, 5, 0);
+}
+
+lv_obj_t *led(void)
+{
+    lv_obj_t *led  = lv_led_create(scr);
+    lv_obj_set_size(led, 8, 8);
+    lv_obj_align(led, LV_ALIGN_TOP_RIGHT, -8, 4);
+    lv_led_set_color(led, lv_palette_main(LV_PALETTE_RED));
+    lv_led_off(led);
+    return led;
+}
 
 extern "C" void app_main(void)
 {
-    ESP_LOGI(TAG, "LED Matrix Test Program");
+  ESP_LOGI(TAG, "LED Matrix Test Program");
 
-  HUB75_I2S_CFG mxconfig(/* width = */ 64, /* height = */ 32, /* chain = */ 2);
+  const lvgl_port_cfg_t lvglConfig = ESP_LVGL_PORT_INIT_CONFIG();
+  lvgl_port_init(&lvglConfig);
 
-  dma_display = new MatrixPanel_I2S_DMA(mxconfig);
-  dma_display->begin();
-  dma_display->setBrightness8(255);
-  dma_display->clearScreen();
+  macdap::LedMatrix &ledMatrix = macdap::LedMatrix::getInstance();
+  lv_disp_t *display = ledMatrix.getLvDisp();
+  scr = lv_disp_get_scr_act(display);
+  _width = lv_disp_get_hor_res(display);
+  _height = lv_disp_get_ver_res(display);
+  ESP_LOGI(TAG, "Display resolution: %d x %d", _width, _height);
+
+  float brightness = 1.0;
+  ledMatrix.setBrightness(brightness);
+  clear();
+
+  greeting("x64y32", "Version 0.0.0");
+  vTaskDelay(pdMS_TO_TICKS(3000));
+  clear();
+
+  message("MacDap Inc.");
+  vTaskDelay(pdMS_TO_TICKS(3000));
+  clear();
+
+  qrcode();
+  vTaskDelay(pdMS_TO_TICKS(3000));
+  clear();
+
+  lv_obj_t *heartbeat = led();
+  scrollingMessage("Test program x64y32, Version 0.0.0 from MacDap Inc.");
+  scrollingMessage2("MacDap Inc. the best");
+
+  // float step = -10.0f;
+  // static int palette_idx = 0;
+  // lv_palette_t palettes[] = {
+  //   LV_PALETTE_RED, LV_PALETTE_PINK, LV_PALETTE_PURPLE, LV_PALETTE_DEEP_PURPLE,
+  //   LV_PALETTE_INDIGO, LV_PALETTE_BLUE, LV_PALETTE_LIGHT_BLUE, LV_PALETTE_CYAN,
+  //   LV_PALETTE_TEAL, LV_PALETTE_GREEN, LV_PALETTE_LIGHT_GREEN, LV_PALETTE_LIME,
+  //   LV_PALETTE_YELLOW, LV_PALETTE_AMBER, LV_PALETTE_ORANGE, LV_PALETTE_DEEP_ORANGE,
+  //   LV_PALETTE_BROWN, LV_PALETTE_GREY, LV_PALETTE_BLUE_GREY
+  // };
+  bool phase = false;
 
   while (true)
   {
-    dma_display->fillScreenRGB888(255, 0, 0);
     vTaskDelay(pdMS_TO_TICKS(1000));
-    dma_display->fillScreenRGB888(128, 0, 0);
-    vTaskDelay(pdMS_TO_TICKS(1000));
-    dma_display->fillScreenRGB888(64, 0, 0);
-    vTaskDelay(pdMS_TO_TICKS(1000));
-    dma_display->fillScreenRGB888(0, 255, 0);
-    vTaskDelay(pdMS_TO_TICKS(1000));
-    dma_display->fillScreenRGB888(0, 128, 0);
-    vTaskDelay(pdMS_TO_TICKS(1000));
-    dma_display->fillScreenRGB888(0, 64, 0);
-    vTaskDelay(pdMS_TO_TICKS(1000));
-    dma_display->fillScreenRGB888(0, 0, 255);
-    vTaskDelay(pdMS_TO_TICKS(1000));
-    dma_display->fillScreenRGB888(0, 0, 128);
-    vTaskDelay(pdMS_TO_TICKS(1000));
-    dma_display->fillScreenRGB888(0, 0, 64);
-    vTaskDelay(pdMS_TO_TICKS(1000));
-    dma_display->fillRect(32, 5, 64, 10, 0, 255, 0);
-    dma_display->fillRect(32, 17, 64, 10, 255, 0, 0);
-    vTaskDelay(pdMS_TO_TICKS(1000));
+    if (phase)
+    {
+      phase = false;
+      lv_led_on(heartbeat);
+    }
+    else
+    {
+      phase = true;
+      lv_led_off(heartbeat);
+    }
+    // ESP_LOGI(TAG, "Heartbeat LED toggled");
+
+    // int num_palettes = sizeof(palettes) / sizeof(palettes[0]);
+    // background(palettes[palette_idx]);
+    // palette_idx = (palette_idx + 1) % num_palettes;
+
+    // ledMatrix.setBrightness(brightness);
+    // brightness += step;
+    // if (brightness <= 10.0f) {
+    //   brightness = 10.0f;
+    //   step = 10.0f;
+    // } else if (brightness >= 100.0f) {
+    //   brightness = 100.0f;
+    //   step = -10.0f;
+    // }
   }
 }

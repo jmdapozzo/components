@@ -20,8 +20,9 @@ if(${target} STREQUAL "esp32s3")
   endif()
 endif()
 
-idf_component_register(SRCS "src/platforms/esp32/esp32_i2s_parallel_dma.cpp" "src/ledMatrix.cpp" "src/ledMatrixDriver.cpp" ${extra_srcs}
-                       INCLUDE_DIRS "./src"
+idf_component_register(
+  SRCS "src/ledMatrix.cpp" "src/platforms/esp32/esp32_i2s_parallel_dma.cpp" "src/ESP32-HUB75-MatrixPanel-I2S-DMA.cpp" "src/ESP32-HUB75-MatrixPanel-leddrivers.cpp" ${extra_srcs}
+  INCLUDE_DIRS "./include"
                        )
 
 # Dependencies cannot be added to the REQUIRES argument of `idf_component_register` because (according to the build process
