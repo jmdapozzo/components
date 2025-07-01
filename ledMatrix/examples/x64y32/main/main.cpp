@@ -35,7 +35,7 @@ void greeting(const char *projectName, const char *version)
         lv_obj_set_style_text_font(scr, &lv_font_montserrat_14, 0);
     
         logo = lv_img_create(scr);
-        lv_img_set_src(logo, &logo32x32);
+        lv_img_set_src(logo, &colorLogo32x32);
         lv_obj_align(logo, LV_ALIGN_LEFT_MID, 0, 0);
     
         lvgl_port_unlock();
