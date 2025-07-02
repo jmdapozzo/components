@@ -1,3 +1,5 @@
 dependencies:
   jmdapozzo/ledMatrix:
     override_path: "../../../"
+  jmdapozzo/graphics:
+    override_path: "../../../../graphics"

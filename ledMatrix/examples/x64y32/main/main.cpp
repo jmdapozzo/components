@@ -25,6 +25,20 @@ void background(lv_palette_t color)
     }
 }
 
+void logo(void)
+{
+    static lv_obj_t *logo;
+
+    if (lvgl_port_lock(0)) 
+    {
+        logo = lv_img_create(scr);
+        lv_img_set_src(logo, &colorLogo32x32);
+        lv_obj_align(logo, LV_ALIGN_LEFT_MID, 0, 0);
+
+        lvgl_port_unlock();
+    }
+}
+
 void greeting(const char *projectName, const char *version)
 {
     static lv_obj_t *logo;
@@ -32,25 +46,21 @@ void greeting(const char *projectName, const char *version)
 
     if (lvgl_port_lock(0)) 
     {
-        lv_obj_set_style_text_font(scr, &lv_font_montserrat_14, 0);
-    
-        logo = lv_img_create(scr);
-        lv_img_set_src(logo, &colorLogo32x32);
-        lv_obj_align(logo, LV_ALIGN_LEFT_MID, 0, 0);
-    
-        lvgl_port_unlock();
-    
-        vTaskDelay(pdMS_TO_TICKS(3000));
-
-        lv_obj_clean(scr);
+        static lv_style_t style;
+        lv_style_init(&style);
+        lv_style_set_text_font(&style, &lv_font_montserrat_14);
+        lv_style_set_text_color(&style, lv_palette_main(LV_PALETTE_AMBER));
+        lv_style_set_align(&style, LV_ALIGN_CENTER);
 
         labelProjectName = lv_label_create(scr);
+        lv_obj_add_style(labelProjectName, &style, 0);
         lv_label_set_text(labelProjectName, projectName);
-        lv_obj_align(labelProjectName, LV_ALIGN_TOP_LEFT, 0, 0);
+        lv_obj_align(labelProjectName, LV_ALIGN_TOP_LEFT, 1, 0);
 
         lv_obj_t * labelVersion = lv_label_create(scr);
+        lv_obj_add_style(labelVersion, &style, 0);
         lv_label_set_text(labelVersion, version);
-        lv_obj_align(labelVersion, LV_ALIGN_BOTTOM_LEFT, 0, 0);
+        lv_obj_align(labelVersion, LV_ALIGN_BOTTOM_LEFT, -1, 0);
 
         lvgl_port_unlock();
     }
@@ -129,19 +139,14 @@ void scrollingMessage2(const char *message)
 void qrcode(void)
 {
     lv_color_t bg_color = lv_palette_lighten(LV_PALETTE_NONE, 5);
-    lv_color_t fg_color = lv_palette_darken(LV_PALETTE_BLUE, 4);
+    lv_color_t fg_color = lv_palette_darken(LV_PALETTE_AMBER, 4);
 
     lv_obj_t * qr = lv_qrcode_create(scr, 32, fg_color, bg_color);
 
-    /*Set data*/
-    const char * data = "https://lvgl.io";
+    const char * data = "https://macdap.net";
     lv_qrcode_update(qr, data, strlen(data));
     lv_obj_center(qr);
     lv_obj_align(qr, LV_ALIGN_LEFT_MID, 0, 0);
-
-    /*Add a border with bg_color*/
-    lv_obj_set_style_border_color(qr, bg_color, 0);
-    lv_obj_set_style_border_width(qr, 5, 0);
 }
 
 lv_obj_t *led(void)
@@ -166,10 +171,14 @@ extern "C" void app_main(void)
   scr = lv_disp_get_scr_act(display);
   _width = lv_disp_get_hor_res(display);
   _height = lv_disp_get_ver_res(display);
+  background(LV_PALETTE_NONE);
   ESP_LOGI(TAG, "Display resolution: %d x %d", _width, _height);
 
-  float brightness = 1.0;
+  float brightness = 100.0;
   ledMatrix.setBrightness(brightness);
+
+  logo();
+  vTaskDelay(pdMS_TO_TICKS(3000));
   clear();
 
   greeting("x64y32", "Version 0.0.0");
@@ -180,10 +189,15 @@ extern "C" void app_main(void)
   vTaskDelay(pdMS_TO_TICKS(3000));
   clear();
 
+  brightness = 10.0;
+  ledMatrix.setBrightness(brightness);
+
   qrcode();
   vTaskDelay(pdMS_TO_TICKS(3000));
   clear();
 
+  brightness = 1.0;
+  ledMatrix.setBrightness(brightness);
   lv_obj_t *heartbeat = led();
   scrollingMessage("Test program x64y32, Version 0.0.0 from MacDap Inc.");
   scrollingMessage2("MacDap Inc. the best");
