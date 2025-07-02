@@ -118,11 +118,11 @@ menu "MacDap Led Matrix"
 	config LED_MATRIX_MODULE_WIDTH
 		int "Panel Module Width"
 		default 1
-		range 0 10
+		range 1 16
 
 	config LED_MATRIX_MODULE_HEIGHT
 		int "Panel Module Height"
 		default 1
-		range 0 10
+		range 1 16
 
 endmenu
