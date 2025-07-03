@@ -57,13 +57,6 @@ extern "C"
         void sendBuffer();
         void setBrightness(float brightness);
         lv_disp_t *getLvDisp();
-        void seize();
-        void release();
-        void clear();
-        void greeting(const char *projectName, const char *version);
-        void message(const char *message);
-        void scrollingMessage(const char *message);
-        void test();
     };
 }
 #ifdef __cplusplus

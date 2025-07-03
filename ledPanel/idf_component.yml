@@ -5,8 +5,3 @@ url: https://github.com/jmdapozzo/components/tree/main/ledPanel
 dependencies:
   lvgl/lvgl: "^8"
   esp_lvgl_port: "^2"
-  jmdapozzo/graphics:
-      version: main
-      git: https://github.com/jmdapozzo/components.git
-      path: graphics
-     
