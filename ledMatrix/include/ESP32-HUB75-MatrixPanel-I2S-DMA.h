@@ -9,54 +9,9 @@
 #include <lvgl.h>
 #include <esp_lvgl_port.h>
 
-// namespace macdap
-// {
-//     class LedMatrix
-//     {
-
-//     private:
-//         lv_disp_draw_buf_t m_displayDrawBuffer;
-//         lv_disp_drv_t m_displayDriver;
-//         lv_disp_t *m_lvDisp;
-//         uint16_t m_horizontalResolution;
-//         uint16_t m_verticalResolution;
-//         size_t m_panelBufferSize;
-//         uint8_t* m_panelBuffer;
-//         LedMatrix();
-//         ~LedMatrix();
-
-//     public:
-//         LedMatrix(LedMatrix const&) = delete;
-//         void operator=(LedMatrix const &) = delete;
-//         static LedMatrix &getInstance()
-//         {
-//             static LedMatrix instance;
-//             return instance;
-//         }
-//         uint16_t getHorizontalResolution();
-//         uint16_t getVerticalResolution();
-//         uint8_t getBuffer(uint16_t index);
-//         void setBuffer(uint16_t index, uint8_t data);
-//         void sendBuffer(void *buffer, size_t bufferSize);
-//         void sendBuffer();
-//         void setBrightness(float brightness);
-//         lv_disp_t *getLvDisp();
-//         void seize();
-//         void release();
-//         void clear();
-//         void greeting(const char *projectName, const char *version);
-//         void message(const char *message);
-//         void scrollingMessage(const char *message);
-//         void test();
-//     };
-// }
-
 /***************************************************************************************/
 /* Core ESP32 hardware / idf includes!                                                 */
 
-#define NO_GFX
-
-// #include <Arduino.h>
 #include "../src/platforms/platform_detect.hpp"
 
 #ifdef USE_GFX_LITE
@@ -391,7 +346,7 @@ struct HUB75_I2S_CFG
           CONFIG_LED_MATRIX_HUB75_CLK},
       shift_driver _drv = SHIFTREG, 
       bool _dbuff = false, 
-      clk_speed _i2sspeed = HZ_8M,
+      clk_speed _i2sspeed = HZ_20M,
       uint8_t _latblk = DEFAULT_LAT_BLANKING, // Anything > 1 seems to cause artefacts on ICS panels
       bool _clockphase = true, 
       uint16_t _min_refresh_rate = 60, 

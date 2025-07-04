@@ -7,11 +7,13 @@ static const char *TAG = "ledMatrix";
 
 static void flushCB(lv_disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t *color_p)
 {
+
     MatrixPanel_I2S_DMA *display = static_cast<MatrixPanel_I2S_DMA*>(disp_drv->user_data);
-    int32_t x, y;
-    for(y = area->y1; y <= area->y2; y++) {
-        for(x = area->x1; x <= area->x2; x++) {
-            display->drawPixel(x, y, static_cast<uint16_t>(color_p->full));
+    for(int32_t y = area->y1; y <= area->y2; y++) {
+        int32_t virtualY = y % CONFIG_LED_MATRIX_PIXEL_HEIGHT;
+        for(int32_t x = area->x1; x <= area->x2; x++) {
+            int32_t virtualX = (x % disp_drv->hor_res) + ((y / CONFIG_LED_MATRIX_PIXEL_HEIGHT) * disp_drv->hor_res);
+            display->drawPixel(virtualX, virtualY, static_cast<uint16_t>(color_p->full));
             color_p++;
         }
     }
@@ -23,7 +25,7 @@ LedMatrix::LedMatrix()
 {
     ESP_LOGI(TAG, "Initializing");
 
-    HUB75_I2S_CFG mxconfig;
+    HUB75_I2S_CFG mxconfig;     //TODO check clk_speed _i2sspeed = HZ_8M, what about HZ_10M, HZ_15M, HZ_16M, HZ_20M?
 
     MatrixPanel_I2S_DMA *display = new MatrixPanel_I2S_DMA(mxconfig);
     display->begin();

@@ -3,7 +3,7 @@
 #include <logo.h>
 
 static const char *TAG = "x64y32";
-static lv_obj_t *scr;
+static lv_obj_t *_scr;
 lv_coord_t _width;
 lv_coord_t _height;
 
@@ -11,7 +11,7 @@ void clear()
 {
     if (lvgl_port_lock(0))
     {
-        lv_obj_clean(scr);
+        lv_obj_clean(_scr);
         lvgl_port_unlock();
     }
 }
@@ -20,7 +20,7 @@ void background(lv_palette_t color)
 {
     if (lvgl_port_lock(0))
     {
-        lv_obj_set_style_bg_color(scr,lv_palette_main(color),LV_PART_MAIN);
+        lv_obj_set_style_bg_color(_scr,lv_palette_main(color),LV_PART_MAIN);
         lvgl_port_unlock();
     }
 }
@@ -31,7 +31,7 @@ void logo(void)
 
     if (lvgl_port_lock(0)) 
     {
-        logo = lv_img_create(scr);
+        logo = lv_img_create(_scr);
         lv_img_set_src(logo, &colorLogo32x32);
         lv_obj_align(logo, LV_ALIGN_LEFT_MID, 0, 0);
 
@@ -52,12 +52,12 @@ void greeting(const char *projectName, const char *version)
         lv_style_set_text_color(&style, lv_palette_main(LV_PALETTE_AMBER));
         lv_style_set_align(&style, LV_ALIGN_CENTER);
 
-        labelProjectName = lv_label_create(scr);
+        labelProjectName = lv_label_create(_scr);
         lv_obj_add_style(labelProjectName, &style, 0);
         lv_label_set_text(labelProjectName, projectName);
         lv_obj_align(labelProjectName, LV_ALIGN_TOP_LEFT, 1, 0);
 
-        lv_obj_t * labelVersion = lv_label_create(scr);
+        lv_obj_t * labelVersion = lv_label_create(_scr);
         lv_obj_add_style(labelVersion, &style, 0);
         lv_label_set_text(labelVersion, version);
         lv_obj_align(labelVersion, LV_ALIGN_BOTTOM_LEFT, -1, 0);
@@ -72,7 +72,7 @@ void message(const char *message)
 
     if (lvgl_port_lock(0))
     {
-        // lv_obj_set_style_bg_color(scr,lv_palette_main(LV_PALETTE_NONE),LV_PART_MAIN);
+        // lv_obj_set_style_bg_color(_scr,lv_palette_main(LV_PALETTE_NONE),LV_PART_MAIN);
 
         static lv_style_t style;
         lv_style_init(&style);
@@ -80,7 +80,7 @@ void message(const char *message)
         lv_style_set_text_color(&style, lv_palette_main(LV_PALETTE_GREEN));
         lv_style_set_align(&style, LV_ALIGN_CENTER);
 
-        label = lv_label_create(scr);
+        label = lv_label_create(_scr);
         lv_obj_add_style(label, &style, 0);
 
         lv_label_set_text(label, message);
@@ -88,27 +88,27 @@ void message(const char *message)
     }
 }
 
-void scrollingMessage(const char *message)
+void scrollingMessage1(const char *message)
 {
     static lv_obj_t *label = nullptr;
 
     if (lvgl_port_lock(0))
     {
-      static lv_style_t style;
-      lv_style_init(&style);
-      lv_style_set_text_font(&style, &lv_font_montserrat_18);
-      // lv_style_set_text_color(&style, lv_palette_main(LV_PALETTE_NONE));
-      lv_style_set_text_color(&style, lv_palette_main(LV_PALETTE_GREEN));
-      lv_style_set_anim_speed(&style, 10);
-      lv_style_set_align(&style, LV_ALIGN_BOTTOM_MID);
-      
-      label = lv_label_create(scr);
-      lv_obj_add_style(label, &style, 0);
-      lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL_CIRCULAR);
-      lv_obj_set_width(label, _width);
-      lv_label_set_text(label, message);
+        static lv_style_t style;
+        lv_style_init(&style);
+        lv_style_set_text_font(&style, &lv_font_montserrat_18);
+        // lv_style_set_text_color(&style, lv_palette_main(LV_PALETTE_NONE));
+        lv_style_set_text_color(&style, lv_palette_main(LV_PALETTE_GREEN));
+        lv_style_set_anim_speed(&style, 10);
+        lv_style_set_align(&style, LV_ALIGN_BOTTOM_MID);
 
-      lvgl_port_unlock();
+        label = lv_label_create(_scr);
+        lv_obj_add_style(label, &style, 0);
+        lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL_CIRCULAR);
+        lv_obj_set_width(label, _width);
+        lv_label_set_text(label, message);
+
+        lvgl_port_unlock();
     }
 }
 
@@ -118,44 +118,86 @@ void scrollingMessage2(const char *message)
 
     if (lvgl_port_lock(0))
     {
-      static lv_style_t style;
-      lv_style_init(&style);
-      lv_style_set_text_font(&style, &lv_font_montserrat_14);
-      // lv_style_set_text_color(&style, lv_palette_main(LV_PALETTE_NONE));
-      lv_style_set_text_color(&style, lv_palette_main(LV_PALETTE_RED));
-      lv_style_set_anim_speed(&style, 20);
-      lv_style_set_align(&style, LV_ALIGN_TOP_RIGHT);
-      
-      label = lv_label_create(scr);
-      lv_obj_add_style(label, &style, 0);
-      lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL_CIRCULAR);
-      lv_obj_set_width(label, _width);
-      lv_label_set_text(label, message);
+        static lv_style_t style;
+        lv_style_init(&style);
+        lv_style_set_text_font(&style, &lv_font_montserrat_14);
+        // lv_style_set_text_color(&style, lv_palette_main(LV_PALETTE_NONE));
+        lv_style_set_text_color(&style, lv_palette_main(LV_PALETTE_RED));
+        lv_style_set_anim_speed(&style, 20);
+        lv_style_set_align(&style, LV_ALIGN_TOP_RIGHT);
 
-      lvgl_port_unlock();
+        label = lv_label_create(_scr);
+        lv_obj_add_style(label, &style, 0);
+        lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL_CIRCULAR);
+        lv_obj_set_width(label, _width);
+        lv_label_set_text(label, message);
+
+        lvgl_port_unlock();
     }
 }
 
 void qrcode(void)
 {
-    lv_color_t bg_color = lv_palette_lighten(LV_PALETTE_NONE, 5);
-    lv_color_t fg_color = lv_palette_darken(LV_PALETTE_AMBER, 4);
+    if (lvgl_port_lock(0))
+    {
+        lv_color_t bg_color = lv_palette_lighten(LV_PALETTE_NONE, 5);
+        lv_color_t fg_color = lv_palette_darken(LV_PALETTE_AMBER, 4);
 
-    lv_obj_t * qr = lv_qrcode_create(scr, 32, fg_color, bg_color);
+        lv_obj_t * qr = lv_qrcode_create(_scr, 32, fg_color, bg_color);
 
-    const char * data = "https://macdap.net";
-    lv_qrcode_update(qr, data, strlen(data));
-    lv_obj_center(qr);
-    lv_obj_align(qr, LV_ALIGN_LEFT_MID, 0, 0);
+        const char * data = "https://macdap.net";
+        lv_qrcode_update(qr, data, strlen(data));
+        lv_obj_center(qr);
+        lv_obj_align(qr, LV_ALIGN_LEFT_MID, 0, 0);
+
+        lvgl_port_unlock();
+    }
+}
+
+void cross(void)
+{
+    if (lvgl_port_lock(0))
+    {
+        /*Create an array for the points of the line*/
+        static lv_point_t line1Points[] = { {0, 0}, {CONFIG_LED_MATRIX_MODULE_WIDTH * CONFIG_LED_MATRIX_PIXEL_WIDTH, CONFIG_LED_MATRIX_MODULE_HEIGHT * CONFIG_LED_MATRIX_PIXEL_HEIGHT} };
+        static lv_point_t line2Points[] = { {0, CONFIG_LED_MATRIX_MODULE_HEIGHT * CONFIG_LED_MATRIX_PIXEL_HEIGHT}, {CONFIG_LED_MATRIX_MODULE_WIDTH * CONFIG_LED_MATRIX_PIXEL_WIDTH, 0} };
+
+        /*Create style*/
+        static lv_style_t style;
+        lv_style_init(&style);
+        lv_style_set_line_width(&style, 3);
+        lv_style_set_line_color(&style, lv_palette_main(LV_PALETTE_BLUE));
+        lv_style_set_line_rounded(&style, true);
+
+        /*Create a line and apply the new style*/
+        lv_obj_t * line1;
+        line1 = lv_line_create(_scr);
+        lv_line_set_points(line1, line1Points, 2);
+        lv_obj_add_style(line1, &style, 0);
+
+        lv_obj_t * line2;
+        line2 = lv_line_create(_scr);
+        lv_line_set_points(line2, line2Points, 2);
+        lv_obj_add_style(line2, &style, 0);
+
+        lvgl_port_unlock();
+    }
 }
 
 lv_obj_t *led(void)
 {
-    lv_obj_t *led  = lv_led_create(scr);
-    lv_obj_set_size(led, 8, 8);
-    lv_obj_align(led, LV_ALIGN_TOP_RIGHT, -8, 4);
-    lv_led_set_color(led, lv_palette_main(LV_PALETTE_RED));
-    lv_led_off(led);
+    lv_obj_t *led = nullptr;
+
+    if (lvgl_port_lock(0))
+    {
+        led = lv_led_create(_scr);
+        lv_obj_set_size(led, 8, 8);
+        lv_obj_align(led, LV_ALIGN_TOP_RIGHT, -8, 4);
+        lv_led_set_color(led, lv_palette_main(LV_PALETTE_RED));
+        lv_led_off(led);
+
+        lvgl_port_unlock();
+    }
     return led;
 }
 
@@ -168,7 +210,7 @@ extern "C" void app_main(void)
 
   macdap::LedMatrix &ledMatrix = macdap::LedMatrix::getInstance();
   lv_disp_t *display = ledMatrix.getLvDisp();
-  scr = lv_disp_get_scr_act(display);
+  _scr = lv_disp_get_scr_act(display);
   _width = lv_disp_get_hor_res(display);
   _height = lv_disp_get_ver_res(display);
   background(LV_PALETTE_NONE);
@@ -196,10 +238,14 @@ extern "C" void app_main(void)
   vTaskDelay(pdMS_TO_TICKS(3000));
   clear();
 
+  cross();
+  vTaskDelay(pdMS_TO_TICKS(3000));
+  clear();
+
   brightness = 1.0;
   ledMatrix.setBrightness(brightness);
   lv_obj_t *heartbeat = led();
-  scrollingMessage("Test program x64y32, Version 0.0.0 from MacDap Inc.");
+  scrollingMessage1("Test program x64y32, Version 0.0.0 from MacDap Inc.");
   scrollingMessage2("MacDap Inc. the best");
 
   // float step = -10.0f;
