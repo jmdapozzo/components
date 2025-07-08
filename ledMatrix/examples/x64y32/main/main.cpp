@@ -1,6 +1,7 @@
-#include "ledMatrix.hpp"
+#include <ledMatrix.hpp>
 #include <esp_log.h>
 #include <logo.h>
+#include <heapHelper.h>
 
 static const char *TAG = "x64y32";
 static lv_obj_t *_scr;
@@ -248,17 +249,12 @@ extern "C" void app_main(void)
   scrollingMessage1("Test program x64y32, Version 0.0.0 from MacDap Inc.");
   scrollingMessage2("MacDap Inc. the best");
 
-  // float step = -10.0f;
-  // static int palette_idx = 0;
-  // lv_palette_t palettes[] = {
-  //   LV_PALETTE_RED, LV_PALETTE_PINK, LV_PALETTE_PURPLE, LV_PALETTE_DEEP_PURPLE,
-  //   LV_PALETTE_INDIGO, LV_PALETTE_BLUE, LV_PALETTE_LIGHT_BLUE, LV_PALETTE_CYAN,
-  //   LV_PALETTE_TEAL, LV_PALETTE_GREEN, LV_PALETTE_LIGHT_GREEN, LV_PALETTE_LIME,
-  //   LV_PALETTE_YELLOW, LV_PALETTE_AMBER, LV_PALETTE_ORANGE, LV_PALETTE_DEEP_ORANGE,
-  //   LV_PALETTE_BROWN, LV_PALETTE_GREY, LV_PALETTE_BLUE_GREY
-  // };
-  bool phase = false;
+#ifdef CONFIG_HEAP_TASK_TRACKING
+    esp_dump_per_task_heap_info();
+#endif
 
+
+  bool phase = false;
   while (true)
   {
     vTaskDelay(pdMS_TO_TICKS(1000));
