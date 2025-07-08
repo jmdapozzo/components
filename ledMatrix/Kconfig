@@ -66,7 +66,7 @@ menu "MacDap Led Matrix"
 		range -1 LED_MATRIX_GPIO_RANGE_MAX
 
 	config LED_MATRIX_HUB75_CLK
-		int "ENABLE GPIO number"
+		int "CLK GPIO number"
 		default 2
 		range 0 LED_MATRIX_GPIO_RANGE_MAX
 
@@ -103,17 +103,21 @@ menu "MacDap Led Matrix"
 			bool "64 x 32"
 		config LED_MATRIX_TYPE_X64Y64
 			bool "64 x 64"
+		config LED_MATRIX_TYPE_X128Y64
+			bool "128 x 64"
 	endchoice
 
 	config LED_MATRIX_PIXEL_WIDTH
 		int
 		default 64 if LED_MATRIX_TYPE_X64Y32
 		default 64 if LED_MATRIX_TYPE_X64Y64
+		default 128 if LED_MATRIX_TYPE_X128Y64
 
 	config LED_MATRIX_PIXEL_HEIGHT
 		int
 		default 32 if LED_MATRIX_TYPE_X64Y32
 		default 64 if LED_MATRIX_TYPE_X64Y64
+		default 64 if LED_MATRIX_TYPE_X128Y64
 
 	config LED_MATRIX_MODULE_WIDTH
 		int "Panel Module Width"
