@@ -25,7 +25,7 @@ LedMatrix::LedMatrix()
 {
     ESP_LOGI(TAG, "Initializing");
 
-    HUB75_I2S_CFG mxconfig;     //TODO check clk_speed _i2sspeed = HZ_8M, what about HZ_10M, HZ_15M, HZ_16M, HZ_20M?
+    HUB75_I2S_CFG mxconfig;
 
     MatrixPanel_I2S_DMA *display = new MatrixPanel_I2S_DMA(mxconfig);
     display->begin();
