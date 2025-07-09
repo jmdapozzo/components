@@ -28,11 +28,9 @@ void background(lv_palette_t color)
 
 void logo(void)
 {
-    static lv_obj_t *logo;
-
     if (lvgl_port_lock(0)) 
     {
-        logo = lv_img_create(_scr);
+        lv_obj_t *logo = lv_img_create(_scr);
         lv_img_set_src(logo, &colorLogo32x32);
         lv_obj_align(logo, LV_ALIGN_LEFT_MID, 0, 0);
 
@@ -42,9 +40,6 @@ void logo(void)
 
 void greeting(const char *projectName, const char *version)
 {
-    static lv_obj_t *logo;
-    static lv_obj_t *labelProjectName;
-
     if (lvgl_port_lock(0)) 
     {
         static lv_style_t style;
@@ -53,12 +48,12 @@ void greeting(const char *projectName, const char *version)
         lv_style_set_text_color(&style, lv_palette_main(LV_PALETTE_AMBER));
         lv_style_set_align(&style, LV_ALIGN_CENTER);
 
-        labelProjectName = lv_label_create(_scr);
+        lv_obj_t *labelProjectName = lv_label_create(_scr);
         lv_obj_add_style(labelProjectName, &style, 0);
         lv_label_set_text(labelProjectName, projectName);
         lv_obj_align(labelProjectName, LV_ALIGN_TOP_LEFT, 1, 0);
 
-        lv_obj_t * labelVersion = lv_label_create(_scr);
+        lv_obj_t *labelVersion = lv_label_create(_scr);
         lv_obj_add_style(labelVersion, &style, 0);
         lv_label_set_text(labelVersion, version);
         lv_obj_align(labelVersion, LV_ALIGN_BOTTOM_LEFT, -1, 0);
@@ -69,19 +64,15 @@ void greeting(const char *projectName, const char *version)
 
 void message(const char *message)
 {
-    static lv_obj_t *label = nullptr;
-
     if (lvgl_port_lock(0))
     {
-        // lv_obj_set_style_bg_color(_scr,lv_palette_main(LV_PALETTE_NONE),LV_PART_MAIN);
-
         static lv_style_t style;
         lv_style_init(&style);
         lv_style_set_text_font(&style, &lv_font_montserrat_20);
         lv_style_set_text_color(&style, lv_palette_main(LV_PALETTE_GREEN));
         lv_style_set_align(&style, LV_ALIGN_CENTER);
 
-        label = lv_label_create(_scr);
+        lv_obj_t *label = lv_label_create(_scr);
         lv_obj_add_style(label, &style, 0);
 
         lv_label_set_text(label, message);
@@ -91,19 +82,16 @@ void message(const char *message)
 
 void scrollingMessage1(const char *message)
 {
-    static lv_obj_t *label = nullptr;
-
     if (lvgl_port_lock(0))
     {
         static lv_style_t style;
         lv_style_init(&style);
         lv_style_set_text_font(&style, &lv_font_montserrat_18);
-        // lv_style_set_text_color(&style, lv_palette_main(LV_PALETTE_NONE));
         lv_style_set_text_color(&style, lv_palette_main(LV_PALETTE_GREEN));
         lv_style_set_anim_speed(&style, 10);
         lv_style_set_align(&style, LV_ALIGN_BOTTOM_MID);
 
-        label = lv_label_create(_scr);
+        lv_obj_t *label = lv_label_create(_scr);
         lv_obj_add_style(label, &style, 0);
         lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL_CIRCULAR);
         lv_obj_set_width(label, _width);
@@ -144,7 +132,7 @@ void qrcode(void)
         lv_color_t bg_color = lv_palette_lighten(LV_PALETTE_NONE, 5);
         lv_color_t fg_color = lv_palette_darken(LV_PALETTE_AMBER, 4);
 
-        lv_obj_t * qr = lv_qrcode_create(_scr, 32, fg_color, bg_color);
+        lv_obj_t * qr = lv_qrcode_create(_scr, _height, fg_color, bg_color);
 
         const char * data = "https://macdap.net";
         lv_qrcode_update(qr, data, strlen(data));
@@ -192,8 +180,10 @@ lv_obj_t *led(void)
     if (lvgl_port_lock(0))
     {
         led = lv_led_create(_scr);
-        lv_obj_set_size(led, 8, 8);
-        lv_obj_align(led, LV_ALIGN_TOP_RIGHT, -8, 4);
+        lv_obj_set_size(led, 16, 16);
+        // lv_obj_set_size(led, 8, 8);
+        lv_obj_align(led, LV_ALIGN_CENTER, 0, 0);
+        //lv_obj_align(led, LV_ALIGN_TOP_RIGHT, -8, 4);
         lv_led_set_color(led, lv_palette_main(LV_PALETTE_RED));
         lv_led_off(led);
 
