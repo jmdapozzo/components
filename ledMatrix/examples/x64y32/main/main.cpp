@@ -31,7 +31,7 @@ void logo(void)
     if (lvgl_port_lock(0)) 
     {
         lv_obj_t *logo = lv_img_create(_scr);
-        lv_img_set_src(logo, &colorLogo32x32);
+        lv_img_set_src(logo, &colorLogo64x64);
         lv_obj_align(logo, LV_ALIGN_LEFT_MID, 0, 0);
 
         lvgl_port_unlock();
@@ -222,8 +222,8 @@ extern "C" void app_main(void)
   vTaskDelay(pdMS_TO_TICKS(3000));
   clear();
 
-  brightness = 10.0;
-  ledMatrix.setBrightness(brightness);
+  //brightness = 10.0;
+  //ledMatrix.setBrightness(brightness);
 
   qrcode();
   vTaskDelay(pdMS_TO_TICKS(3000));
@@ -233,8 +233,8 @@ extern "C" void app_main(void)
   vTaskDelay(pdMS_TO_TICKS(3000));
   clear();
 
-  brightness = 1.0;
-  ledMatrix.setBrightness(brightness);
+  //brightness = 1.0;
+  //ledMatrix.setBrightness(brightness);
   lv_obj_t *heartbeat = led();
   scrollingMessage1("Test program x64y32, Version 0.0.0 from MacDap Inc.");
   scrollingMessage2("MacDap Inc. the best");
