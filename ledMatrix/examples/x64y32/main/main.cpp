@@ -5,8 +5,31 @@
 
 static const char *TAG = "x64y32";
 static lv_obj_t *_scr;
-lv_coord_t _width;
-lv_coord_t _height;
+static lv_coord_t _width;
+static lv_coord_t _height;
+
+static lv_palette_t palettes[] = {
+    LV_PALETTE_RED,
+    LV_PALETTE_PINK,
+    LV_PALETTE_PURPLE,
+    LV_PALETTE_DEEP_PURPLE,
+    LV_PALETTE_INDIGO,
+    LV_PALETTE_BLUE,
+    LV_PALETTE_LIGHT_BLUE,
+    LV_PALETTE_CYAN,
+    LV_PALETTE_TEAL,
+    LV_PALETTE_GREEN,
+    LV_PALETTE_LIGHT_GREEN,
+    LV_PALETTE_LIME,
+    LV_PALETTE_YELLOW,
+    LV_PALETTE_AMBER,
+    LV_PALETTE_ORANGE,
+    LV_PALETTE_DEEP_ORANGE,
+    LV_PALETTE_BROWN,
+    LV_PALETTE_BLUE_GREY,
+    LV_PALETTE_GREY,
+};
+
 
 void clear()
 {
@@ -194,84 +217,78 @@ lv_obj_t *led(void)
 
 extern "C" void app_main(void)
 {
-  ESP_LOGI(TAG, "LED Matrix Test Program");
+    ESP_LOGI(TAG, "LED Matrix Test Program");
 
-  const lvgl_port_cfg_t lvglConfig = ESP_LVGL_PORT_INIT_CONFIG();
-  lvgl_port_init(&lvglConfig);
+    const lvgl_port_cfg_t lvglConfig = ESP_LVGL_PORT_INIT_CONFIG();
+    lvgl_port_init(&lvglConfig);
 
-  macdap::LedMatrix &ledMatrix = macdap::LedMatrix::getInstance();
-  lv_disp_t *display = ledMatrix.getLvDisp();
-  _scr = lv_disp_get_scr_act(display);
-  _width = lv_disp_get_hor_res(display);
-  _height = lv_disp_get_ver_res(display);
-  background(LV_PALETTE_NONE);
-  ESP_LOGI(TAG, "Display resolution: %d x %d", _width, _height);
+    macdap::LedMatrix &ledMatrix = macdap::LedMatrix::getInstance();
+    lv_disp_t *display = ledMatrix.getLvDisp();
+    _scr = lv_disp_get_scr_act(display);
+    _width = lv_disp_get_hor_res(display);
+    _height = lv_disp_get_ver_res(display);
+    background(LV_PALETTE_NONE);
+    ESP_LOGI(TAG, "Display resolution: %d x %d", _width, _height);
 
-  float brightness = 100.0;
-  ledMatrix.setBrightness(brightness);
+    float brightness = 100.0;
+    ledMatrix.setBrightness(brightness);
 
-  logo();
-  vTaskDelay(pdMS_TO_TICKS(3000));
-  clear();
+    logo();
+    vTaskDelay(pdMS_TO_TICKS(3000));
+    clear();
 
-  greeting("x64y32", "Version 0.0.0");
-  vTaskDelay(pdMS_TO_TICKS(3000));
-  clear();
+    greeting("Test", "Version 0.0.0");
+    vTaskDelay(pdMS_TO_TICKS(3000));
+    clear();
 
-  message("MacDap Inc.");
-  vTaskDelay(pdMS_TO_TICKS(3000));
-  clear();
+    message("MacDap Inc.");
+    vTaskDelay(pdMS_TO_TICKS(3000));
+    clear();
 
-  //brightness = 10.0;
-  //ledMatrix.setBrightness(brightness);
+    //brightness = 10.0;
+    //ledMatrix.setBrightness(brightness);
 
-  qrcode();
-  vTaskDelay(pdMS_TO_TICKS(3000));
-  clear();
+    qrcode();
+    vTaskDelay(pdMS_TO_TICKS(3000));
+    clear();
 
-  cross();
-  vTaskDelay(pdMS_TO_TICKS(3000));
-  clear();
+    cross();
+    vTaskDelay(pdMS_TO_TICKS(3000));
+    clear();
 
-  //brightness = 1.0;
-  //ledMatrix.setBrightness(brightness);
-  lv_obj_t *heartbeat = led();
-  scrollingMessage1("Test program x64y32, Version 0.0.0 from MacDap Inc.");
-  scrollingMessage2("MacDap Inc. the best");
+    //brightness = 1.0;
+    //ledMatrix.setBrightness(brightness);
+    lv_obj_t *heartbeat = led();
+    scrollingMessage1("Test program, Version 0.0.0 from MacDap Inc.");
+    scrollingMessage2("MacDap Inc. the best");
 
 #ifdef CONFIG_HEAP_TASK_TRACKING
     esp_dump_per_task_heap_info();
 #endif
 
-
-  bool phase = false;
-  while (true)
-  {
-    vTaskDelay(pdMS_TO_TICKS(1000));
-    if (phase)
+    int palette_idx = 0;
+    int tick = 0;
+    bool phase = false;
+    while (true)
     {
-      phase = false;
-      lv_led_on(heartbeat);
-    }
-    else
-    {
-      phase = true;
-      lv_led_off(heartbeat);
-    }
-    // ESP_LOGI(TAG, "Heartbeat LED toggled");
+        vTaskDelay(pdMS_TO_TICKS(1000));
+        if (phase)
+        {
+            phase = false;
+            lv_led_on(heartbeat);
+        }
+        else
+        {
+            phase = true;
+            lv_led_off(heartbeat);
+        }
 
-    // int num_palettes = sizeof(palettes) / sizeof(palettes[0]);
-    // background(palettes[palette_idx]);
-    // palette_idx = (palette_idx + 1) % num_palettes;
-
-    // ledMatrix.setBrightness(brightness);
-    // brightness += step;
-    // if (brightness <= 10.0f) {
-    //   brightness = 10.0f;
-    //   step = 10.0f;
-    // } else if (brightness >= 100.0f) {
-    //   brightness = 100.0f;
-    //   step = -10.0f;
-    // }
-  }
+        tick++;
+        if (tick >= 4) { // 5 seconds (since vTaskDelay is 1 second)
+            tick = 0;
+            palette_idx = (palette_idx + 1) % (sizeof(palettes)/sizeof(palettes[0]));
+            lv_led_set_color(heartbeat, lv_palette_main(palettes[palette_idx]));
+        }
+    }
 }
+
