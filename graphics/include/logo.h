@@ -3,6 +3,8 @@
 #include <lvgl.h>
 
 extern lv_img_dsc_t colorLogo32x32;
+extern lv_img_dsc_t colorLogo64x64;
+extern lv_img_dsc_t colorLogo128x128;
 extern lv_img_dsc_t logo16x16;
 extern lv_img_dsc_t logo32x32;
 extern lv_img_dsc_t logo48x48;
