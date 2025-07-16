@@ -1,16 +1,16 @@
 idf_component_register(
     SRCS
         "src/font/nothingFont5x7.c"
-        "src/logo/colorLogo32x32.c"
-        "src/logo/colorLogo64x64.c"
-        "src/logo/colorLogo128x128.c"
-        "src/logo/logo16x16.c"
-        "src/logo/logo32x32.c"
-        "src/logo/logo48x48.c"
-        "src/logo/logo64x64.c"
-        "src/logo/logoText32x32.c"
-        "src/logo/logoText48x48.c"
-        "src/logo/logoText64x64.c"
+        "src/logo/bwLogoNoText16x16.c"
+        "src/logo/bwLogoNoText32x32.c"
+        "src/logo/bwLogoNoText48x48.c"
+        "src/logo/bwLogoNoText64x64.c"
+        "src/logo/bwLogoText32x32.c"
+        "src/logo/bwLogoText48x48.c"
+        "src/logo/bwLogoText64x64.c"
+        "src/logo/colorLogoNoText32x32.c"
+        "src/logo/colorLogoNoText64x64.c"
+        "src/logo/colorLogoNoText128x128.c"
     PRIV_REQUIRES driver
     INCLUDE_DIRS "include"
 )
