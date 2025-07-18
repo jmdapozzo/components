@@ -31,7 +31,6 @@ static lv_palette_t palettes[] = {
     LV_PALETTE_GREY,
 };
 
-
 void clear()
 {
     if (lvgl_port_lock(0))

@@ -49,17 +49,6 @@ LedMatrix::LedMatrix()
     lv_display_set_flush_cb(m_displayDriver, flushCB);
     lv_display_set_user_data(m_displayDriver, display);
     lv_display_set_buffers(m_displayDriver, lvBuffer, NULL, lvBufferSize, LV_DISPLAY_RENDER_MODE_FULL);
-
-    // lv_disp_draw_buf_init(&m_displayDrawBuffer, lvBuffer, NULL, lvBufferSize);   
-    // lv_disp_drv_init(&m_displayDriver);
-    // m_displayDriver.draw_buf = &m_displayDrawBuffer;
-    // m_displayDriver.hor_res = m_horizontalResolution;
-    // m_displayDriver.ver_res = m_verticalResolution;
-    // m_displayDriver.flush_cb = flushCB;
-    // m_displayDriver.user_data = display;
-    // m_displayDriver.full_refresh = true;
-    // m_lvDisp = lv_disp_drv_register(&m_displayDriver);
-
 }
 
 LedMatrix::~LedMatrix()
