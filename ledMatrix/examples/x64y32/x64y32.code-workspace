@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../.."
+		},
+		{
+			"path": "../../../graphics"
+		}
+	],
+	"settings": {
+		"svg.preview.background": "editor"
+	}
+}
