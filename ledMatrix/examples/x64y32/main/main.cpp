@@ -107,11 +107,18 @@ void scrollingMessage1(const char *message)
 {
     if (lvgl_port_lock(0))
     {
+        static lv_anim_t animationTemplate;
+        lv_anim_init(&animationTemplate);
+        lv_anim_set_delay(&animationTemplate, 1000);
+        lv_anim_set_repeat_delay(&animationTemplate, 3000);
+        lv_anim_set_repeat_count(&animationTemplate, LV_ANIM_REPEAT_INFINITE);
+
         static lv_style_t style;
         lv_style_init(&style);
         lv_style_set_text_font(&style, &lv_font_montserrat_18);
         lv_style_set_text_color(&style, lv_palette_main(LV_PALETTE_GREEN));
         lv_style_set_align(&style, LV_ALIGN_BOTTOM_MID);
+        lv_style_set_anim(&style, &animationTemplate);
 
         lv_obj_t *label = lv_label_create(_scr);
         lv_obj_add_style(label, &style, LV_STATE_DEFAULT);
@@ -151,21 +158,26 @@ void scrollingMessage3(const char *message)
     static lv_anim_t animationTemplate;
     static lv_style_t style;
 
-    lv_anim_init(&animationTemplate);
-    lv_anim_set_delay(&animationTemplate, 1000);
-    lv_anim_set_repeat_delay(&animationTemplate, 3000);
+    if (lvgl_port_lock(0))
+    {
+        lv_anim_init(&animationTemplate);
+        lv_anim_set_delay(&animationTemplate, 1000);
+        lv_anim_set_repeat_delay(&animationTemplate, 3000);
 
-    lv_style_init(&style);
-    lv_style_set_text_font(&style, &lv_font_montserrat_18);
-    lv_style_set_text_color(&style, lv_palette_main(LV_PALETTE_GREEN));
-    lv_style_set_align(&style, LV_ALIGN_CENTER);
-    lv_style_set_anim(&style, &animationTemplate);
+        lv_style_init(&style);
+        lv_style_set_text_font(&style, &lv_font_montserrat_18);
+        lv_style_set_text_color(&style, lv_palette_main(LV_PALETTE_GREEN));
+        lv_style_set_align(&style, LV_ALIGN_CENTER);
+        lv_style_set_anim(&style, &animationTemplate);
 
-    lv_obj_t * label1 = lv_label_create(_scr);
-    lv_obj_add_style(label1, &style, LV_STATE_DEFAULT);
-    lv_label_set_long_mode(label1, LV_LABEL_LONG_SCROLL_CIRCULAR);
-    lv_obj_set_width(label1, _width);
-    lv_label_set_text(label1, message);
+        lv_obj_t * label1 = lv_label_create(_scr);
+        lv_obj_add_style(label1, &style, LV_STATE_DEFAULT);
+        lv_label_set_long_mode(label1, LV_LABEL_LONG_SCROLL_CIRCULAR);
+        lv_obj_set_width(label1, _width);
+        lv_label_set_text(label1, message);
+
+        lvgl_port_unlock();
+    }
 }
 
 void qrcode(void)
@@ -262,7 +274,7 @@ extern "C" void app_main(void)
     _width = lv_disp_get_hor_res(display);
     _height = lv_disp_get_ver_res(display);
     background(LV_PALETTE_NONE);
-    // ESP_LOGI(TAG, "Display resolution: %d x %d", _width, _height);
+    // ESP_LOGI(TAG, "Display resolution: %d x %d", _width, _height); //TODO try to reinstate ESP_LOGx
 
     float brightness = 100.0;
     ledMatrix.setBrightness(brightness);
@@ -301,7 +313,7 @@ extern "C" void app_main(void)
     //brightness = 1.0;
     //ledMatrix.setBrightness(brightness);
     lv_obj_t *heartbeat = led();
-    scrollingMessage1("Test program, Version 0.0.0 from MacDap Inc.");
+    scrollingMessage1("Test program Version 0.0.0 from MacDap Inc.");
     scrollingMessage2("MacDap Inc. the best");
 
 #ifdef CONFIG_HEAP_TASK_TRACKING
