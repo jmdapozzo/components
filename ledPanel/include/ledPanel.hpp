@@ -24,8 +24,7 @@ extern "C"
     {
 
     private:
-        lv_disp_draw_buf_t m_displayDrawBuffer;
-        lv_disp_drv_t m_displayDriver;
+        lv_display_t *m_displayDriver;
         lv_disp_t *m_lvDisp;
         uint16_t m_horizontalResolution;
         uint16_t m_verticalResolution;

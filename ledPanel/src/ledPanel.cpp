@@ -32,9 +32,19 @@ static const char *TAG = "ledPanel (SPI)";
 
 #define PIXEL_PER_BYTE 8
 
+#if LV_COLOR_DEPTH == 32
+#define BYTES_PER_PIXEL 4
+#elif LV_COLOR_DEPTH == 16
+#define BYTES_PER_PIXEL 2
+#elif LV_COLOR_DEPTH == 8
+#define BYTES_PER_PIXEL 1
+#else
+#error "Unsupported LV_COLOR_DEPTH"
+#endif
+
 static SemaphoreHandle_t _panelBufferMutex;
 
-static void setPixel(LedPanel* ledPanel, int32_t x, int32_t y, lv_color_t * color)
+static void setPixel(LedPanel* ledPanel, int32_t x, int32_t y, bool state)
 {
     uint16_t horizontalResolution = ledPanel->getHorizontalResolution();
     uint16_t verticalResolution = ledPanel->getVerticalResolution();
@@ -52,7 +62,7 @@ static void setPixel(LedPanel* ledPanel, int32_t x, int32_t y, lv_color_t * colo
     uint8_t segment = static_cast<uint8_t>(0x80 >> (yReverse % PIXEL_PER_BYTE));
     uint8_t buffer = ledPanel->getBuffer(bufferIndex);
 
-    if (color->full == 0)
+    if (state)
     {
         buffer = buffer | segment;
     }
@@ -63,22 +73,27 @@ static void setPixel(LedPanel* ledPanel, int32_t x, int32_t y, lv_color_t * colo
     ledPanel->setBuffer(bufferIndex, buffer);
 }
 
-static void flushCB(lv_disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p)
+static void flushCB(lv_display_t *disp_drv, const lv_area_t *area, uint8_t *px_map)
 {
-    LedPanel* ledPanel = static_cast<LedPanel*>(disp_drv->user_data);
+#if BYTES_PER_PIXEL == 1
+    uint8_t *pxMap = px_map;
+#elif BYTES_PER_PIXEL == 2
+    uint16_t *pxMap = (uint16_t *)px_map;
+#elif BYTES_PER_PIXEL == 4
+    uint32_t *pxMap = (uint32_t *)px_map;
+#else
+#error "LV_COLOR_DEPTH should be 1, 8, 16 or 32"
+#endif
+
+    LedPanel* ledPanel = static_cast<LedPanel*>(lv_display_get_user_data(disp_drv));
 
     xSemaphoreTake(_panelBufferMutex, portMAX_DELAY);
-
-    lv_color_t color_black = lv_color_black(); 
-    lv_color_t color_white = lv_color_white();
-    uint16_t horizontalResolution = ledPanel->getHorizontalResolution();
-    uint16_t verticalResolution = ledPanel->getVerticalResolution();
 
     int32_t x, y;
     for(y = area->y1; y <= area->y2; y++) {
         for(x = area->x1; x <= area->x2; x++) {
-            setPixel(ledPanel, x, y, color_p);
-            color_p++;
+            setPixel(ledPanel, x, y, *pxMap != 0);
+            pxMap++;
         }
     }
 
@@ -160,23 +175,19 @@ LedPanel::LedPanel()
         return;
     }
 
-    size_t lvBufferSize = m_horizontalResolution * m_verticalResolution * sizeof(lv_color_t);
-    lv_color_t *lvBuffer = static_cast<lv_color_t*>(heap_caps_malloc(lvBufferSize, MALLOC_CAP_DEFAULT));
+    size_t lvBufferSize = m_horizontalResolution * m_verticalResolution * BYTES_PER_PIXEL;
+    ESP_LOGI(TAG, "Allocating lvBuffer of size %zu", lvBufferSize);
+    uint8_t *lvBuffer = static_cast<uint8_t*>(heap_caps_malloc(lvBufferSize, MALLOC_CAP_DEFAULT));
     if (lvBuffer == nullptr)
     {
         ESP_LOGE(TAG, "Failed to allocate lvBuffer on the heap!");
         return;
     }
 
-    lv_disp_draw_buf_init(&m_displayDrawBuffer, lvBuffer, NULL, lvBufferSize);   
-    lv_disp_drv_init(&m_displayDriver);
-    m_displayDriver.draw_buf = &m_displayDrawBuffer;
-    m_displayDriver.hor_res = m_horizontalResolution;
-    m_displayDriver.ver_res = m_verticalResolution;
-    m_displayDriver.flush_cb = flushCB;
-    m_displayDriver.user_data = this;
-    m_displayDriver.full_refresh = true;
-    m_lvDisp = lv_disp_drv_register(&m_displayDriver);
+    m_displayDriver = lv_display_create(m_horizontalResolution, m_verticalResolution);
+    lv_display_set_flush_cb(m_displayDriver, flushCB);
+    lv_display_set_user_data(m_displayDriver, this);
+    lv_display_set_buffers(m_displayDriver, lvBuffer, NULL, lvBufferSize, LV_DISPLAY_RENDER_MODE_FULL);
 
 #ifdef CONFIG_LED_PANEL_TYPE_MBI5026
     ledc_timer_config_t ledc_timer = {
