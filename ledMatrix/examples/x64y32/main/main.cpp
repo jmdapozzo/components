@@ -91,7 +91,7 @@ void message(const char *message)
     {
         static lv_style_t style;
         lv_style_init(&style);
-        lv_style_set_text_font(&style, &lv_font_montserrat_20);
+        lv_style_set_text_font(&style, &lv_font_montserrat_28);
         lv_style_set_text_color(&style, lv_palette_main(LV_PALETTE_GREEN));
         lv_style_set_align(&style, LV_ALIGN_CENTER);
 
@@ -115,7 +115,7 @@ void scrollingMessage1(const char *message)
 
         static lv_style_t style;
         lv_style_init(&style);
-        lv_style_set_text_font(&style, &lv_font_montserrat_18);
+        lv_style_set_text_font(&style, &lv_font_montserrat_24);
         lv_style_set_text_color(&style, lv_palette_main(LV_PALETTE_GREEN));
         lv_style_set_align(&style, LV_ALIGN_BOTTOM_MID);
         lv_style_set_anim(&style, &animationTemplate);
@@ -138,7 +138,7 @@ void scrollingMessage2(const char *message)
     {
         static lv_style_t style;
         lv_style_init(&style);
-        lv_style_set_text_font(&style, &lv_font_montserrat_14);
+        lv_style_set_text_font(&style, &lv_font_montserrat_20);
         // lv_style_set_text_color(&style, lv_palette_main(LV_PALETTE_NONE));
         lv_style_set_text_color(&style, lv_palette_main(LV_PALETTE_RED));
         lv_style_set_align(&style, LV_ALIGN_TOP_RIGHT);
@@ -165,7 +165,7 @@ void scrollingMessage3(const char *message)
         lv_anim_set_repeat_delay(&animationTemplate, 3000);
 
         lv_style_init(&style);
-        lv_style_set_text_font(&style, &lv_font_montserrat_18);
+        lv_style_set_text_font(&style, &lv_font_montserrat_24);
         lv_style_set_text_color(&style, lv_palette_main(LV_PALETTE_GREEN));
         lv_style_set_align(&style, LV_ALIGN_CENTER);
         lv_style_set_anim(&style, &animationTemplate);
@@ -249,7 +249,7 @@ lv_obj_t *led(void)
     if (lvgl_port_lock(0))
     {
         led = lv_led_create(_scr);
-        lv_obj_set_size(led, 16, 16);
+        lv_obj_set_size(led, 32, 32);
         // lv_obj_set_size(led, 8, 8);
         lv_obj_align(led, LV_ALIGN_CENTER, 0, 0);
         //lv_obj_align(led, LV_ALIGN_TOP_RIGHT, -8, 4);
