@@ -10,7 +10,6 @@ menu "MacDap Display Configuration"
 		default 30 if IDF_TARGET_ESP32C6
 		default 27 if IDF_TARGET_ESP32H2
 
-
     choice LCD_CONTROLLER
         prompt "LCD controller model"
         default LCD_CONTROLLER_SSD1306
@@ -58,5 +57,40 @@ menu "MacDap Display Configuration"
             GPIO number (IOxx) to RESET.
             When it is -1, RESET isn't performed.
 
+	choice DISPLAY_ROTATION_CHOICE
+		prompt "Display Rotation"
+		help
+			Select Display Rotation
+		config DISPLAY_ROTATION_0
+            bool "0 degrees"
+		config DISPLAY_ROTATION_90
+			bool "90 degrees"
+		config DISPLAY_ROTATION_180
+			bool "180 degrees"
+		config DISPLAY_ROTATION_270
+			bool "270 degrees"
+	endchoice
+
+    config DISPLAY_ROTATION
+        int
+        default 0 if DISPLAY_ROTATION_0
+        default 1 if DISPLAY_ROTATION_90
+        default 2 if DISPLAY_ROTATION_180
+        default 3 if DISPLAY_ROTATION_270
+
+    config DISPLAY_WIDTH
+        int "Display Width in pixels"
+        default 128
+        range 1 1024
+        help
+            Width of the display in pixels. a.k.a horizontal resolution
+
+    config DISPLAY_HEIGHT
+        int "Display Height in pixels"
+        default 64 if SSD1306_HEIGHT_64
+        default 32 if SSD1306_HEIGHT_32
+        range 1 1024
+        help
+            Height of the display in pixels. a.k.a vertical resolution
         
 endmenu

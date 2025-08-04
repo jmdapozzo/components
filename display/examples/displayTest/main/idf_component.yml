@@ -1,0 +1,5 @@
+dependencies:
+  jmdapozzo/display:
+    override_path: "../../../"
+  jmdapozzo/graphics:
+    override_path: "../../../../graphics"

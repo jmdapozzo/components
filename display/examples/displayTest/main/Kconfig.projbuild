@@ -1,0 +1,15 @@
+menu "Display Test Configuration"
+
+    config GPIO_I2C_SCL
+        int "GPIO I2C SCL pin"
+        default 9
+        help
+            GPIO pin number to be used as option switch.
+        
+    config GPIO_I2C_SDA
+        int "GPIO I2C SDA pin"
+        default 8
+        help
+            GPIO pin number to be used as option switch.
+        
+endmenu

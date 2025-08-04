@@ -14,7 +14,7 @@ extern "C"
         {
 
         private:
-            lv_disp_t *m_lvDisp;
+            lv_display_t *m_lvDisplay;
             Display();
             ~Display();
 
@@ -26,13 +26,7 @@ extern "C"
                 static Display instance;
                 return instance;
             }
-
-            void clear();
-            void greeting(const char *projectName, const char *version);
-            void message(const char *message);
-            //  esp_err_t showLogoHorizontal(uint8_t chXpos = 0, uint8_t chYpos = 16);
-            //  esp_err_t showLogoVertical(uint8_t chXpos = 0, uint8_t chYpos = 0);
-            //  esp_err_t showTime(uint8_t chYpos = 16);
+            lv_display_t *getLvDisplay();
         };
     }
 #ifdef __cplusplus
