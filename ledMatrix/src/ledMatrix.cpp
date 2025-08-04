@@ -45,19 +45,19 @@ LedMatrix::LedMatrix()
         return;
     }
 
-    m_displayDriver = lv_display_create(m_horizontalResolution, m_verticalResolution);
-    lv_display_set_flush_cb(m_displayDriver, flushCB);
-    lv_display_set_user_data(m_displayDriver, display);
-    lv_display_set_buffers(m_displayDriver, lvBuffer, NULL, lvBufferSize, LV_DISPLAY_RENDER_MODE_FULL);
+    m_display = lv_display_create(m_horizontalResolution, m_verticalResolution);
+    lv_display_set_flush_cb(m_display, flushCB);
+    lv_display_set_user_data(m_display, display);
+    lv_display_set_buffers(m_display, lvBuffer, NULL, lvBufferSize, LV_DISPLAY_RENDER_MODE_FULL);
 }
 
 LedMatrix::~LedMatrix()
 {
 }
 
-lv_disp_t *LedMatrix::getLvDisp()
+lv_display_t *LedMatrix::getLvDisplay()
 {
-    return m_lvDisp;
+    return m_display;
 }
 
 void LedMatrix::setBrightness(float brightness)
@@ -71,6 +71,6 @@ void LedMatrix::setBrightness(float brightness)
         brightness = 0.0;
     }
     uint8_t brightnessByte = static_cast<uint8_t>(std::round((brightness / 100.0f) * 255.0f));
-    MatrixPanel_I2S_DMA *display = static_cast<MatrixPanel_I2S_DMA*>(lv_display_get_user_data(m_displayDriver));
+    MatrixPanel_I2S_DMA *display = static_cast<MatrixPanel_I2S_DMA*>(lv_display_get_user_data(m_display));
     display->setPanelBrightness(brightnessByte);
 }

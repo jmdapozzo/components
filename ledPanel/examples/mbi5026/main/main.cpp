@@ -105,7 +105,7 @@ extern "C" void app_main(void)
     lvgl_port_init(&lvglConfig);
 
     macdap::LedPanel &ledPanel = macdap::LedPanel::getInstance();
-    lv_disp_t *display = ledPanel.getLvDisp();
+    lv_display_t *display = ledPanel.getLvDisplay();
     _scr = lv_disp_get_scr_act(display);
     _width = lv_disp_get_hor_res(display);
     _height = lv_disp_get_ver_res(display);

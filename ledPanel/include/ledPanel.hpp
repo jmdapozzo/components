@@ -24,8 +24,7 @@ extern "C"
     {
 
     private:
-        lv_display_t *m_displayDriver;
-        lv_disp_t *m_lvDisp;
+        lv_display_t *m_display;
         uint16_t m_horizontalResolution;
         uint16_t m_verticalResolution;
         size_t m_panelBufferSize;
@@ -55,7 +54,7 @@ extern "C"
         void sendBuffer(void *buffer, size_t bufferSize);
         void sendBuffer();
         void setBrightness(float brightness);
-        lv_disp_t *getLvDisp();
+        lv_display_t *getLvDisplay();
     };
 }
 #ifdef __cplusplus

@@ -8,8 +8,7 @@ namespace macdap
     {
 
     private:
-        lv_display_t *m_displayDriver;
-        lv_disp_t *m_lvDisp;
+        lv_display_t *m_display;
         uint16_t m_horizontalResolution;
         uint16_t m_verticalResolution;
         LedMatrix();
@@ -24,6 +23,6 @@ namespace macdap
             return instance;
         }
         void setBrightness(float brightness);
-        lv_disp_t *getLvDisp();
+        lv_display_t *getLvDisplay();
     };
 }

@@ -1,6 +1,6 @@
 #include <ledMatrix.hpp>
 #include <string.h>
-// #include <esp_log.h>
+#include <esp_log.h>
 #include <logo.h>
 #include <heapHelper.h>
 
@@ -263,18 +263,18 @@ lv_obj_t *led(void)
 
 extern "C" void app_main(void)
 {
-    // ESP_LOGI(TAG, "LED Matrix Test Program");
+    ESP_LOGI(TAG, "LED Matrix Test Program");
 
     const lvgl_port_cfg_t lvglConfig = ESP_LVGL_PORT_INIT_CONFIG();
     lvgl_port_init(&lvglConfig);
 
     macdap::LedMatrix &ledMatrix = macdap::LedMatrix::getInstance();
-    lv_disp_t *display = ledMatrix.getLvDisp();
+    lv_display_t *display = ledMatrix.getLvDisplay();
     _scr = lv_disp_get_scr_act(display);
     _width = lv_disp_get_hor_res(display);
     _height = lv_disp_get_ver_res(display);
     background(LV_PALETTE_NONE);
-    // ESP_LOGI(TAG, "Display resolution: %d x %d", _width, _height); //TODO try to reinstate ESP_LOGx
+    ESP_LOGI(TAG, "Display resolution: %ld x %ld", _width, _height);
 
     float brightness = 100.0;
     ledMatrix.setBrightness(brightness);

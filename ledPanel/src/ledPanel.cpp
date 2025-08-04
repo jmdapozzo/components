@@ -184,10 +184,10 @@ LedPanel::LedPanel()
         return;
     }
 
-    m_displayDriver = lv_display_create(m_horizontalResolution, m_verticalResolution);
-    lv_display_set_flush_cb(m_displayDriver, flushCB);
-    lv_display_set_user_data(m_displayDriver, this);
-    lv_display_set_buffers(m_displayDriver, lvBuffer, NULL, lvBufferSize, LV_DISPLAY_RENDER_MODE_FULL);
+    m_display = lv_display_create(m_horizontalResolution, m_verticalResolution);
+    lv_display_set_flush_cb(m_display, flushCB);
+    lv_display_set_user_data(m_display, this);
+    lv_display_set_buffers(m_display, lvBuffer, NULL, lvBufferSize, LV_DISPLAY_RENDER_MODE_FULL);
 
 #ifdef CONFIG_LED_PANEL_TYPE_MBI5026
     ledc_timer_config_t ledc_timer = {
@@ -413,9 +413,9 @@ void LedPanel::sendBuffer()
 #endif
 }
 
-lv_disp_t *LedPanel::getLvDisp()
+lv_display_t *LedPanel::getLvDisplay()
 {
-    return m_lvDisp;
+    return m_display;
 }
 
 void LedPanel::setBrightness(float brightness)
