@@ -110,37 +110,7 @@ void message(lv_display_t *display, const char *message)
     }
 }
 
-void scrollingMessage1(lv_display_t *display, const char *message)
-{
-    if (lvgl_port_lock(0))
-    {
-        lv_obj_t *scr = lv_display_get_screen_active(display);
-        int32_t width = lv_display_get_horizontal_resolution(display);
-
-        static lv_anim_t animationTemplate;
-        lv_anim_init(&animationTemplate);
-        lv_anim_set_delay(&animationTemplate, 1000);
-        lv_anim_set_repeat_delay(&animationTemplate, 3000);
-        lv_anim_set_repeat_count(&animationTemplate, LV_ANIM_REPEAT_INFINITE);
-
-        static lv_style_t style;
-        lv_style_init(&style);
-        lv_style_set_text_font(&style, &lv_font_montserrat_24);
-        lv_style_set_text_color(&style, lv_palette_main(LV_PALETTE_GREEN));
-        lv_style_set_align(&style, LV_ALIGN_BOTTOM_MID);
-        lv_style_set_anim(&style, &animationTemplate);
-
-        lv_obj_t *label = lv_label_create(scr);
-        lv_obj_add_style(label, &style, LV_STATE_DEFAULT);
-        lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL_CIRCULAR);
-        lv_obj_set_width(label, width);
-        lv_label_set_text(label, message);
-
-        lvgl_port_unlock();
-    }
-}
-
-void scrollingMessage2(lv_display_t *display, const char *message)
+void scrollingMessageTop(lv_display_t *display, const char *message)
 {
     static lv_obj_t *label = nullptr;
 
@@ -166,7 +136,7 @@ void scrollingMessage2(lv_display_t *display, const char *message)
     }
 }
 
-void scrollingMessage3(lv_display_t *display, const char *message)
+void scrollingMessageCenter(lv_display_t *display, const char *message)
 {
     if (lvgl_port_lock(0))
     {
@@ -190,6 +160,36 @@ void scrollingMessage3(lv_display_t *display, const char *message)
         lv_label_set_long_mode(label1, LV_LABEL_LONG_SCROLL_CIRCULAR);
         lv_obj_set_width(label1, width);
         lv_label_set_text(label1, message);
+
+        lvgl_port_unlock();
+    }
+}
+
+void scrollingMessageBottom(lv_display_t *display, const char *message)
+{
+    if (lvgl_port_lock(0))
+    {
+        lv_obj_t *scr = lv_display_get_screen_active(display);
+        int32_t width = lv_display_get_horizontal_resolution(display);
+
+        static lv_anim_t animationTemplate;
+        lv_anim_init(&animationTemplate);
+        lv_anim_set_delay(&animationTemplate, 1000);
+        lv_anim_set_repeat_delay(&animationTemplate, 3000);
+        lv_anim_set_repeat_count(&animationTemplate, LV_ANIM_REPEAT_INFINITE);
+
+        static lv_style_t style;
+        lv_style_init(&style);
+        lv_style_set_text_font(&style, &lv_font_montserrat_24);
+        lv_style_set_text_color(&style, lv_palette_main(LV_PALETTE_GREEN));
+        lv_style_set_align(&style, LV_ALIGN_BOTTOM_MID);
+        lv_style_set_anim(&style, &animationTemplate);
+
+        lv_obj_t *label = lv_label_create(scr);
+        lv_obj_add_style(label, &style, LV_STATE_DEFAULT);
+        lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL_CIRCULAR);
+        lv_obj_set_width(label, width);
+        lv_label_set_text(label, message);
 
         lvgl_port_unlock();
     }
@@ -333,7 +333,7 @@ extern "C" void app_main(void)
     vTaskDelay(pdMS_TO_TICKS(3000));
     clear(display);
 
-    scrollingMessage3(display, "This is a MacDap application!");
+    scrollingMessageCenter(display, "This is a MacDap application!");
     vTaskDelay(pdMS_TO_TICKS(10000));
     clear(display);
 
@@ -344,8 +344,8 @@ extern "C" void app_main(void)
     //brightness = 1.0;
     //ledMatrix.setBrightness(brightness);
     lv_obj_t *heartbeat = led(display);
-    scrollingMessage1(display, "Test program Version 0.0.0 from MacDap Inc.");
-    scrollingMessage2(display, "MacDap Inc. the best");
+    scrollingMessageBottom(display, "Test program Version 0.0.0 from MacDap Inc.");
+    scrollingMessageTop(display, "MacDap Inc. the best");
 
 #ifdef CONFIG_HEAP_TASK_TRACKING
     esp_dump_per_task_heap_info();

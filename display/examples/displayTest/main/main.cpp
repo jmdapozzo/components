@@ -89,36 +89,6 @@ void message(lv_display_t *display, const char *message)
     }
 }
 
-void scrollingMessageBottom(lv_display_t *display, const char *message)
-{
-    if (lvgl_port_lock(0))
-    {
-        lv_obj_t *scr = lv_display_get_screen_active(display);
-        int32_t width = lv_display_get_horizontal_resolution(display);
-
-        static lv_anim_t animationTemplate;
-        lv_anim_init(&animationTemplate);
-        lv_anim_set_delay(&animationTemplate, 1000);
-        lv_anim_set_repeat_delay(&animationTemplate, 3000);
-        lv_anim_set_repeat_count(&animationTemplate, LV_ANIM_REPEAT_INFINITE);
-
-        static lv_style_t style;
-        lv_style_init(&style);
-        lv_style_set_text_font(&style, &lv_font_montserrat_14);
-        lv_style_set_text_color(&style, lv_palette_main(LV_PALETTE_GREEN));
-        lv_style_set_align(&style, LV_ALIGN_BOTTOM_MID);
-        lv_style_set_anim(&style, &animationTemplate);
-
-        lv_obj_t *label = lv_label_create(scr);
-        lv_obj_add_style(label, &style, LV_STATE_DEFAULT);
-        lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL_CIRCULAR);
-        lv_obj_set_width(label, width);
-        lv_label_set_text(label, message);
-
-        lvgl_port_unlock();
-    }
-}
-
 void scrollingMessageTop(lv_display_t *display, const char *message)
 {
     static lv_obj_t *label = nullptr;
@@ -169,6 +139,36 @@ void scrollingMessageCenter(lv_display_t *display, const char *message)
         lv_label_set_long_mode(label1, LV_LABEL_LONG_SCROLL_CIRCULAR);
         lv_obj_set_width(label1, width);
         lv_label_set_text(label1, message);
+
+        lvgl_port_unlock();
+    }
+}
+
+void scrollingMessageBottom(lv_display_t *display, const char *message)
+{
+    if (lvgl_port_lock(0))
+    {
+        lv_obj_t *scr = lv_display_get_screen_active(display);
+        int32_t width = lv_display_get_horizontal_resolution(display);
+
+        static lv_anim_t animationTemplate;
+        lv_anim_init(&animationTemplate);
+        lv_anim_set_delay(&animationTemplate, 1000);
+        lv_anim_set_repeat_delay(&animationTemplate, 3000);
+        lv_anim_set_repeat_count(&animationTemplate, LV_ANIM_REPEAT_INFINITE);
+
+        static lv_style_t style;
+        lv_style_init(&style);
+        lv_style_set_text_font(&style, &lv_font_montserrat_14);
+        lv_style_set_text_color(&style, lv_palette_main(LV_PALETTE_GREEN));
+        lv_style_set_align(&style, LV_ALIGN_BOTTOM_MID);
+        lv_style_set_anim(&style, &animationTemplate);
+
+        lv_obj_t *label = lv_label_create(scr);
+        lv_obj_add_style(label, &style, LV_STATE_DEFAULT);
+        lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL_CIRCULAR);
+        lv_obj_set_width(label, width);
+        lv_label_set_text(label, message);
 
         lvgl_port_unlock();
     }
