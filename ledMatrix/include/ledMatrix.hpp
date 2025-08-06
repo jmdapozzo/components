@@ -9,8 +9,6 @@ namespace macdap
 
     private:
         lv_display_t *m_display;
-        uint16_t m_horizontalResolution;
-        uint16_t m_verticalResolution;
         LedMatrix();
         ~LedMatrix();
 

@@ -5,21 +5,21 @@ using namespace macdap;
 
 static const char *TAG = "ledMatrix";
 
-static void flushCB(lv_display_t *disp_drv, const lv_area_t *area, uint8_t *px_map)
+static void flushCB(lv_display_t *display, const lv_area_t *area, uint8_t *px_map)
 {
     uint16_t *pxMap = (uint16_t *)px_map;
-    uint32_t horizontalResolution = lv_display_get_horizontal_resolution(disp_drv);
-    MatrixPanel_I2S_DMA *display = static_cast<MatrixPanel_I2S_DMA*>(lv_display_get_user_data(disp_drv));
+    uint32_t horizontalResolution = lv_display_get_horizontal_resolution(display);
+    MatrixPanel_I2S_DMA *matrixPanel = static_cast<MatrixPanel_I2S_DMA*>(lv_display_get_user_data(display));
     for(int32_t y = area->y1; y <= area->y2; y++) {
         int32_t virtualY = y % CONFIG_LED_MATRIX_PIXEL_HEIGHT;
         for(int32_t x = area->x1; x <= area->x2; x++) {
             int32_t virtualX = (x % horizontalResolution) + ((y / CONFIG_LED_MATRIX_PIXEL_HEIGHT) * horizontalResolution);
-            display->drawPixel(virtualX, virtualY, *pxMap);
+            matrixPanel->drawPixel(virtualX, virtualY, *pxMap);
             pxMap++;
         }
     }
 
-    lv_disp_flush_ready(disp_drv);
+    lv_disp_flush_ready(display);
 }
 
 LedMatrix::LedMatrix()
@@ -33,11 +33,13 @@ LedMatrix::LedMatrix()
     display->setPanelBrightness(255);
     display->clearScreen();
 
-    m_horizontalResolution = CONFIG_LED_MATRIX_MODULE_WIDTH * CONFIG_LED_MATRIX_PIXEL_WIDTH;
-    m_verticalResolution = CONFIG_LED_MATRIX_MODULE_HEIGHT * CONFIG_LED_MATRIX_PIXEL_HEIGHT;
-    
+    int32_t horizontalResolution = CONFIG_LED_MATRIX_MODULE_WIDTH * CONFIG_LED_MATRIX_PIXEL_WIDTH;
+    int32_t verticalResolution = CONFIG_LED_MATRIX_MODULE_HEIGHT * CONFIG_LED_MATRIX_PIXEL_HEIGHT;
+
+    ESP_LOGI(TAG, "Display resolution: %ld x %ld", horizontalResolution, verticalResolution);
+
     #define BYTES_PER_PIXEL (LV_COLOR_FORMAT_GET_SIZE(LV_COLOR_FORMAT_RGB565))
-    size_t lvBufferSize = m_horizontalResolution * m_verticalResolution * BYTES_PER_PIXEL;
+    size_t lvBufferSize = horizontalResolution * verticalResolution * BYTES_PER_PIXEL;
     uint8_t *lvBuffer = static_cast<uint8_t*>(heap_caps_malloc(lvBufferSize, MALLOC_CAP_DEFAULT));
     if (lvBuffer == nullptr)
     {
@@ -45,7 +47,7 @@ LedMatrix::LedMatrix()
         return;
     }
 
-    m_display = lv_display_create(m_horizontalResolution, m_verticalResolution);
+    m_display = lv_display_create(horizontalResolution, verticalResolution);
     lv_display_set_flush_cb(m_display, flushCB);
     lv_display_set_user_data(m_display, display);
     lv_display_set_buffers(m_display, lvBuffer, NULL, lvBufferSize, LV_DISPLAY_RENDER_MODE_FULL);

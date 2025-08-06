@@ -104,10 +104,12 @@ Display::Display()
         }
     };
 
+    ESP_LOGI(TAG, "Display resolution: %d x %d", DISP_WIDTH, DISP_HEIGHT);
+
     m_lvDisplay = lvgl_port_add_disp(&dispConfig); // Warning "Callback on_color_trans_done was already set and now it was overwritten!" comes from this call.
 
     /* Rotation of the screen */
-    lv_disp_set_rotation(m_lvDisplay, static_cast<lv_display_rotation_t>(CONFIG_DISPLAY_ROTATION));
+    lv_display_set_rotation(m_lvDisplay, static_cast<lv_display_rotation_t>(CONFIG_DISPLAY_ROTATION));
 }
 
 Display::~Display()

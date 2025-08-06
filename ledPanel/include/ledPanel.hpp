@@ -25,8 +25,6 @@ extern "C"
 
     private:
         lv_display_t *m_display;
-        uint16_t m_horizontalResolution;
-        uint16_t m_verticalResolution;
         size_t m_panelBufferSize;
         uint8_t* m_panelBuffer;
 #ifdef CONFIG_LED_PANEL_TYPE_MAX7219
@@ -47,8 +45,6 @@ extern "C"
             static LedPanel instance;
             return instance;
         }
-        uint16_t getHorizontalResolution();
-        uint16_t getVerticalResolution();
         uint8_t getBuffer(uint16_t index);
         void setBuffer(uint16_t index, uint8_t data);
         void sendBuffer(void *buffer, size_t bufferSize);

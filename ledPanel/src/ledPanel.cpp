@@ -7,6 +7,10 @@
 #include <esp_timer.h>
 #include "esp_heap_caps.h"
 
+// #include <string.h>
+// #include <esp_timer.h>
+// #include <esp_check.h>
+
 using namespace macdap;
 
 #ifdef CONFIG_LED_PANEL_INTERFACE_GPIO
@@ -44,11 +48,8 @@ static const char *TAG = "ledPanel (SPI)";
 
 static SemaphoreHandle_t _panelBufferMutex;
 
-static void setPixel(LedPanel* ledPanel, int32_t x, int32_t y, bool state)
+static void setPixel(LedPanel* ledPanel, int32_t horizontalResolution, int32_t verticalResolution, int32_t x, int32_t y, bool state)
 {
-    uint16_t horizontalResolution = ledPanel->getHorizontalResolution();
-    uint16_t verticalResolution = ledPanel->getVerticalResolution();
-
     if (x < 0 || x >= horizontalResolution || y < 0 || y >= verticalResolution)
     {
         ESP_LOGE(TAG, "setPixel x=%ld, y=%ld out of bounds", x, y);
@@ -73,7 +74,7 @@ static void setPixel(LedPanel* ledPanel, int32_t x, int32_t y, bool state)
     ledPanel->setBuffer(bufferIndex, buffer);
 }
 
-static void flushCB(lv_display_t *disp_drv, const lv_area_t *area, uint8_t *px_map)
+static void flushCB(lv_display_t *display, const lv_area_t *area, uint8_t *px_map)
 {
 #if BYTES_PER_PIXEL == 1
     uint8_t *pxMap = px_map;
@@ -85,21 +86,24 @@ static void flushCB(lv_display_t *disp_drv, const lv_area_t *area, uint8_t *px_m
 #error "LV_COLOR_DEPTH should be 1, 8, 16 or 32"
 #endif
 
-    LedPanel* ledPanel = static_cast<LedPanel*>(lv_display_get_user_data(disp_drv));
+    LedPanel* ledPanel = static_cast<LedPanel*>(lv_display_get_user_data(display));
 
     xSemaphoreTake(_panelBufferMutex, portMAX_DELAY);
+
+    int32_t horizontalResolution = lv_display_get_horizontal_resolution(display);
+    int32_t verticalResolution = lv_display_get_vertical_resolution(display);
 
     int32_t x, y;
     for(y = area->y1; y <= area->y2; y++) {
         for(x = area->x1; x <= area->x2; x++) {
-            setPixel(ledPanel, x, y, *pxMap != 0);
+            setPixel(ledPanel,horizontalResolution, verticalResolution, x, y, *pxMap != 0);
             pxMap++;
         }
     }
 
     ledPanel->sendBuffer();
 
-    lv_disp_flush_ready(disp_drv);
+    lv_disp_flush_ready(display);
 
     xSemaphoreGive(_panelBufferMutex);
 }
@@ -164,10 +168,11 @@ LedPanel::LedPanel()
     ESP_ERROR_CHECK(spi_bus_add_device(SPI3_HOST, &spiDeviceInterfaceConfig, &m_spi));
 #endif
 
-    m_horizontalResolution = CONFIG_LED_PANEL_MODULE_WIDTH * CONFIG_LED_PANEL_MATRIX_WIDTH;
-    m_verticalResolution = CONFIG_LED_PANEL_MODULE_HEIGHT * CONFIG_LED_PANEL_MATRIX_HEIGHT;
+    int32_t horizontalResolution = CONFIG_LED_PANEL_MODULE_WIDTH * CONFIG_LED_PANEL_MATRIX_WIDTH;
+    int32_t verticalResolution = CONFIG_LED_PANEL_MODULE_HEIGHT * CONFIG_LED_PANEL_MATRIX_HEIGHT;
+    ESP_LOGI(TAG, "Display resolution: %ld x %ld", horizontalResolution, verticalResolution);
 
-    m_panelBufferSize = (m_verticalResolution / PIXEL_PER_BYTE) * m_horizontalResolution * sizeof(uint8_t);
+    m_panelBufferSize = (verticalResolution / PIXEL_PER_BYTE) * horizontalResolution * sizeof(uint8_t);
     m_panelBuffer = static_cast<uint8_t*>(heap_caps_malloc(m_panelBufferSize, MALLOC_CAP_DMA));
     if (m_panelBuffer == nullptr)
     {
@@ -175,7 +180,7 @@ LedPanel::LedPanel()
         return;
     }
 
-    size_t lvBufferSize = m_horizontalResolution * m_verticalResolution * BYTES_PER_PIXEL;
+    size_t lvBufferSize = horizontalResolution * verticalResolution * BYTES_PER_PIXEL;
     ESP_LOGI(TAG, "Allocating lvBuffer of size %zu", lvBufferSize);
     uint8_t *lvBuffer = static_cast<uint8_t*>(heap_caps_malloc(lvBufferSize, MALLOC_CAP_DEFAULT));
     if (lvBuffer == nullptr)
@@ -184,7 +189,7 @@ LedPanel::LedPanel()
         return;
     }
 
-    m_display = lv_display_create(m_horizontalResolution, m_verticalResolution);
+    m_display = lv_display_create(horizontalResolution, verticalResolution);
     lv_display_set_flush_cb(m_display, flushCB);
     lv_display_set_user_data(m_display, this);
     lv_display_set_buffers(m_display, lvBuffer, NULL, lvBufferSize, LV_DISPLAY_RENDER_MODE_FULL);
@@ -299,16 +304,6 @@ LedPanel::~LedPanel()
 #endif
 }
 
-uint16_t LedPanel::getHorizontalResolution()
-{
-    return m_horizontalResolution;
-}
-
-uint16_t LedPanel::getVerticalResolution()
-{
-    return m_verticalResolution;
-}
-
 uint8_t LedPanel::getBuffer(uint16_t index)
 {
     assert(index < m_panelBufferSize);
@@ -382,12 +377,15 @@ void LedPanel::sendBuffer()
 
     for (int regDigit = 0; regDigit < ALL_DIGITS; regDigit++)
     {
+        // TODO Is this needed here?
         if (m_max7219Buffer == nullptr)
         {
             ESP_LOGE(TAG, "Failed to allocate m_max7219Buffer on the heap!");
             return;
         }
-        lv_memset_00(m_max7219Buffer, m_max7219BufferLen * sizeof(Max7219Buffer_t));
+
+        // TODO Fix this as lv_memset_00 is no longer available
+        // lv_memset_00(m_max7219Buffer, m_max7219BufferLen * sizeof(Max7219Buffer_t));
         uint8_t *panelBuffer = m_panelBuffer;
         for (int chip = 0; chip < m_max7219BufferLen; chip++)
         {
