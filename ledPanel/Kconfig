@@ -26,7 +26,7 @@ menu "MacDap Led Panel"
 
 	choice LED_PANEL_INTERFACE
 		prompt "Interface"
-		default LED_PANEL_INTERFACE_GPIO
+		default LED_PANEL_INTERFACE_SPI
 		help
 			Select LED Panel Interface
 		config LED_PANEL_INTERFACE_GPIO
