@@ -1,6 +1,12 @@
-#include "esp_err.h"
+#pragma once
+
 #include <lvgl.h>
 #include <esp_lvgl_port.h>
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 namespace macdap
 {
@@ -24,3 +30,8 @@ namespace macdap
         lv_display_t *getLvDisplay();
     };
 }
+
+#ifdef __cplusplus
+}
+#endif
+

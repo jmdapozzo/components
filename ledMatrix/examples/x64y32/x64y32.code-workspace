@@ -11,6 +11,9 @@
 		}
 	],
 	"settings": {
-		"svg.preview.background": "editor"
+		"svg.preview.background": "editor",
+		"files.associations": {
+			"__config": "cpp"
+		}
 	}
 }
