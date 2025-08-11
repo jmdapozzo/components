@@ -46,8 +46,8 @@ extern "C" void app_main(void)
     macdap::Graphics &graphics = macdap::Graphics::getInstance();
 
     macdap::LedMatrix &ledMatrix = macdap::LedMatrix::getInstance();
-    lv_display_t *display = ledMatrix.getLvDisplay();
-    graphics.init(display);
+    lv_display_t *lvDisplay = ledMatrix.getLvDisplay();
+    graphics.init(lvDisplay);
 
     lv_anim_init(&_animationTemplate);
     lv_anim_set_delay(&_animationTemplate, 1000);
@@ -75,48 +75,48 @@ extern "C" void app_main(void)
     lv_style_set_text_font(&_styleExtraLargePrimary, &lv_font_montserrat_28);
     lv_style_set_text_color(&_styleExtraLargePrimary, _primaryColor);
    
-    graphics.background(display, lv_color_black());
+    graphics.background(lvDisplay, lv_color_black());
 
     float brightness = 100.0;
     ledMatrix.setBrightness(brightness);
 
-    graphics.logo(display, &colorLogoNoText64x64);
+    graphics.logo(lvDisplay, &colorLogoNoText64x64);
     vTaskDelay(pdMS_TO_TICKS(3000));
-    graphics.clear(display);
+    graphics.clear(lvDisplay);
 
-    graphics.greeting(display, &_styleSmallPrimary, "Test", "Version 0.0.0");
+    graphics.greeting(lvDisplay, &_styleSmallPrimary, "Test", "Version 0.0.0");
     vTaskDelay(pdMS_TO_TICKS(3000));
-    graphics.clear(display);
+    graphics.clear(lvDisplay);
 
-    graphics.message(display, &_styleExtraLargePrimary, "MacDap Inc.");
+    graphics.message(lvDisplay, &_styleExtraLargePrimary, "MacDap Inc.");
     vTaskDelay(pdMS_TO_TICKS(3000));
-    graphics.clear(display);
+    graphics.clear(lvDisplay);
 
-    graphics.qrcode(display);
+    graphics.qrcode(lvDisplay);
     vTaskDelay(pdMS_TO_TICKS(3000));
-    graphics.clear(display);
+    graphics.clear(lvDisplay);
 
-    graphics.cross(display);
+    graphics.cross(lvDisplay, lv_palette_main(LV_PALETTE_BLUE));
     vTaskDelay(pdMS_TO_TICKS(3000));
-    graphics.clear(display);
+    graphics.clear(lvDisplay);
 
-    graphics.scrollingMessageCenter(display, &_styleLargeAnimation, "This is a MacDap application!");
+    graphics.scrollingMessageCenter(lvDisplay, &_styleLargeAnimation, "This is a MacDap application!");
     vTaskDelay(pdMS_TO_TICKS(10000));
-    graphics.clear(display);
+    graphics.clear(lvDisplay);
 
-    graphics.spinner(display);
+    graphics.spinner(lvDisplay);
     vTaskDelay(pdMS_TO_TICKS(5000));
-    graphics.clear(display);
+    graphics.clear(lvDisplay);
 
-    lv_obj_t *heartbeat = graphics.led(display);
-    graphics.scrollingMessageBottom(display, &_styleLargeAnimation, "Test program Version 0.0.0 from MacDap Inc.");
-    graphics.scrollingMessageTop(display, &_styleMediumPrimary, "MacDap Inc. the best");
+    int palette_idx = 0;
+    lv_obj_t *heartbeat = graphics.led(lvDisplay, lv_palette_main(palettes[palette_idx]));
+    graphics.scrollingMessageBottom(lvDisplay, &_styleLargeAnimation, "Test program Version 0.0.0 from MacDap Inc.");
+    graphics.scrollingMessageTop(lvDisplay, &_styleMediumPrimary, "MacDap Inc. the best");
 
 #ifdef CONFIG_HEAP_TASK_TRACKING
     esp_dump_per_task_heap_info();
 #endif
 
-    int palette_idx = 0;
     int tick = 0;
     bool phase = false;
     while (true)
