@@ -180,8 +180,8 @@ void Graphics::qrcode(lv_display_t *display)
 
         lv_obj_t *qr = lv_qrcode_create(scr);
         lv_qrcode_set_size(qr, height);
-        lv_qrcode_set_dark_color(qr, fgColor);
-        lv_qrcode_set_light_color(qr, bgColor);
+        lv_qrcode_set_dark_color(qr, lv_color_black());
+        lv_qrcode_set_light_color(qr, lv_color_white());
 
         const char *data = "https://macdap.net";
         lv_qrcode_update(qr, data, strlen(data));
@@ -192,7 +192,7 @@ void Graphics::qrcode(lv_display_t *display)
     }
 }
 
-void Graphics::cross(lv_display_t *display)
+void Graphics::cross(lv_display_t *display, lv_color_t color)
 {
     if (lvgl_port_lock(0))
     {
@@ -201,22 +201,20 @@ void Graphics::cross(lv_display_t *display)
         int32_t width = lv_display_get_horizontal_resolution(display);
         int32_t height = lv_display_get_vertical_resolution(display);
 
-        static lv_point_precise_t line1Points[] = { {0, 0}, {width, height} };
-        static lv_point_precise_t line2Points[] = { {0, height}, {width, 0} };
+        lv_point_precise_t line1Points[] = { {0, 0}, {width, height} };
+        lv_point_precise_t line2Points[] = { {0, height}, {width, 0} };
 
         static lv_style_t style;
         lv_style_init(&style);
         lv_style_set_line_width(&style, 3);
-        lv_style_set_line_color(&style, lv_palette_main(LV_PALETTE_BLUE));
+        lv_style_set_line_color(&style, color);
         lv_style_set_line_rounded(&style, true);
 
-        lv_obj_t *line1;
-        line1 = lv_line_create(scr);
+        lv_obj_t *line1 = lv_line_create(scr);
         lv_line_set_points(line1, line1Points, 2);
         lv_obj_add_style(line1, &style, LV_STATE_DEFAULT);
 
-        lv_obj_t *line2;
-        line2 = lv_line_create(scr);
+        lv_obj_t *line2 = lv_line_create(scr);
         lv_line_set_points(line2, line2Points, 2);
         lv_obj_add_style(line2, &style, LV_STATE_DEFAULT);
 
@@ -246,7 +244,7 @@ void Graphics::spinner(lv_display_t *display)
     }
 }
 
-lv_obj_t *Graphics::led(lv_display_t *display)
+lv_obj_t *Graphics::led(lv_display_t *display, lv_color_t color)
 {
     lv_obj_t *led = nullptr;
 
@@ -259,7 +257,7 @@ lv_obj_t *Graphics::led(lv_display_t *display)
         // lv_obj_set_size(led, 8, 8);
         lv_obj_align(led, LV_ALIGN_CENTER, 0, 0);
         //lv_obj_align(led, LV_ALIGN_TOP_RIGHT, -8, 4);
-        lv_led_set_color(led, lv_palette_main(LV_PALETTE_RED));
+        lv_led_set_color(led, color);
         lv_led_off(led);
 
         lvgl_port_unlock();

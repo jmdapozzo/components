@@ -41,9 +41,9 @@ namespace macdap
         lv_obj_t * scrollingMessageCenter(lv_display_t *display, lv_style_t *style, const char *message);
         lv_obj_t * scrollingMessageBottom(lv_display_t *display, lv_style_t *style, const char *message);
         void qrcode(lv_display_t *display);
-        void cross(lv_display_t *display);
+        void cross(lv_display_t *display, lv_color_t color);
         void spinner(lv_display_t *display);
-        lv_obj_t *led(lv_display_t *display);
+        lv_obj_t *led(lv_display_t *display, lv_color_t color);
         
     };
 }
