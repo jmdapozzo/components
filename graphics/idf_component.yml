@@ -4,3 +4,4 @@ description: "Graphics used for MacDap's projects"
 url: https://github.com/jmdapozzo/components/tree/main/graphics
 dependencies:
   lvgl/lvgl: "^9"
+  esp_lvgl_port: "^2"
