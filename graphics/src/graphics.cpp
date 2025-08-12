@@ -178,9 +178,9 @@ lv_obj_t *Graphics::scrollingMessageBottom(lv_display_t *display, lv_style_t *st
     return label;
 }
 
-#ifdef CONFIG_LV_USE_QRCODE
 void Graphics::qrcode(lv_display_t *display)
 {
+#ifdef CONFIG_LV_USE_QRCODE
     if (seizeLvgl())
     {
         lv_obj_t *scr = lv_display_get_screen_active(display);
@@ -201,8 +201,10 @@ void Graphics::qrcode(lv_display_t *display)
 
         releaseLvgl();
     }
-}
+#else
+    ESP_LOGW(TAG, "QR Code support is not enabled in LVGL configuration.");
 #endif
+}
 
 void Graphics::cross(lv_display_t *display, lv_color_t color)
 {
