@@ -33,7 +33,7 @@ extern "C" void app_main(void)
     lv_style_init(&_styleMediumPrimary);
     lv_style_set_text_font(&_styleMediumPrimary, &lv_font_unscii_8);
     lv_style_set_text_color(&_styleMediumPrimary, lv_color_white());
-
+    
     lv_style_init(&_styleMediumAnimation);
     lv_style_set_text_font(&_styleMediumAnimation, &lv_font_unscii_8);
     lv_style_set_text_color(&_styleMediumAnimation, lv_color_white());

@@ -110,6 +110,7 @@ extern "C" void app_main(void)
 
     int palette_idx = 0;
     lv_obj_t *heartbeat = graphics.led(lvDisplay, lv_palette_main(palettes[palette_idx]));
+
     graphics.scrollingMessageBottom(lvDisplay, &_styleLargeAnimation, "Test program Version 0.0.0 from MacDap Inc.");
     graphics.scrollingMessageTop(lvDisplay, &_styleMediumPrimary, "MacDap Inc. the best");
 
@@ -125,12 +126,20 @@ extern "C" void app_main(void)
         if (phase)
         {
             phase = false;
-            lv_led_on(heartbeat);
+            if (graphics.seizeLvgl())
+            {
+                lv_led_on(heartbeat);
+                graphics.releaseLvgl();
+            }
         }
         else
         {
             phase = true;
-            lv_led_off(heartbeat);
+            if (graphics.seizeLvgl())
+            {
+                lv_led_off(heartbeat);
+                graphics.releaseLvgl();
+            }
         }
 
         tick++;
@@ -138,7 +147,11 @@ extern "C" void app_main(void)
         {
             tick = 0;
             palette_idx = (palette_idx + 1) % (sizeof(palettes)/sizeof(palettes[0]));
-            lv_led_set_color(heartbeat, lv_palette_main(palettes[palette_idx]));
+            if (lvgl_port_lock(0))
+            {
+                lv_led_set_color(heartbeat, lv_palette_main(palettes[palette_idx]));
+                lvgl_port_unlock();
+            }
         }
     }
 }
