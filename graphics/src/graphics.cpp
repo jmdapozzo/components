@@ -31,31 +31,41 @@ esp_err_t Graphics::init(lv_display_t *display)
     return ESP_OK;
 }
 
+bool Graphics::seizeLvgl(uint32_t msTimeout)
+{
+    return lvgl_port_lock(msTimeout);
+}
+
+void Graphics::releaseLvgl(void)
+{
+    lvgl_port_unlock();
+}
+
 void Graphics::clear(lv_display_t *display)
 {
-    if (lvgl_port_lock(0))
+    if (seizeLvgl())
     {
         lv_obj_t *scr = lv_display_get_screen_active(display);
 
         lv_obj_clean(scr);
-        lvgl_port_unlock();
+        releaseLvgl();
     }
 }
 
 void Graphics::background(lv_display_t *display, lv_color_t color)
 {
-    if (lvgl_port_lock(0))
+    if (seizeLvgl())
     {
         lv_obj_t *scr = lv_display_get_screen_active(display);
 
         lv_obj_set_style_bg_color(scr, color, LV_PART_MAIN);
-        lvgl_port_unlock();
+        releaseLvgl();
     }
 }
 
 void Graphics::logo(lv_display_t *display, const void *src)
 {
-    if (lvgl_port_lock(0)) 
+    if (seizeLvgl()) 
     {
         lv_obj_t *scr = lv_display_get_screen_active(display);
 
@@ -63,13 +73,13 @@ void Graphics::logo(lv_display_t *display, const void *src)
         lv_image_set_src(logo, src);
         lv_obj_align(logo, LV_ALIGN_LEFT_MID, 0, 0);
 
-        lvgl_port_unlock();
+        releaseLvgl();
     }
 }
 
 void Graphics::greeting(lv_display_t *display, lv_style_t *style, const char *projectName, const char *version)
 {
-    if (lvgl_port_lock(0)) 
+    if (seizeLvgl()) 
     {
         lv_obj_t *scr = lv_display_get_screen_active(display);
 
@@ -83,7 +93,7 @@ void Graphics::greeting(lv_display_t *display, lv_style_t *style, const char *pr
         lv_label_set_text(labelVersion, version);
         lv_obj_align(labelVersion, LV_ALIGN_BOTTOM_LEFT, 0, 0);
 
-        lvgl_port_unlock();
+        releaseLvgl();
     }
 }
 
@@ -91,7 +101,7 @@ lv_obj_t *Graphics::message(lv_display_t *display, lv_style_t *style, const char
 {
     lv_obj_t *label = nullptr;
 
-    if (lvgl_port_lock(0))
+    if (seizeLvgl())
     {
         lv_obj_t *scr = lv_display_get_screen_active(display);
 
@@ -100,7 +110,7 @@ lv_obj_t *Graphics::message(lv_display_t *display, lv_style_t *style, const char
         lv_label_set_text(label, message);
         lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
 
-        lvgl_port_unlock();
+        releaseLvgl();
     }
     return label;
 }
@@ -109,7 +119,7 @@ lv_obj_t *Graphics::scrollingMessageTop(lv_display_t *display, lv_style_t *style
 {
     lv_obj_t *label = nullptr;
 
-    if (lvgl_port_lock(0))
+    if (seizeLvgl())
     {
         lv_obj_t *scr = lv_display_get_screen_active(display);
         int32_t width = lv_display_get_horizontal_resolution(display);
@@ -121,7 +131,7 @@ lv_obj_t *Graphics::scrollingMessageTop(lv_display_t *display, lv_style_t *style
         lv_obj_set_width(label, width);
         lv_label_set_text(label, message);
 
-        lvgl_port_unlock();
+        releaseLvgl();
     }
     return label;
 }
@@ -130,7 +140,7 @@ lv_obj_t *Graphics::scrollingMessageCenter(lv_display_t *display, lv_style_t *st
 {
     lv_obj_t *label = nullptr;
 
-    if (lvgl_port_lock(0))
+    if (seizeLvgl())
     {
         lv_obj_t *scr = lv_display_get_screen_active(display);
         int32_t width = lv_display_get_horizontal_resolution(display);
@@ -142,7 +152,7 @@ lv_obj_t *Graphics::scrollingMessageCenter(lv_display_t *display, lv_style_t *st
         lv_obj_set_width(label, width);
         lv_label_set_text(label, message);
 
-        lvgl_port_unlock();
+        releaseLvgl();
     }
     return label;
 }
@@ -151,7 +161,7 @@ lv_obj_t *Graphics::scrollingMessageBottom(lv_display_t *display, lv_style_t *st
 {
     lv_obj_t *label = nullptr;
 
-    if (lvgl_port_lock(0))
+    if (seizeLvgl())
     {
         lv_obj_t *scr = lv_display_get_screen_active(display);
         int32_t width = lv_display_get_horizontal_resolution(display);
@@ -163,14 +173,15 @@ lv_obj_t *Graphics::scrollingMessageBottom(lv_display_t *display, lv_style_t *st
         lv_obj_set_width(label, width);
         lv_label_set_text(label, message);
 
-        lvgl_port_unlock();
+        releaseLvgl();
     }
     return label;
 }
 
+#ifdef CONFIG_LV_USE_QRCODE
 void Graphics::qrcode(lv_display_t *display)
 {
-    if (lvgl_port_lock(0))
+    if (seizeLvgl())
     {
         lv_obj_t *scr = lv_display_get_screen_active(display);
         int32_t height = lv_display_get_vertical_resolution(display);
@@ -188,13 +199,14 @@ void Graphics::qrcode(lv_display_t *display)
         lv_obj_center(qr);
         lv_obj_align(qr, LV_ALIGN_LEFT_MID, 0, 0);
 
-        lvgl_port_unlock();
+        releaseLvgl();
     }
 }
+#endif
 
 void Graphics::cross(lv_display_t *display, lv_color_t color)
 {
-    if (lvgl_port_lock(0))
+    if (seizeLvgl())
     {
         lv_obj_t *scr = lv_display_get_screen_active(display);
 
@@ -218,13 +230,13 @@ void Graphics::cross(lv_display_t *display, lv_color_t color)
         lv_line_set_points(line2, line2Points, 2);
         lv_obj_add_style(line2, &style, LV_STATE_DEFAULT);
 
-        lvgl_port_unlock();
+        releaseLvgl();
     }
 }
 
 void Graphics::spinner(lv_display_t *display)
 {
-    if (lvgl_port_lock(0))
+    if (seizeLvgl())
     {
         lv_obj_t *scr = lv_display_get_screen_active(display);
         int32_t height = lv_display_get_vertical_resolution(display);
@@ -240,7 +252,7 @@ void Graphics::spinner(lv_display_t *display)
         lv_obj_set_size(spinner, height, height);
         lv_obj_align(spinner, LV_ALIGN_CENTER, 0, 0);
 
-        lvgl_port_unlock();
+        releaseLvgl();
     }
 }
 
@@ -248,7 +260,7 @@ lv_obj_t *Graphics::led(lv_display_t *display, lv_color_t color)
 {
     lv_obj_t *led = nullptr;
 
-    if (lvgl_port_lock(0))
+    if (seizeLvgl())
     {
         lv_obj_t *scr = lv_display_get_screen_active(display);
 
@@ -260,7 +272,7 @@ lv_obj_t *Graphics::led(lv_display_t *display, lv_color_t color)
         lv_led_set_color(led, color);
         lv_led_off(led);
 
-        lvgl_port_unlock();
+        releaseLvgl();
     }
     return led;
 }

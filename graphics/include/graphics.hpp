@@ -32,6 +32,8 @@ namespace macdap
         }
 
         esp_err_t init(lv_display_t *display);
+        bool seizeLvgl(uint32_t msTimeout = 0);
+        void releaseLvgl(void);
         void clear(lv_display_t *display);
         void background(lv_display_t *display,lv_color_t color);
         void logo(lv_display_t *display, const void *src);
