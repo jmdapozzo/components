@@ -37,12 +37,8 @@ namespace macdap
         void clear(lv_display_t *display);
         void background(lv_display_t *display,lv_color_t color);
         void logo(lv_display_t *display, const void *src);
-        void greeting(lv_display_t *display, lv_style_t *style, const char *projectName, const char *version); 
-        lv_obj_t * message(lv_display_t *display, lv_style_t *style, const char *message);
-        lv_obj_t * scrollingMessageTop(lv_display_t *display, lv_style_t *style, const char *message);
-        lv_obj_t * scrollingMessageCenter(lv_display_t *display, lv_style_t *style, const char *message);
-        lv_obj_t * scrollingMessageBottom(lv_display_t *display, lv_style_t *style, const char *message);
-        void qrcode(lv_display_t *display);
+        lv_obj_t * message(lv_display_t *display, lv_style_t *style, const char *message = "", lv_label_long_mode_t longMode = LV_LABEL_LONG_SCROLL_CIRCULAR);
+        void qrcode(lv_display_t *display, const char *data);
         void cross(lv_display_t *display, lv_color_t color);
         void spinner(lv_display_t *display);
         lv_obj_t *led(lv_display_t *display, lv_color_t color);
