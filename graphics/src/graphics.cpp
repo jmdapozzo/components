@@ -84,12 +84,17 @@ void Graphics::greeting(lv_display_t *display, lv_style_t *style, const char *pr
         lv_obj_t *scr = lv_display_get_screen_active(display);
 
         lv_obj_t *labelProjectName = lv_label_create(scr);
+        if (style != nullptr) {
+            lv_obj_add_style(labelProjectName, style, LV_STATE_DEFAULT);
+        }
         lv_obj_add_style(labelProjectName, style, LV_STATE_DEFAULT);
         lv_label_set_text(labelProjectName, projectName);
         lv_obj_align(labelProjectName, LV_ALIGN_TOP_LEFT, 0, 0);
 
         lv_obj_t *labelVersion = lv_label_create(scr);
-        lv_obj_add_style(labelVersion, style, LV_STATE_DEFAULT);
+        if (style != nullptr) {
+            lv_obj_add_style(labelVersion, style, LV_STATE_DEFAULT);
+        }
         lv_label_set_text(labelVersion, version);
         lv_obj_align(labelVersion, LV_ALIGN_BOTTOM_LEFT, 0, 0);
 
@@ -104,11 +109,16 @@ lv_obj_t *Graphics::message(lv_display_t *display, lv_style_t *style, const char
     if (seizeLvgl())
     {
         lv_obj_t *scr = lv_display_get_screen_active(display);
+        int32_t width = lv_display_get_horizontal_resolution(display);
 
         label = lv_label_create(scr);
-        lv_obj_add_style(label, style, LV_STATE_DEFAULT);
-        lv_label_set_text(label, message);
+        if (style != nullptr) {
+            lv_obj_add_style(label, style, LV_STATE_DEFAULT);
+        }
         lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
+        lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL_CIRCULAR);
+        lv_obj_set_width(label, width);
+        lv_label_set_text(label, message);
 
         releaseLvgl();
     }
@@ -125,8 +135,10 @@ lv_obj_t *Graphics::scrollingMessageTop(lv_display_t *display, lv_style_t *style
         int32_t width = lv_display_get_horizontal_resolution(display);
 
         label = lv_label_create(scr);
-        lv_obj_add_style(label, style, LV_STATE_DEFAULT);
-        lv_obj_align(label, LV_ALIGN_TOP_RIGHT, 0, 0);
+        if (style != nullptr) {
+            lv_obj_add_style(label, style, LV_STATE_DEFAULT);
+        }
+        lv_obj_align(label, LV_ALIGN_TOP_MID, 0, 0);
         lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL_CIRCULAR);
         lv_obj_set_width(label, width);
         lv_label_set_text(label, message);
@@ -146,7 +158,9 @@ lv_obj_t *Graphics::scrollingMessageCenter(lv_display_t *display, lv_style_t *st
         int32_t width = lv_display_get_horizontal_resolution(display);
 
         label = lv_label_create(scr);
-        lv_obj_add_style(label, style, LV_STATE_DEFAULT);
+        if (style != nullptr) {
+            lv_obj_add_style(label, style, LV_STATE_DEFAULT);
+        }
         lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
         lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL_CIRCULAR);
         lv_obj_set_width(label, width);
@@ -167,7 +181,9 @@ lv_obj_t *Graphics::scrollingMessageBottom(lv_display_t *display, lv_style_t *st
         int32_t width = lv_display_get_horizontal_resolution(display);
 
         label = lv_label_create(scr);
-        lv_obj_add_style(label, style, LV_STATE_DEFAULT);
+        if (style != nullptr) {
+            lv_obj_add_style(label, style, LV_STATE_DEFAULT);
+        }
         lv_obj_align(label, LV_ALIGN_BOTTOM_MID, 0, 0);
         lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL_CIRCULAR);
         lv_obj_set_width(label, width);
