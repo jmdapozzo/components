@@ -97,7 +97,7 @@ lv_obj_t *Graphics::message(lv_display_t *display, lv_style_t *style, const char
     return label;
 }
 
-void Graphics::qrcode(lv_display_t *display, const char *data)
+void Graphics::qrcode(lv_display_t *display, const char *data, lv_color_t lightColor, lv_color_t darkColor)
 {
 #ifdef CONFIG_LV_USE_QRCODE
     if (seizeLvgl())
@@ -105,15 +105,11 @@ void Graphics::qrcode(lv_display_t *display, const char *data)
         lv_obj_t *screen = lv_display_get_screen_active(display);
         int32_t height = lv_display_get_vertical_resolution(display);
 
-        lv_color_t bgColor = lv_palette_lighten(LV_PALETTE_NONE, 5);
-        lv_color_t fgColor = lv_palette_darken(LV_PALETTE_AMBER, 4);
-
         lv_obj_t *qr = lv_qrcode_create(screen);
         lv_qrcode_set_size(qr, height);
-        lv_qrcode_set_dark_color(qr, lv_color_black());
-        lv_qrcode_set_light_color(qr, lv_color_white());
+        lv_qrcode_set_dark_color(qr, darkColor);
+        lv_qrcode_set_light_color(qr, lightColor);
 
-        const char *data = "https://macdap.net";
         lv_qrcode_update(qr, data, strlen(data));
         lv_obj_center(qr);
         lv_obj_align(qr, LV_ALIGN_LEFT_MID, 0, 0);
@@ -125,7 +121,7 @@ void Graphics::qrcode(lv_display_t *display, const char *data)
 #endif
 }
 
-void Graphics::cross(lv_display_t *display, lv_color_t color)
+void Graphics::cross(lv_display_t *display, lv_style_t *style)
 {
     if (seizeLvgl())
     {
@@ -137,47 +133,39 @@ void Graphics::cross(lv_display_t *display, lv_color_t color)
         lv_point_precise_t line1Points[] = { {0, 0}, {width, height} };
         lv_point_precise_t line2Points[] = { {0, height}, {width, 0} };
 
-        static lv_style_t style;
-        lv_style_init(&style);
-        lv_style_set_line_width(&style, 3);
-        lv_style_set_line_color(&style, color);
-        lv_style_set_line_rounded(&style, true);
-
         lv_obj_t *line1 = lv_line_create(screen);
         lv_line_set_points(line1, line1Points, 2);
-        lv_obj_add_style(line1, &style, LV_STATE_DEFAULT);
+        if (style != nullptr) {
+            lv_obj_add_style(line1, style, LV_STATE_DEFAULT);
+        }
 
         lv_obj_t *line2 = lv_line_create(screen);
         lv_line_set_points(line2, line2Points, 2);
-        lv_obj_add_style(line2, &style, LV_STATE_DEFAULT);
+        if (style != nullptr) {
+            lv_obj_add_style(line2, style, LV_STATE_DEFAULT);
+        }
 
         releaseLvgl();
     }
 }
 
-void Graphics::spinner(lv_display_t *display)
+void Graphics::spinner(lv_display_t *display, int32_t size, lv_style_t *style)
 {
     if (seizeLvgl())
     {
         lv_obj_t *screen = lv_display_get_screen_active(display);
-        int32_t height = lv_display_get_vertical_resolution(display);
-
-        static lv_style_t style;
-        lv_style_init(&style);
-        lv_style_set_bg_color(&style, lv_palette_main(LV_PALETTE_BLUE));
-        lv_style_set_arc_color(&style, lv_palette_main(LV_PALETTE_RED));
 
         lv_obj_t *spinner = lv_spinner_create(screen);
-        lv_obj_add_style(spinner, &style, LV_STATE_DEFAULT);
-        // lv_spinner_set_anim_params(spinner, 1000, 60);
-        lv_obj_set_size(spinner, height, height);
-        lv_obj_align(spinner, LV_ALIGN_CENTER, 0, 0);
+        if (style != nullptr) {
+            lv_obj_add_style(spinner, style, LV_STATE_DEFAULT);
+        }
+        lv_obj_set_size(spinner, size, size);
 
         releaseLvgl();
     }
 }
 
-lv_obj_t *Graphics::led(lv_display_t *display, lv_color_t color)
+lv_obj_t *Graphics::led(lv_display_t *display, int32_t size, lv_color_t color)
 {
     lv_obj_t *led = nullptr;
 
@@ -186,10 +174,8 @@ lv_obj_t *Graphics::led(lv_display_t *display, lv_color_t color)
         lv_obj_t *screen = lv_display_get_screen_active(display);
 
         led = lv_led_create(screen);
-        lv_obj_set_size(led, 32, 32);
-        // lv_obj_set_size(led, 8, 8);
+        lv_obj_set_size(led, size, size);
         lv_obj_align(led, LV_ALIGN_CENTER, 0, 0);
-        //lv_obj_align(led, LV_ALIGN_TOP_RIGHT, -8, 4);
         lv_led_set_color(led, color);
         lv_led_off(led);
 
