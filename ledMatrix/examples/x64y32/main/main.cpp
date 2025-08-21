@@ -89,7 +89,7 @@ extern "C" void app_main(void)
 
     graphics.background(lvDisplay, lv_color_black());
 
-    float brightness = 100.0;
+    float brightness = 1.0;
     ledMatrix.setBrightness(brightness);
 
     graphics.logo(lvDisplay, &colorLogoNoText64x64);

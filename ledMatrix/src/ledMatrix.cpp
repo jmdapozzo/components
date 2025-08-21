@@ -27,11 +27,13 @@ LedMatrix::LedMatrix()
     ESP_LOGI(TAG, "Initializing");
 
     HUB75_I2S_CFG mxconfig;
+    // mxconfig.clkphase = false; // See https://github.com/mrcodetastic/ESP32-HUB75-MatrixPanel-DMA Clock Phase for more information
 
     MatrixPanel_I2S_DMA *display = new MatrixPanel_I2S_DMA(mxconfig);
     display->begin();
     display->setPanelBrightness(255);
     display->clearScreen();
+    // display->setLatBlanking(4); // See https://github.com/mrcodetastic/ESP32-HUB75-MatrixPanel-DMA Latch Blanking for more information
 
     int32_t horizontalResolution = CONFIG_LED_MATRIX_MODULE_WIDTH * CONFIG_LED_MATRIX_PIXEL_WIDTH;
     int32_t verticalResolution = CONFIG_LED_MATRIX_MODULE_HEIGHT * CONFIG_LED_MATRIX_PIXEL_HEIGHT;
