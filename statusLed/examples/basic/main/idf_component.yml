@@ -1,0 +1,3 @@
+dependencies:
+  jmdapozzo/statusLed:
+    override_path: "../../../"

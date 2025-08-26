@@ -14,7 +14,7 @@ namespace macdap
     {
         Off,
         Booting,
-        Commissionning,
+        Commissioning,
         RunningPhase0,
         RunningPhase1,
         Error
@@ -24,7 +24,7 @@ namespace macdap
     {
 
     private:
-#ifdef CONFIG_LED_TYPE_COLOR
+#ifdef CONFIG_STATUS_LED_TYPE_COLOR
         led_strip_handle_t m_ledStrip;
 #endif
         Status status = Status::Off;
