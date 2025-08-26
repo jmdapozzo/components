@@ -75,24 +75,9 @@ menu "MacDap Led Matrix"
 		default 47
 		range 0 LED_MATRIX_GPIO_RANGE_MAX
 
-	config LED_MATRIX_HUB75_OE1
-		int "OE-1 GPIO number"
+	config LED_MATRIX_HUB75_OE
+		int "OE GPIO number"
 		default 14
-		range 0 LED_MATRIX_GPIO_RANGE_MAX
-
-	config LED_MATRIX_HUB75_OE2
-		int "OE-2 GPIO number"
-		default 46
-		range 0 LED_MATRIX_GPIO_RANGE_MAX
-
-	config LED_MATRIX_HUB75_OE3
-		int "OE-3 GPIO number"
-		default 7
-		range 0 LED_MATRIX_GPIO_RANGE_MAX
-
-	config LED_MATRIX_HUB75_OE4
-		int "OE-4 GPIO number"
-		default 6
 		range 0 LED_MATRIX_GPIO_RANGE_MAX
 
 	choice LED_MATRIX_MODULE_TYPE
