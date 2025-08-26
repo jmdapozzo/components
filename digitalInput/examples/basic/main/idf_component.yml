@@ -1,0 +1,3 @@
+dependencies:
+  jmdapozzo/digitalInput:
+    override_path: "../../../"

@@ -2,6 +2,7 @@
 
 #include "eventLoop.hpp"
 #include "driver/gpio.h"
+#include "driver/gpio_filter.h"
 
 ESP_EVENT_DECLARE_BASE(GPIO_EVENTS);
 

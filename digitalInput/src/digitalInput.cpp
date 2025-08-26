@@ -52,6 +52,32 @@ DigitalInput::~DigitalInput()
 
 esp_err_t DigitalInput::addInput(gpio_num_t gpioNumber)
 {
+    gpio_glitch_filter_handle_t gpioGlitchFilterHandle = NULL;
+    gpio_pin_glitch_filter_config_t gpioPinGlitchFilterConfig = {
+        .clk_src = GLITCH_FILTER_CLK_SRC_DEFAULT,
+        .gpio_num = gpioNumber
+    };
+    esp_err_t err = ESP_OK;
+    err = gpio_new_pin_glitch_filter(&gpioPinGlitchFilterConfig, &gpioGlitchFilterHandle);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to create glitch filter for GPIO %d", gpioNumber);
+        return err;
+    }
+
+    err = gpio_glitch_filter_enable(gpioGlitchFilterHandle);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to enable glitch filter for GPIO %d", gpioNumber);
+        return err;
+    }
+
+    gpio_config_t gpioConfig;
+    gpioConfig.intr_type = GPIO_INTR_ANYEDGE;
+    gpioConfig.mode = GPIO_MODE_INPUT;
+    gpioConfig.pin_bit_mask = (1ULL << gpioNumber);
+    gpioConfig.pull_down_en = GPIO_PULLDOWN_DISABLE;
+    gpioConfig.pull_up_en = GPIO_PULLUP_ENABLE;
+    gpio_config(&gpioConfig);
+
     return gpio_isr_handler_add(gpioNumber, isrHandler, (void*) gpioNumber);
 }
 
