@@ -27,7 +27,7 @@ menu "MacDap Status Led"
 	if STATUS_LED_TYPE_COLOR
 		choice STATUS_LED_COLOR_DRIVER
 			prompt "Color Led Driver"
-			default RMT_LED_DRIVER
+			default STATUS_LED_RMT_DRIVER
 			help
 				Select LED Driver.
 			config STATUS_LED_RMT_DRIVER
