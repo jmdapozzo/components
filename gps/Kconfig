@@ -5,14 +5,31 @@ menu "MacDap GPS Configuration"
 
     config GPS_EVENT_LOG
         bool "Log GPS events to console"
-        default n
+        default y
         help
             Enabling this option will log GPS events to console.
+
+	choice GPS_UART
+		prompt "UART Number"
+        default GPS_UART_NUMBER_1
+		help
+			Select GPS UART Number
+		config GPS_UART_NUMBER_0
+			bool "UART #0"
+		config GPS_UART_NUMBER_1
+			bool "UART #1"
+	endchoice
+    
+    config GPS_UART_NUMBER
+        int
+        default 0 if GPS_UART_NUMBER_0
+        default 1 if GPS_UART_NUMBER_1
 
     config GPS_UART_RXD
         int "UART RXD pin number"
         range ENV_GPIO_RANGE_MIN ENV_GPIO_IN_RANGE_MAX
-        default 18
+        default 44 if GPS_UART_NUMBER_0
+        default 18 if GPS_UART_NUMBER_1
         help
             GPIO number for UART RX pin. See UART documentation for more information
             about available pin numbers for UART.
@@ -20,11 +37,20 @@ menu "MacDap GPS Configuration"
     config GPS_UART_TXD
         int "UART TXD pin number"
         range ENV_GPIO_RANGE_MIN ENV_GPIO_IN_RANGE_MAX
-        default 17
+        default 43 if GPS_UART_NUMBER_0
+        default 17 if GPS_UART_NUMBER_1
         help
             GPIO number for UART TX pin. See UART documentation for more information
             about available pin numbers for UART.
     
+    config GPS_PPS
+        int "GPS PPS pin number"
+        range -1 ENV_GPIO_IN_RANGE_MAX
+        default -1
+        help
+            GPIO number for GPS PPS pin. See GPIO documentation for more information
+            about available pin numbers for GPIO.
+
     config GPS_RING_BUFFER_SIZE
         int "GPS Ring Buffer Size"
         range 0 2048

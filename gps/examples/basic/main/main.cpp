@@ -9,4 +9,8 @@ extern "C" void app_main(void)
     ESP_LOGI(TAG, "GPS Test Program");
 
     macdap::GPS &gps = macdap::GPS::getInstance();
+
+    while (true) {
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
 }

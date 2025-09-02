@@ -1,4 +1,4 @@
-#include "gps.hpp"
+#include <gps.hpp>
 #include <freertos/FreeRTOS.h>
 #include <string.h>
 #include <esp_log.h>
@@ -524,16 +524,16 @@ static esp_err_t gps_decode(esp_gps_t *esp_gps, size_t len)
 
 static void esp_handle_uart_pattern(esp_gps_t *esp_gps)
 {
-    int pos = uart_pattern_pop_pos(UART_NUM_1);
+    int pos = uart_pattern_pop_pos(static_cast<uart_port_t>(static_cast<uart_port_t>(CONFIG_GPS_UART_NUMBER)));
     if (pos != -1) {
-        int read_len = uart_read_bytes(UART_NUM_1, esp_gps->buffer, pos + 1, 100 / portTICK_PERIOD_MS);
+        int read_len = uart_read_bytes(static_cast<uart_port_t>(CONFIG_GPS_UART_NUMBER), esp_gps->buffer, pos + 1, 100 / portTICK_PERIOD_MS);
         esp_gps->buffer[read_len] = '\0';
         if (gps_decode(esp_gps, read_len + 1) != ESP_OK) {
             ESP_LOGW(TAG, "GPS decode line failed");
         }
     } else {
         ESP_LOGW(TAG, "Pattern Queue Size too small");
-        uart_flush_input(UART_NUM_1);
+        uart_flush_input(static_cast<uart_port_t>(CONFIG_GPS_UART_NUMBER));
     }
 }
 
@@ -548,12 +548,12 @@ static void nmeaParserTask(void *arg)
                 break;
             case UART_FIFO_OVF:
                 ESP_LOGW(TAG, "HW FIFO Overflow");
-                uart_flush(UART_NUM_1);
+                uart_flush(static_cast<uart_port_t>(CONFIG_GPS_UART_NUMBER));
                 xQueueReset(esp_gps->event_queue);
                 break;
             case UART_BUFFER_FULL:
                 ESP_LOGW(TAG, "Ring Buffer Full");
-                uart_flush(UART_NUM_1);
+                uart_flush(static_cast<uart_port_t>(CONFIG_GPS_UART_NUMBER));
                 xQueueReset(esp_gps->event_queue);
                 break;
             case UART_BREAK:
@@ -585,7 +585,7 @@ void GPS::ReleaseResources()
         free(_esp_gps);
     }
 
-    uart_driver_delete(UART_NUM_1);
+    uart_driver_delete(static_cast<uart_port_t>(CONFIG_GPS_UART_NUMBER));
 
     if (_esp_gps->semaphoreHandle) {
         vSemaphoreDelete(_esp_gps->semaphoreHandle);
@@ -625,6 +625,11 @@ static void onGPSEvent(void* handler_arg, esp_event_base_t base, int32_t event_i
 GPS::GPS()
 {
     ESP_LOGI(TAG, "Initializing...");
+
+    if (CONFIG_GPS_PPS != -1)
+    {
+        ESP_LOGW(TAG, "PPS is not yet supported, use -1 to disable");
+    }
 
     esp_gps_t *esp_gps = (esp_gps_t *)calloc(1, sizeof(esp_gps_t));
     if (!esp_gps) {
@@ -686,29 +691,29 @@ GPS::GPS()
         .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
         .source_clk = UART_SCLK_DEFAULT,
     };
-    if (uart_driver_install(UART_NUM_1, CONFIG_GPS_RING_BUFFER_SIZE, 0, UART_EVENT_QUEUE_SIZE, &esp_gps->event_queue, 0) != ESP_OK) {
+    if (uart_driver_install(static_cast<uart_port_t>(CONFIG_GPS_UART_NUMBER), CONFIG_GPS_RING_BUFFER_SIZE, 0, UART_EVENT_QUEUE_SIZE, &esp_gps->event_queue, 0) != ESP_OK) {
         ESP_LOGE(TAG, "install uart driver failed");
         ReleaseResources();
         return;
     }
-    if (uart_param_config(UART_NUM_1, &uart_config) != ESP_OK) {
+    if (uart_param_config(static_cast<uart_port_t>(CONFIG_GPS_UART_NUMBER), &uart_config) != ESP_OK) {
         ESP_LOGE(TAG, "config uart parameter failed");
         ReleaseResources();
         return;
     }
-    if (uart_set_pin(UART_NUM_1, CONFIG_GPS_UART_TXD, CONFIG_GPS_UART_RXD, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE) != ESP_OK) {
+    if (uart_set_pin(static_cast<uart_port_t>(CONFIG_GPS_UART_NUMBER), CONFIG_GPS_UART_TXD, CONFIG_GPS_UART_RXD, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE) != ESP_OK) {
         ESP_LOGE(TAG, "config uart gpio failed");
         ReleaseResources();
         return;
     }
 
     /* Set pattern interrupt, used to detect the end of a line */
-    uart_enable_pattern_det_baud_intr(UART_NUM_1, '\n', 1, 9, 0, 0);
+    uart_enable_pattern_det_baud_intr(static_cast<uart_port_t>(CONFIG_GPS_UART_NUMBER), '\n', 1, 9, 0, 0);
 
     /* Set pattern queue size */
-    uart_pattern_queue_reset(UART_NUM_1, UART_EVENT_QUEUE_SIZE);
+    uart_pattern_queue_reset(static_cast<uart_port_t>(CONFIG_GPS_UART_NUMBER), UART_EVENT_QUEUE_SIZE);
 
-    uart_flush(UART_NUM_1);
+    uart_flush(static_cast<uart_port_t>(CONFIG_GPS_UART_NUMBER));
 
     BaseType_t err = xTaskCreate(
                          nmeaParserTask,
