@@ -5,7 +5,7 @@ menu "MacDap GPS Configuration"
 
     config GPS_EVENT_LOG
         bool "Log GPS events to console"
-        default y
+        default n
         help
             Enabling this option will log GPS events to console.
 

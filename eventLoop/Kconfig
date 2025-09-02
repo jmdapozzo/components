@@ -2,7 +2,7 @@ menu "MacDap Event Loop Configuration"
 
     config EVENT_LOOP_LOG_ALL_EVENTS
         bool "Log Event Loop events to the console"
-        default y
+        default n
         help
             Enabling this option will log Event Loop events to console.
 
