@@ -342,7 +342,7 @@ struct HUB75_I2S_CFG
           CONFIG_LED_MATRIX_HUB75_ADDRD,
           CONFIG_LED_MATRIX_HUB75_ADDRE,
           CONFIG_LED_MATRIX_HUB75_LAT,
-          CONFIG_LED_MATRIX_HUB75_OE1,
+          CONFIG_LED_MATRIX_HUB75_OE,
           CONFIG_LED_MATRIX_HUB75_CLK},
       shift_driver _drv = SHIFTREG,
       bool _dbuff = false, 
