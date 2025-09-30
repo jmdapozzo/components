@@ -46,6 +46,8 @@ extern "C" void app_main(void)
     lv_display_t *lvDisplay = ledMatrix.getLvDisplay();
     graphics.init(lvDisplay);
 
+    ESP_LOGI(TAG, "Free heap: %d", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
+
     int32_t width = lv_display_get_horizontal_resolution(lvDisplay);
     int32_t height = lv_display_get_vertical_resolution(lvDisplay);
 
@@ -89,7 +91,7 @@ extern "C" void app_main(void)
 
     graphics.background(lvDisplay, lv_color_black());
 
-    float brightness = 1.0;
+    float brightness = 100.0;
     ledMatrix.setBrightness(brightness);
 
     graphics.logo(lvDisplay, &colorLogoNoText64x64);

@@ -45,7 +45,7 @@ endforeach()
 
 # Example to build with USE_GFX_ROOT or NO_GFX / just uncomment the appropriate line
 # target_compile_options(${COMPONENT_TARGET} PUBLIC -DUSE_GFX_ROOT)
-target_compile_options(${COMPONENT_TARGET} PUBLIC -DNO_GFX)
+# target_compile_options(${COMPONENT_TARGET} PUBLIC -DNO_GFX)
 
 # esp-idf does not have any GFX library support yet, so we need to define NO_GFX
 if(ARDUINO_ARCH_ESP32 OR CONFIG_ESP32_HUB75_USE_GFX)
@@ -60,7 +60,7 @@ else()
 endif()
 
 # You can also use multiple options like this
-# target_compile_options(${COMPONENT_TARGET} PUBLIC -DNO_GFX -DNO_FAST_FUNCTIONS)
+target_compile_options(${COMPONENT_TARGET} PUBLIC -DNO_GFX -DNO_FAST_FUNCTIONS -DSPIRAM_FRAMEBUFFER)
 
 # All options can be found here:
 # https://github.com/mrfaptastic/ledMatrix/blob/master/doc/BuildOptions.md
