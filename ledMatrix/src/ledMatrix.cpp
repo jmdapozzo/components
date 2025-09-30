@@ -48,7 +48,7 @@ LedMatrix::LedMatrix()
     mxconfig.driver = static_cast<HUB75_I2S_CFG::shift_driver>(HUB75_I2S_CFG::shift_driver::SHIFTREG);
     mxconfig.line_decoder = static_cast<HUB75_I2S_CFG::line_driver>(HUB75_I2S_CFG::line_driver::TYPE138);
     mxconfig.double_buff = false;
-    mxconfig.i2sspeed = static_cast<HUB75_I2S_CFG::clk_speed>(HUB75_I2S_CFG::clk_speed::HZ_8M);
+    mxconfig.i2sspeed = static_cast<HUB75_I2S_CFG::clk_speed>(HUB75_I2S_CFG::clk_speed::HZ_20M);
     mxconfig.latch_blanking = 2; //CONFIG_LED_MATRIX_LATCH_BLANKING;
     mxconfig.clkphase = true;
     mxconfig.min_refresh_rate = 60; //CONFIG_LED_MATRIX_MIN_REFRESH_RATE;
