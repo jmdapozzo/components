@@ -16,3 +16,7 @@ git clone https://github.com/mrfaptastic/ESP32-HUB75-MatrixPanel-DMA.git compone
 
 Clock speed at the fastest, may be set at 8M for less memory usage
 clk_speed::HZ_20M
+
+
+
+See https://blog.davidv.dev/posts/exploring-hub75/ for a HUB75 explanation
