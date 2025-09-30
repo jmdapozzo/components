@@ -1,5 +1,5 @@
 #include <ledMatrix.hpp>
-#include "ESP32-HUB75-MatrixPanel-I2S-DMA.h"
+#include <ESP32-HUB75-MatrixPanel-I2S-DMA.h>
 
 using namespace macdap;
 
@@ -27,7 +27,32 @@ LedMatrix::LedMatrix()
     ESP_LOGI(TAG, "Initializing");
 
     HUB75_I2S_CFG mxconfig;
-    // mxconfig.clkphase = false; // See https://github.com/mrcodetastic/ESP32-HUB75-MatrixPanel-DMA Clock Phase for more information
+    mxconfig.mx_width = CONFIG_LED_MATRIX_PIXEL_WIDTH;
+    mxconfig.mx_height = CONFIG_LED_MATRIX_PIXEL_HEIGHT;
+    mxconfig.chain_length = CONFIG_LED_MATRIX_MODULE_WIDTH * CONFIG_LED_MATRIX_MODULE_HEIGHT;
+    mxconfig.gpio = {
+          CONFIG_LED_MATRIX_HUB75_R1,
+          CONFIG_LED_MATRIX_HUB75_G1,
+          CONFIG_LED_MATRIX_HUB75_B1,
+          CONFIG_LED_MATRIX_HUB75_R2,
+          CONFIG_LED_MATRIX_HUB75_G2,
+          CONFIG_LED_MATRIX_HUB75_B2,
+          CONFIG_LED_MATRIX_HUB75_ADDRA,
+          CONFIG_LED_MATRIX_HUB75_ADDRB,
+          CONFIG_LED_MATRIX_HUB75_ADDRC,
+          CONFIG_LED_MATRIX_HUB75_ADDRD,
+          CONFIG_LED_MATRIX_HUB75_ADDRE,
+          CONFIG_LED_MATRIX_HUB75_LAT,
+          CONFIG_LED_MATRIX_HUB75_OE,
+          CONFIG_LED_MATRIX_HUB75_CLK},
+    mxconfig.driver = static_cast<HUB75_I2S_CFG::shift_driver>(HUB75_I2S_CFG::shift_driver::SHIFTREG);
+    mxconfig.line_decoder = static_cast<HUB75_I2S_CFG::line_driver>(HUB75_I2S_CFG::line_driver::TYPE138);
+    mxconfig.double_buff = false;
+    mxconfig.i2sspeed = static_cast<HUB75_I2S_CFG::clk_speed>(HUB75_I2S_CFG::clk_speed::HZ_8M);
+    mxconfig.latch_blanking = 2; //CONFIG_LED_MATRIX_LATCH_BLANKING;
+    mxconfig.clkphase = true;
+    mxconfig.min_refresh_rate = 60; //CONFIG_LED_MATRIX_MIN_REFRESH_RATE;
+    mxconfig.setPixelColorDepthBits(6); //CONFIG_LED_MATRIX_COLOR_DEPTH;
 
     MatrixPanel_I2S_DMA *display = new MatrixPanel_I2S_DMA(mxconfig);
     display->begin();
