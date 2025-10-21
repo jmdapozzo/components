@@ -12,7 +12,7 @@ else()
 endif()
 
 if(${target} STREQUAL "esp32s3")
-  list(APPEND extra_srcs src/platforms/${target}/gdma_lcd_parallel16.cpp)
+  list(APPEND extra_srcs components/ESP32-HUB75-MatrixPanel-I2S-DMA/src/platforms/${target}/gdma_lcd_parallel16.cpp)
 
   # Required by gdma_lcd_parallel16.cpp
   if (NOT esp_lcd IN_LIST build_dependencies)
@@ -21,8 +21,13 @@ if(${target} STREQUAL "esp32s3")
 endif()
 
 idf_component_register(
-  SRCS "src/ledMatrix.cpp" "src/platforms/esp32/esp32_i2s_parallel_dma.cpp" "src/ESP32-HUB75-MatrixPanel-I2S-DMA.cpp" "src/ESP32-HUB75-MatrixPanel-leddrivers.cpp" ${extra_srcs}
-  INCLUDE_DIRS "include"
+  SRCS
+  "src/ledMatrix.cpp"
+  "components/ESP32-HUB75-MatrixPanel-I2S-DMA/src/platforms/esp32/esp32_i2s_parallel_dma.cpp"
+  "components/ESP32-HUB75-MatrixPanel-I2S-DMA/src/ESP32-HUB75-MatrixPanel-I2S-DMA.cpp"
+  "components/ESP32-HUB75-MatrixPanel-I2S-DMA/src/ESP32-HUB75-MatrixPanel-leddrivers.cpp"
+  ${extra_srcs}
+  INCLUDE_DIRS "include" "components/ESP32-HUB75-MatrixPanel-I2S-DMA/src/"
                        )
 
 # Dependencies cannot be added to the REQUIRES argument of `idf_component_register` because (according to the build process
