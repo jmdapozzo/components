@@ -28,7 +28,7 @@ namespace macdap
         led_strip_handle_t m_ledStrip;
 #endif
         Status status = Status::Off;
-        int8_t brightness = CONFIG_STATUS_LED_DEFAULT_BRIGHTNESS;
+        int8_t m_brightness = CONFIG_STATUS_LED_DEFAULT_BRIGHTNESS;
         StatusLed();
         ~StatusLed();
 
@@ -42,7 +42,7 @@ namespace macdap
         }
 
         void clear();
-        void setStatus(Status status);
+        void set_status(Status status);
     };
 }
 

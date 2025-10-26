@@ -14,27 +14,27 @@ extern "C" void app_main(void)
 
     while (true)
     {
-        statusLed.setStatus(macdap::Status::Off);
+        statusLed.set_status(macdap::Status::Off);
         ESP_LOGI(TAG, "Status::Off");
         vTaskDelay(pdMS_TO_TICKS(3000));
 
-        statusLed.setStatus(macdap::Status::Booting);
+        statusLed.set_status(macdap::Status::Booting);
         ESP_LOGI(TAG, "Status::Booting");
         vTaskDelay(pdMS_TO_TICKS(3000));
 
-        statusLed.setStatus(macdap::Status::Commissioning);
+        statusLed.set_status(macdap::Status::Commissioning);
         ESP_LOGI(TAG, "Status::Commissioning");
         vTaskDelay(pdMS_TO_TICKS(3000));
 
-        statusLed.setStatus(macdap::Status::RunningPhase0);
+        statusLed.set_status(macdap::Status::RunningPhase0);
         ESP_LOGI(TAG, "Status::RunningPhase0");
         vTaskDelay(pdMS_TO_TICKS(3000));
 
-        statusLed.setStatus(macdap::Status::RunningPhase1);
+        statusLed.set_status(macdap::Status::RunningPhase1);
         ESP_LOGI(TAG, "Status::RunningPhase1");
         vTaskDelay(pdMS_TO_TICKS(3000));
 
-        statusLed.setStatus(macdap::Status::Error);
+        statusLed.set_status(macdap::Status::Error);
         ESP_LOGI(TAG, "Status::Error");
         vTaskDelay(pdMS_TO_TICKS(3000));
     }

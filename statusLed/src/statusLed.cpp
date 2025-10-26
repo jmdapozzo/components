@@ -81,7 +81,7 @@ void StatusLed::clear()
     status = Status::Off;
 }
 
-void StatusLed::setStatus(Status status)
+void StatusLed::set_status(Status status)
 {
 #ifdef CONFIG_STATUS_LED_TYPE_MONOCHROME
     gpio_set_level(static_cast<gpio_num_t>(CONFIG_STATUS_LED_GPIO), (status == Status::Off) || (status == Status::RunningPhase0) ? 0 : 1);
@@ -92,19 +92,19 @@ void StatusLed::setStatus(Status status)
         ESP_ERROR_CHECK(led_strip_set_pixel(m_ledStrip, 0, 0, 0, 0));
         break;
     case Status::Booting:
-        ESP_ERROR_CHECK(led_strip_set_pixel(m_ledStrip, 0, 0, 0, brightness));
+        ESP_ERROR_CHECK(led_strip_set_pixel(m_ledStrip, 0, 0, 0, m_brightness));
         break;
     case Status::Commissioning:
-        ESP_ERROR_CHECK(led_strip_set_pixel(m_ledStrip, 0, brightness, 0, 0));
+        ESP_ERROR_CHECK(led_strip_set_pixel(m_ledStrip, 0, m_brightness, 0, 0));
         break;
     case Status::RunningPhase0:
         ESP_ERROR_CHECK(led_strip_set_pixel(m_ledStrip, 0, 0, 0, 0));
         break;
     case Status::RunningPhase1:
-        ESP_ERROR_CHECK(led_strip_set_pixel(m_ledStrip, 0, 0, brightness, 0));
+        ESP_ERROR_CHECK(led_strip_set_pixel(m_ledStrip, 0, 0, m_brightness, 0));
         break;
     case Status::Error:
-        ESP_ERROR_CHECK(led_strip_set_pixel(m_ledStrip, 0, brightness, 0, 0));
+        ESP_ERROR_CHECK(led_strip_set_pixel(m_ledStrip, 0, m_brightness, 0, 0));
         break;
     }
     ESP_ERROR_CHECK(led_strip_refresh(m_ledStrip));
