@@ -14,3 +14,5 @@ sdkconfig*
 
 .clangd
 
+build_log_*.txt
+build_report.*
