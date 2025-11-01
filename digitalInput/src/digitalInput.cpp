@@ -8,18 +8,18 @@ using namespace macdap;
 
 static const char *TAG = "digitalInput";
 ESP_EVENT_DEFINE_BASE(GPIO_EVENTS);
-static esp_event_loop_handle_t _eventLoopHandle;
+static esp_event_loop_handle_t _event_loop_handle;
 
-static void IRAM_ATTR isrHandler(void* arg)
+static void IRAM_ATTR isr_handler(void* arg)
 {
     gpio_num_t gpioNumber = (gpio_num_t)(uintptr_t)arg;
     EdgeDetection_t edgeDetection = static_cast<EdgeDetection_t>(gpio_get_level(gpioNumber));
 
-    esp_event_isr_post_to(_eventLoopHandle, GPIO_EVENTS, gpioNumber, &edgeDetection, sizeof(EdgeDetection_t), NULL);
+    esp_event_isr_post_to(_event_loop_handle, GPIO_EVENTS, gpioNumber, &edgeDetection, sizeof(EdgeDetection_t), NULL);
 }
 
 #if CONFIG_DIGITAL_INPUT_EVENT_LOG
-static void onDigitalInputEvent(void* handler_arg, esp_event_base_t base, int32_t event_id, void* event_data)
+static void on_digital_input_event(void* handler_arg, esp_event_base_t base, int32_t event_id, void* event_data)
 {
     gpio_num_t gpioNumber = static_cast<gpio_num_t>(event_id);
     EdgeDetection_t edgeDetection = *static_cast<EdgeDetection_t*>(event_data);
@@ -28,7 +28,7 @@ static void onDigitalInputEvent(void* handler_arg, esp_event_base_t base, int32_
     gettimeofday(&tvNow, NULL);
     int64_t detectedAt = (int64_t)tvNow.tv_sec * 1000000L + (int64_t)tvNow.tv_usec;
 
-    ESP_LOGI(TAG, "GPIO %d detected %s at %lld", gpioNumber, edgeDetection == rising ? "rising" : "falling", detectedAt);
+    ESP_LOGI(TAG, "GPIO %d detected %s at %lld", gpioNumber, edgeDetection == Rising ? "rising" : "falling", detectedAt);
 }
 #endif
 
@@ -36,11 +36,11 @@ DigitalInput::DigitalInput()
 {
     ESP_LOGI(TAG, "Initializing...");
 
-    macdap::EventLoop &eventLoop = macdap::EventLoop::getInstance();
-    _eventLoopHandle = eventLoop.getEventLoopHandle();
+    macdap::EventLoop &eventLoop = macdap::EventLoop::get_instance();
+    _event_loop_handle = eventLoop.get_event_loop_handle();
 
 #if CONFIG_DIGITAL_INPUT_EVENT_LOG
-    esp_event_handler_register_with(_eventLoopHandle, GPIO_EVENTS, ESP_EVENT_ANY_ID, onDigitalInputEvent, NULL);
+    esp_event_handler_register_with(_event_loop_handle, GPIO_EVENTS, ESP_EVENT_ANY_ID, on_digital_input_event, NULL);
 #endif
 
     gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
@@ -50,39 +50,40 @@ DigitalInput::~DigitalInput()
 {
 }
 
-esp_err_t DigitalInput::addInput(gpio_num_t gpioNumber)
+esp_err_t DigitalInput::add_input(gpio_num_t gpio_num)
 {
-    gpio_glitch_filter_handle_t gpioGlitchFilterHandle = NULL;
-    gpio_pin_glitch_filter_config_t gpioPinGlitchFilterConfig = {
+    gpio_glitch_filter_handle_t gpio_glitch_filter_handle = NULL;
+    gpio_pin_glitch_filter_config_t gpio_pin_glitch_filter_config = {
         .clk_src = GLITCH_FILTER_CLK_SRC_DEFAULT,
-        .gpio_num = gpioNumber
+        .gpio_num = gpio_num
     };
     esp_err_t err = ESP_OK;
-    err = gpio_new_pin_glitch_filter(&gpioPinGlitchFilterConfig, &gpioGlitchFilterHandle);
+    err = gpio_new_pin_glitch_filter(&gpio_pin_glitch_filter_config, &gpio_glitch_filter_handle);
     if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to create glitch filter for GPIO %d", gpioNumber);
+        ESP_LOGE(TAG, "Failed to create glitch filter for GPIO %d", gpio_num);
         return err;
     }
 
-    err = gpio_glitch_filter_enable(gpioGlitchFilterHandle);
+    err = gpio_glitch_filter_enable(gpio_glitch_filter_handle);
     if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to enable glitch filter for GPIO %d", gpioNumber);
+        ESP_LOGE(TAG, "Failed to enable glitch filter for GPIO %d", gpio_num);
         return err;
     }
 
-    gpio_config_t gpioConfig;
-    gpioConfig.intr_type = GPIO_INTR_ANYEDGE;
-    gpioConfig.mode = GPIO_MODE_INPUT;
-    gpioConfig.pin_bit_mask = (1ULL << gpioNumber);
-    gpioConfig.pull_down_en = GPIO_PULLDOWN_DISABLE;
-    gpioConfig.pull_up_en = GPIO_PULLUP_ENABLE;
-    gpio_config(&gpioConfig);
+    gpio_config_t gpio_conf = {
+        .pin_bit_mask = (1ULL << gpio_num),
+        .mode = GPIO_MODE_INPUT,
+        .pull_up_en = GPIO_PULLUP_ENABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_ANYEDGE
+    };
+    gpio_config(&gpio_conf);
 
-    return gpio_isr_handler_add(gpioNumber, isrHandler, (void*) gpioNumber);
+    return gpio_isr_handler_add(gpio_num, isr_handler, (void*) gpio_num);
 }
 
-esp_err_t DigitalInput::removeInput(gpio_num_t gpioNumber)
+esp_err_t DigitalInput::remove_input(gpio_num_t gpio_num)
 {
-    return gpio_isr_handler_remove(gpioNumber);
+    return gpio_isr_handler_remove(gpio_num);
 }
 

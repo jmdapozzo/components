@@ -1,4 +1,4 @@
-version: "0.0.1"
+version: "0.1.0"
 license: "MIT"
 description: "Display driver used for MacDap's projects"
 url: https://github.com/jmdapozzo/components/tree/main/display

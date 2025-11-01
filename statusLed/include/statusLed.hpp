@@ -1,12 +1,7 @@
 #pragma once
 
-#include "esp_err.h"
-#include "led_strip.h"
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+#include <esp_err.h>
+#include <led_strip.h>
 
 namespace macdap
 {
@@ -15,8 +10,8 @@ namespace macdap
         Off,
         Booting,
         Commissioning,
-        RunningPhase0,
-        RunningPhase1,
+        WaitingForNetwork,
+        Running,
         Error
     };
 
@@ -35,7 +30,7 @@ namespace macdap
     public:
         StatusLed(StatusLed const&) = delete;
         void operator=(StatusLed const &) = delete;
-        static StatusLed &getInstance()
+        static StatusLed &get_instance()
         {
             static StatusLed instance;
             return instance;
@@ -45,7 +40,3 @@ namespace macdap
         void set_status(Status status);
     };
 }
-
-#ifdef __cplusplus
-}
-#endif

@@ -15,7 +15,7 @@ using namespace macdap;
 
 static const char *TAG = "tokenManager";
 
-static esp_err_t clientEventHandler(esp_http_client_event_handle_t event)
+static esp_err_t client_event_handler(esp_http_client_event_handle_t event)
 {
     TokenManager *tokenManager = (TokenManager *)event->user_data;
 
@@ -42,30 +42,30 @@ static esp_err_t clientEventHandler(esp_http_client_event_handle_t event)
         {
             if (!esp_http_client_is_chunked_response(event->client))
             {
-                int copyLength = 0;
-                int contentLength = esp_http_client_get_content_length(event->client);
+                int copy_length = 0;
+                int content_length = esp_http_client_get_content_length(event->client);
 
-                copyLength = MIN(event->data_len, (contentLength - tokenManager->m_outputLength));
-                if (copyLength)
+                copy_length = MIN(event->data_len, (content_length - tokenManager->m_output_buffer_length));
+                if (copy_length)
                 {
-                    if (tokenManager->m_outputLength + copyLength > sizeof(tokenManager->m_outputBuffer))
+                    if (tokenManager->m_output_buffer_length + copy_length > sizeof(tokenManager->m_output_buffer))
                     {
                         ESP_LOGE(TAG, "Output buffer overflow from %s", url);
                         return ESP_FAIL;
                     }
-                    memcpy(tokenManager->m_outputBuffer + tokenManager->m_outputLength, event->data, copyLength);
+                    memcpy(tokenManager->m_output_buffer + tokenManager->m_output_buffer_length, event->data, copy_length);
                 }
-                tokenManager->m_outputLength += copyLength;
+                tokenManager->m_output_buffer_length += copy_length;
             }
             else
             {
-                if (tokenManager->m_outputLength + event->data_len > sizeof(tokenManager->m_outputBuffer))
+                if (tokenManager->m_output_buffer_length + event->data_len > sizeof(tokenManager->m_output_buffer))
                 {
                     ESP_LOGE(TAG, "Output buffer overflow from %s", url);
                     return ESP_FAIL;
                 }
-                memcpy(tokenManager->m_outputBuffer + tokenManager->m_outputLength, event->data, event->data_len);
-                tokenManager->m_outputLength += event->data_len;
+                memcpy(tokenManager->m_output_buffer + tokenManager->m_output_buffer_length, event->data, event->data_len);
+                tokenManager->m_output_buffer_length += event->data_len;
             }
         }
         break;
@@ -73,7 +73,7 @@ static esp_err_t clientEventHandler(esp_http_client_event_handle_t event)
         ESP_LOGD(TAG, "HTTP_EVENT_ON_FINISH");
         if (tokenManager != nullptr)
         {
-            tokenManager->m_outputLength = 0;
+            tokenManager->m_output_buffer_length = 0;
         }
         break;
     case HTTP_EVENT_DISCONNECTED:
@@ -86,7 +86,7 @@ static esp_err_t clientEventHandler(esp_http_client_event_handle_t event)
     return ESP_OK;
 }
 
-static esp_err_t getAccessToken(TokenManager *tokenManager)
+static esp_err_t get_access_token(TokenManager *tokenManager)
 {
     esp_http_client_config_t http_client_config = {};    
     http_client_config.url = CONFIG_TOKEN_MANAGER_ENDPOINT CONFIG_TOKEN_MANAGER_API_REQUEST,
@@ -94,7 +94,7 @@ static esp_err_t getAccessToken(TokenManager *tokenManager)
     http_client_config.crt_bundle_attach = esp_crt_bundle_attach;
     http_client_config.method = HTTP_METHOD_POST,
     http_client_config.cert_pem = nullptr,
-    http_client_config.event_handler = clientEventHandler;
+    http_client_config.event_handler = client_event_handler;
     http_client_config.user_data = tokenManager;
 
     esp_http_client_handle_t client = esp_http_client_init(&http_client_config);
@@ -104,8 +104,8 @@ static esp_err_t getAccessToken(TokenManager *tokenManager)
         return ESP_FAIL;
     }
 
-    const char *postData = "grant_type=client_credentials&client_id=" CONFIG_TOKEN_MANAGER_CLIENT_ID "&client_secret=" CONFIG_TOKEN_MANAGER_SECRET "&audience=" CONFIG_TOKEN_MANAGER_AUDIENCE;
-    esp_http_client_set_post_field(client, postData, strlen(postData));
+    const char *post_data = "grant_type=client_credentials&client_id=" CONFIG_TOKEN_MANAGER_CLIENT_ID "&client_secret=" CONFIG_TOKEN_MANAGER_SECRET "&audience=" CONFIG_TOKEN_MANAGER_AUDIENCE;
+    esp_http_client_set_post_field(client, post_data, strlen(post_data));
     esp_http_client_set_header(client, "Content-Type", "application/x-www-form-urlencoded");
 
     if (esp_http_client_perform(client) != ESP_OK)
@@ -117,14 +117,14 @@ static esp_err_t getAccessToken(TokenManager *tokenManager)
 
     if (esp_http_client_get_content_length(client) > 0)
     {
-        cJSON *root = cJSON_Parse(tokenManager->m_outputBuffer);
-        const char *accessToken = cJSON_GetObjectItem(root, "access_token")->valuestring;
-        const uint32_t expiresIn = cJSON_GetObjectItem(root, "expires_in")->valueint;
-        const char *tokenType = cJSON_GetObjectItem(root, "token_type")->valuestring;
-        esp_err_t result = tokenManager->setToken(accessToken, expiresIn, tokenType);
+        cJSON *root = cJSON_Parse(tokenManager->m_output_buffer);
+        const char *access_token = cJSON_GetObjectItem(root, "access_token")->valuestring;
+        const uint32_t expires_in = cJSON_GetObjectItem(root, "expires_in")->valueint;
+        const char *token_type = cJSON_GetObjectItem(root, "token_type")->valuestring;
+        esp_err_t result = tokenManager->set_token(access_token, expires_in, token_type);
         if (result != ESP_OK)
         {
-            ESP_LOGE(TAG, "tokenManager->setToken failed");
+            ESP_LOGE(TAG, "tokenManager->set_token failed");
         }
 
         cJSON_Delete(root);
@@ -147,38 +147,38 @@ static esp_err_t getAccessToken(TokenManager *tokenManager)
     return ESP_OK;
 }
 
-static void localTask(void *parameter)
+static void local_task(void *parameter)
 {
     TokenManager *tokenManager = (TokenManager *)parameter;
 
-    char *taskName = pcTaskGetName(nullptr);
-    ESP_LOGI(TAG, "Starting %s", taskName);
+    char *task_name = pcTaskGetName(nullptr);
+    ESP_LOGI(TAG, "Starting %s", task_name);
 
-    tokenManager->m_outputLength = 0;
+    tokenManager->m_output_buffer_length = 0;
 
     while (true)
     {
-        TickType_t nextRefresh = RETRY_RATE_SECS;
-        if (getAccessToken(tokenManager) == ESP_OK)
+        TickType_t next_refresh = RETRY_RATE_SECS;
+        if (get_access_token(tokenManager) == ESP_OK)
         {
             Token_t token;
-            if (tokenManager->getToken(&token) == ESP_OK)
+            if (tokenManager->get_token(&token) == ESP_OK)
             {
-                nextRefresh = (token.expiresIn - REFRESH_RATE_OFFSET_SEC);
+                next_refresh = (token.expires_in - REFRESH_RATE_OFFSET_SEC);
             }
             else
             {
-                ESP_LOGE(TAG, "tokenManager->getToken failed");
+                ESP_LOGE(TAG, "tokenManager->get_token failed");
             }
         }
         else
         {
-            ESP_LOGE(TAG, "getAccessToken failed");
+            ESP_LOGE(TAG, "get_access_token failed");
         }
-        ESP_LOGI(TAG, "Next access token refresh in %lu seconds", nextRefresh);
-        nextRefresh = 60 * (1000 / portTICK_PERIOD_MS); //TODO restore this
+        ESP_LOGI(TAG, "Next access token refresh in %lu seconds", next_refresh);
+        next_refresh = 60 * (1000 / portTICK_PERIOD_MS); //TODO restore this
         // nextRefresh = nextRefresh * (1000 / portTICK_PERIOD_MS);
-        vTaskDelay(nextRefresh);
+        vTaskDelay(next_refresh);
     }
 
     vTaskDelete(NULL);
@@ -186,60 +186,67 @@ static void localTask(void *parameter)
 
 TokenManager::TokenManager()
 {
-    esp_log_level_set(TAG, ESP_LOG_VERBOSE);
-    ESP_LOGI(TAG, "Initializing...");
-
-    m_semaphoreHandle = xSemaphoreCreateMutex();
-
-    if (m_semaphoreHandle != nullptr)
+    if (!m_initialized)
     {
-        if (m_taskHandle == nullptr)
+        esp_log_level_set(TAG, ESP_LOG_VERBOSE);
+        ESP_LOGI(TAG, "Initializing...");
+
+        m_semaphore_handle = xSemaphoreCreateMutex();
+
+        if (m_semaphore_handle != nullptr)
         {
-            if (xTaskCreate(
-                    localTask,
-                    TAG,
-                    LOCAL_TASK_STACKSIZE,
-                    this,
-                    tskIDLE_PRIORITY,
-                    &m_taskHandle) != pdPASS)
+            if (m_task_handle == nullptr)
             {
-                ESP_LOGE(TAG, "xTaskCreate failed");
+                if (xTaskCreate(
+                        local_task,
+                        TAG,
+                        LOCAL_TASK_STACKSIZE,
+                        this,
+                        tskIDLE_PRIORITY,
+                        &m_task_handle) == pdPASS)
+                {
+                    m_initialized = true;
+                } else {
+                    ESP_LOGE(TAG, "xTaskCreate failed");
+                }
+            } else {
+                ESP_LOGW(TAG, "TokenManager already initialized");
             }
         }
         else
         {
-            ESP_LOGW(TAG, "TokenManager already initialized");
+            ESP_LOGE(TAG, "xSemaphoreCreateMutex failed");
         }
-    }
-    else
-    {
-        ESP_LOGE(TAG, "xSemaphoreCreateMutex failed");
+    } else {
+        ESP_LOGW(TAG, "TokenManager already initialized");
     }
 }
 
 TokenManager::~TokenManager()
 {
-    if (m_taskHandle != nullptr)
+    if (m_task_handle != nullptr)
     {
-        vTaskDelete(m_taskHandle);
+        vTaskDelete(m_task_handle);
     }
 
-    if (m_semaphoreHandle != nullptr)
+    if (m_semaphore_handle != nullptr)
     {
-        vSemaphoreDelete(m_semaphoreHandle);
+        vSemaphoreDelete(m_semaphore_handle);
     }
+
+    m_initialized = false;
 }
 
-esp_err_t TokenManager::setToken(const char *accessToken, uint32_t expiresIn, const char *tokenType)
+esp_err_t TokenManager::set_token(const char *access_token, uint32_t expires_in, const char *token_type)
 {
     esp_err_t result = ESP_OK;
 
-    if (xSemaphoreTake(m_semaphoreHandle, pdMS_TO_TICKS(10000)) == pdTRUE)
+    if (xSemaphoreTake(m_semaphore_handle, pdMS_TO_TICKS(10000)) == pdTRUE)
     {
-        strcpy(m_token.accessToken, accessToken);
-        m_token.expiresIn = expiresIn;
-        strcpy(m_token.tokenType, tokenType);
-        xSemaphoreGive(m_semaphoreHandle);
+        strcpy(m_token.access_token, access_token);
+        m_token.expires_in = expires_in;
+        strcpy(m_token.token_type, token_type);
+        xSemaphoreGive(m_semaphore_handle);
     }
     else
     {
@@ -250,11 +257,11 @@ esp_err_t TokenManager::setToken(const char *accessToken, uint32_t expiresIn, co
     return result;
 }
 
-esp_err_t TokenManager::getToken(Token_t *token)
+esp_err_t TokenManager::get_token(Token_t *token)
 {
     esp_err_t result = ESP_OK;
 
-    if (xSemaphoreTake(m_semaphoreHandle, pdMS_TO_TICKS(10000)) == pdTRUE)
+    if (xSemaphoreTake(m_semaphore_handle, pdMS_TO_TICKS(10000)) == pdTRUE)
     {
         if (token != nullptr)
         {
@@ -264,7 +271,7 @@ esp_err_t TokenManager::getToken(Token_t *token)
         {
             result = ESP_ERR_INVALID_ARG;
         }
-        xSemaphoreGive(m_semaphoreHandle);
+        xSemaphoreGive(m_semaphore_handle);
     }
     else
     {
@@ -275,20 +282,20 @@ esp_err_t TokenManager::getToken(Token_t *token)
     return result;
 }
 
-esp_err_t TokenManager::getAuthorisation(char *authorisation, size_t maxSize)
+esp_err_t TokenManager::get_authorisation(char *authorisation, size_t maxSize)
 {
     esp_err_t result = ESP_OK;
 
-    if (xSemaphoreTake(m_semaphoreHandle, pdMS_TO_TICKS(10000)) == pdTRUE)
+    if (xSemaphoreTake(m_semaphore_handle, pdMS_TO_TICKS(10000)) == pdTRUE)
     {
         if (authorisation != nullptr)
         {
-            if (m_token.expiresIn > 0)
+            if (m_token.expires_in > 0)
             {
-                size_t length = strlen(m_token.accessToken) + strlen(m_token.tokenType) + 1;
+                size_t length = strlen(m_token.access_token) + strlen(m_token.token_type) + 1;
                 if (length <= maxSize)
                 {
-                    sprintf(authorisation, "%s %s", m_token.tokenType, m_token.accessToken);
+                    sprintf(authorisation, "%s %s", m_token.token_type, m_token.access_token);
                 }
                 else
                 {
@@ -306,7 +313,7 @@ esp_err_t TokenManager::getAuthorisation(char *authorisation, size_t maxSize)
             ESP_LOGE(TAG, "authorisation is null");
             result = ESP_ERR_INVALID_ARG;
         }
-        xSemaphoreGive(m_semaphoreHandle);
+        xSemaphoreGive(m_semaphore_handle);
     }
     else
     {

@@ -321,80 +321,80 @@ static esp_err_t parse_item(esp_gps_t *esp_gps)
         }
 #if CONFIG_NMEA_STATEMENT_GGA
         else if (strstr(esp_gps->item_str, "GGA")) {
-            esp_gps->cur_statement = STATEMENT_GGA;
+            esp_gps->cur_statement = StatementGga;
         }
 #endif
 #if CONFIG_NMEA_STATEMENT_GSA
         else if (strstr(esp_gps->item_str, "GSA")) {
-            esp_gps->cur_statement = STATEMENT_GSA;
+            esp_gps->cur_statement = StatementGsa;
         }
 #endif
 #if CONFIG_NMEA_STATEMENT_RMC
         else if (strstr(esp_gps->item_str, "RMC")) {
-            esp_gps->cur_statement = STATEMENT_RMC;
+            esp_gps->cur_statement = StatementRmc;
         }
 #endif
 #if CONFIG_NMEA_STATEMENT_GSV
         else if (strstr(esp_gps->item_str, "GSV")) {
-            esp_gps->cur_statement = STATEMENT_GSV;
+            esp_gps->cur_statement = StatementGsv;
         }
 #endif
 #if CONFIG_NMEA_STATEMENT_GLL
         else if (strstr(esp_gps->item_str, "GLL")) {
-            esp_gps->cur_statement = STATEMENT_GLL;
+            esp_gps->cur_statement = StatementGll;
         }
 #endif
 #if CONFIG_NMEA_STATEMENT_VTG
         else if (strstr(esp_gps->item_str, "VTG")) {
-            esp_gps->cur_statement = STATEMENT_VTG;
+            esp_gps->cur_statement = StatementVtg;
         }
 #endif
 #if CONFIG_NMEA_STATEMENT_ZDA
         else if (strstr(esp_gps->item_str, "ZDA")) {
-            esp_gps->cur_statement = STATEMENT_ZDA;
+            esp_gps->cur_statement = StatementZda;
         }
 #endif
         else {
-            esp_gps->cur_statement = STATEMENT_UNKNOWN;
+            esp_gps->cur_statement = StatementUnknown;
         }
         goto out;
     }
     /* Parse each item, depend on the type of the statement */
-    if (esp_gps->cur_statement == STATEMENT_UNKNOWN) {
+    if (esp_gps->cur_statement == StatementUnknown) {
         goto out;
     }
 #if CONFIG_NMEA_STATEMENT_GGA
-    else if (esp_gps->cur_statement == STATEMENT_GGA) {
+    else if (esp_gps->cur_statement == StatementGga) {
         parse_gga(esp_gps);
     }
 #endif
 #if CONFIG_NMEA_STATEMENT_GSA
-    else if (esp_gps->cur_statement == STATEMENT_GSA) {
+    else if (esp_gps->cur_statement == StatementGsa) {
         parse_gsa(esp_gps);
     }
 #endif
 #if CONFIG_NMEA_STATEMENT_GSV
-    else if (esp_gps->cur_statement == STATEMENT_GSV) {
+    else if (esp_gps->cur_statement == StatementGsv) {
         parse_gsv(esp_gps);
     }
 #endif
 #if CONFIG_NMEA_STATEMENT_RMC
-    else if (esp_gps->cur_statement == STATEMENT_RMC) {
+    else if (esp_gps->cur_statement == StatementRmc) {
         parse_rmc(esp_gps);
     }
 #endif
 #if CONFIG_NMEA_STATEMENT_GLL
-    else if (esp_gps->cur_statement == STATEMENT_GLL) {
+    else if (esp_gps->cur_statement == StatementGll) {
         parse_gll(esp_gps);
     }
 #endif
 #if CONFIG_NMEA_STATEMENT_VTG
-    else if (esp_gps->cur_statement == STATEMENT_VTG) {
+    else if (esp_gps->cur_statement == StatementVtg) {
         parse_vtg(esp_gps);
     }
 #endif
 #if CONFIG_NMEA_STATEMENT_ZDA
-    else if (esp_gps->cur_statement == STATEMENT_ZDA) {
+    else if (esp_gps->cur_statement == StatementZda) {
         parse_zda(esp_gps);
     }
 #endif
@@ -453,40 +453,40 @@ static esp_err_t gps_decode(esp_gps_t *esp_gps, size_t len)
             if (esp_gps->crc == crc) {
                 switch (esp_gps->cur_statement) {
 #if CONFIG_NMEA_STATEMENT_GGA
-                case STATEMENT_GGA:
-                    esp_gps->parsed_statement |= 1 << STATEMENT_GGA;
+                case StatementGga:
+                    esp_gps->parsed_statement |= 1 << StatementGga;
                     break;
 #endif
 #if CONFIG_NMEA_STATEMENT_GSA
-                case STATEMENT_GSA:
-                    esp_gps->parsed_statement |= 1 << STATEMENT_GSA;
+                case StatementGsa:
+                    esp_gps->parsed_statement |= 1 << StatementGsa;
                     break;
 #endif
 #if CONFIG_NMEA_STATEMENT_RMC
-                case STATEMENT_RMC:
-                    esp_gps->parsed_statement |= 1 << STATEMENT_RMC;
+                case StatementRmc:
+                    esp_gps->parsed_statement |= 1 << StatementRmc;
                     break;
 #endif
 #if CONFIG_NMEA_STATEMENT_GSV
-                case STATEMENT_GSV:
+                case StatementGsv:
                     if (esp_gps->sat_num == esp_gps->sat_count) {
-                        esp_gps->parsed_statement |= 1 << STATEMENT_GSV;
+                        esp_gps->parsed_statement |= 1 << StatementGsv;
                     }
                     break;
 #endif
 #if CONFIG_NMEA_STATEMENT_GLL
-                case STATEMENT_GLL:
-                    esp_gps->parsed_statement |= 1 << STATEMENT_GLL;
+                case StatementGll:
+                    esp_gps->parsed_statement |= 1 << StatementGll;
                     break;
 #endif
 #if CONFIG_NMEA_STATEMENT_VTG
-                case STATEMENT_VTG:
-                    esp_gps->parsed_statement |= 1 << STATEMENT_VTG;
+                case StatementVtg:
+                    esp_gps->parsed_statement |= 1 << StatementVtg;
                     break;
 #endif
 #if CONFIG_NMEA_STATEMENT_ZDA
-                case STATEMENT_ZDA:
-                    esp_gps->parsed_statement |= 1 << STATEMENT_ZDA;
+                case StatementZda:
+                    esp_gps->parsed_statement |= 1 << StatementZda;
                     break;
 #endif
                 default:
@@ -496,14 +496,14 @@ static esp_err_t gps_decode(esp_gps_t *esp_gps, size_t len)
                 if (((esp_gps->parsed_statement) & esp_gps->all_statements) == esp_gps->all_statements) {
                     esp_gps->parsed_statement = 0;
                     /* Send signal to notify that GPS information has been updated */
-                    esp_event_post_to(esp_gps->event_loop_hdl, GPS_EVENTS, GPS_UPDATE, &(esp_gps->parent), sizeof(gps_t), 100 / portTICK_PERIOD_MS);
+                    esp_event_post_to(esp_gps->event_loop_hdl, GPS_EVENTS, GpsUpdate, &(esp_gps->parent), sizeof(gps_t), 100 / portTICK_PERIOD_MS);
                 }
             } else {
                 ESP_LOGD(TAG, "CRC Error for statement:%s", esp_gps->buffer);
             }
-            if (esp_gps->cur_statement == STATEMENT_UNKNOWN) {
+            if (esp_gps->cur_statement == StatementUnknown) {
                 /* Send signal to notify that one unknown statement has been met */
-                esp_event_post_to(esp_gps->event_loop_hdl, GPS_EVENTS, GPS_UNKNOWN, esp_gps->buffer, len, 100 / portTICK_PERIOD_MS);
+                esp_event_post_to(esp_gps->event_loop_hdl, GPS_EVENTS, GpsUnknown, esp_gps->buffer, len, 100 / portTICK_PERIOD_MS);
             }
         }
         /* Other non-space character */
@@ -602,7 +602,7 @@ static void onGPSEvent(void* handler_arg, esp_event_base_t base, int32_t event_i
     macdap::gps_t *gps = static_cast<macdap::gps_t*>(event_data);
 
     switch (event_id) {
-    case macdap::GPS_UPDATE:
+    case macdap::GpsUpdate:
         ESP_LOGI(TAG, "%d/%d/%d %d:%d:%d => \r\n"
                  "\t\t\t\t\t\tlatitude   = %.05f°N\r\n"
                  "\t\t\t\t\t\tlongitude  = %.05f°E\r\n"
@@ -612,7 +612,7 @@ static void onGPSEvent(void* handler_arg, esp_event_base_t base, int32_t event_i
                  gps->tim.hour, gps->tim.minute, gps->tim.second,
                  gps->latitude, gps->longitude, gps->altitude, gps->speed);
         break;
-    case macdap::GPS_UNKNOWN:
+    case macdap::GpsUnknown:
         /* print unknown statements */
         ESP_LOGW(TAG, "Unknown statement:%s", (char *)event_data);
         break;
@@ -652,33 +652,33 @@ GPS::GPS()
         return;
     }
 
-    macdap::EventLoop &eventLoop = macdap::EventLoop::getInstance();
-    esp_gps->event_loop_hdl = eventLoop.getEventLoopHandle();
+    macdap::EventLoop &eventLoop = macdap::EventLoop::get_instance();
+    esp_gps->event_loop_hdl = eventLoop.get_event_loop_handle();
 
 #if CONFIG_GPS_EVENT_LOG
     esp_event_handler_register_with(esp_gps->event_loop_hdl, GPS_EVENTS, ESP_EVENT_ANY_ID, onGPSEvent, NULL);
 #endif
 
 #if CONFIG_NMEA_STATEMENT_GSA
-    esp_gps->all_statements |= (1 << STATEMENT_GSA);
+    esp_gps->all_statements |= (1 << StatementGsa);
 #endif
 #if CONFIG_NMEA_STATEMENT_GSV
-    esp_gps->all_statements |= (1 << STATEMENT_GSV);
+    esp_gps->all_statements |= (1 << StatementGsv);
 #endif
 #if CONFIG_NMEA_STATEMENT_GGA
-    esp_gps->all_statements |= (1 << STATEMENT_GGA);
+    esp_gps->all_statements |= (1 << StatementGga);
 #endif
 #if CONFIG_NMEA_STATEMENT_RMC
-    esp_gps->all_statements |= (1 << STATEMENT_RMC);
+    esp_gps->all_statements |= (1 << StatementRmc);
 #endif
 #if CONFIG_NMEA_STATEMENT_GLL
-    esp_gps->all_statements |= (1 << STATEMENT_GLL);
+    esp_gps->all_statements |= (1 << StatementGll);
 #endif
 #if CONFIG_NMEA_STATEMENT_VTG
-    esp_gps->all_statements |= (1 << STATEMENT_VTG);
+    esp_gps->all_statements |= (1 << StatementVtg);
 #endif
 #if CONFIG_NMEA_STATEMENT_ZDA
-    esp_gps->all_statements |= (1 << STATEMENT_ZDA);
+    esp_gps->all_statements |= (1 << StatementZda);
 #endif
 
     esp_gps->all_statements &= 0xFE;

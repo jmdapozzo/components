@@ -2,22 +2,22 @@
 #include <esp_log.h>
 #include <digitalInput.hpp>
 
-#define CONFIG_GPIO_SWITCH_UP_OPTION 6
-#define CONFIG_GPIO_SWITCH_DOWN 7
-
 static const char *TAG = "main";
 
 extern "C" void app_main(void)
 {
     ESP_LOGI(TAG, "Digital Input Test Program");
 
-    macdap::DigitalInput &digitalInput = macdap::DigitalInput::getInstance();
+    macdap::DigitalInput &digitalInput = macdap::DigitalInput::get_instance();
 
-    digitalInput.addInput(static_cast<gpio_num_t>(CONFIG_GPIO_SWITCH_UP_OPTION));
-    digitalInput.addInput(static_cast<gpio_num_t>(CONFIG_GPIO_SWITCH_DOWN));
+    digitalInput.add_input(static_cast<gpio_num_t>(0));
+    digitalInput.add_input(static_cast<gpio_num_t>(5));
+    digitalInput.add_input(static_cast<gpio_num_t>(6));
+    digitalInput.add_input(static_cast<gpio_num_t>(7));
 
     while (true)
     {
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
+
 }

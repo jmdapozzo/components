@@ -15,8 +15,8 @@ extern "C" void app_main(void)
     const lvgl_port_cfg_t lvglConfig = ESP_LVGL_PORT_INIT_CONFIG();
     lvgl_port_init(&lvglConfig);
 
-    macdap::LedPanel &ledPanel = macdap::LedPanel::getInstance();
-    ledPanel.setBrightness(1.00);
+    macdap::LedPanel &ledPanel = macdap::LedPanel::get_instance();
+    ledPanel.set_brightness(1.00);
     message("12345678");
     // ledPanel.message("1234");
     // ledPanel.message("-.-");

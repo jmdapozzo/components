@@ -11,28 +11,23 @@
 
 ESP_EVENT_DECLARE_BASE(GPS_EVENTS);
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 namespace macdap
 {
     typedef enum {
-        GPS_UPDATE, /*!< GPS information has been updated */
-        GPS_UNKNOWN /*!< Unknown statements detected */
+        GpsUpdate, /*!< GPS information has been updated */
+        GpsUnknown /*!< Unknown statements detected */
     } nmea_event_id_t;
 
     typedef enum {
-        GPS_FIX_INVALID, /*!< Not fixed */
-        GPS_FIX_GPS,     /*!< GPS */
-        GPS_FIX_DGPS,    /*!< Differential GPS */
+        GpsFixInvalid, /*!< Not fixed */
+        GpsFixGps,     /*!< GPS */
+        GpsFixDgps,    /*!< Differential GPS */
     } gps_fix_t;
 
     typedef enum {
-        GPS_MODE_INVALID = 1, /*!< Not fixed */
-        GPS_MODE_2D,          /*!< 2D GPS */
-        GPS_MODE_3D           /*!< 3D GPS */
+        GpsModeInvalid = 1, /*!< Not fixed */
+        GpsMode2D,          /*!< 2D GPS */
+        GpsMode3D           /*!< 3D GPS */
     } gps_fix_mode_t;
 
     typedef struct {
@@ -56,14 +51,14 @@ namespace macdap
     } gps_date_t;
 
     typedef enum {
-        STATEMENT_UNKNOWN = 0, /*!< Unknown statement */
-        STATEMENT_GGA,         /*!< GGA */
-        STATEMENT_GSA,         /*!< GSA */
-        STATEMENT_RMC,         /*!< RMC */
-        STATEMENT_GSV,         /*!< GSV */
-        STATEMENT_GLL,         /*!< GLL */
-        STATEMENT_VTG,         /*!< VTG */
-        STATEMENT_ZDA,         /*!< ZDA */
+        StatementUnknown = 0, /*!< Unknown statement */
+        StatementGga,         /*!< GGA */
+        StatementGsa,         /*!< GSA */
+        StatementRmc,         /*!< RMC */
+        StatementGsv,         /*!< GSV */
+        StatementGll,         /*!< GLL */
+        StatementVtg,         /*!< VTG */
+        StatementZda,         /*!< ZDA */
     } nmea_statement_t;
 
     typedef struct {
@@ -99,7 +94,7 @@ namespace macdap
     public:
         GPS(GPS const&) = delete;
         void operator=(GPS const &) = delete;
-        static GPS &getInstance()
+        static GPS &get_instance()
         {
             static GPS instance;
             return instance;
@@ -107,7 +102,3 @@ namespace macdap
         void getPosition();
     };
 }
-
-#ifdef __cplusplus
-}
-#endif

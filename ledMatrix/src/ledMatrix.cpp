@@ -5,17 +5,17 @@ using namespace macdap;
 
 static const char *TAG = "ledMatrix";
 
-static void flushCB(lv_display_t *display, const lv_area_t *area, uint8_t *px_map)
+static void flush_cb(lv_display_t *display, const lv_area_t *area, uint8_t *px_map)
 {
-    uint16_t *pxMap = (uint16_t *)px_map;
-    uint32_t horizontalResolution = lv_display_get_horizontal_resolution(display);
-    MatrixPanel_I2S_DMA *matrixPanel = static_cast<MatrixPanel_I2S_DMA*>(lv_display_get_user_data(display));
+    uint16_t *px_map_16 = (uint16_t *)px_map;
+    uint32_t horizontal_resolution = lv_display_get_horizontal_resolution(display);
+    MatrixPanel_I2S_DMA *matrix_panel = static_cast<MatrixPanel_I2S_DMA*>(lv_display_get_user_data(display));
     for(int32_t y = area->y1; y <= area->y2; y++) {
-        int32_t virtualY = y % CONFIG_LED_MATRIX_PIXEL_HEIGHT;
+        int32_t virtual_y = y % CONFIG_LED_MATRIX_PIXEL_HEIGHT;
         for(int32_t x = area->x1; x <= area->x2; x++) {
-            int32_t virtualX = (x % horizontalResolution) + ((y / CONFIG_LED_MATRIX_PIXEL_HEIGHT) * horizontalResolution);
-            matrixPanel->drawPixel(virtualX, virtualY, *pxMap);
-            pxMap++;
+            int32_t virtual_x = (x % horizontal_resolution) + ((y / CONFIG_LED_MATRIX_PIXEL_HEIGHT) * horizontal_resolution);
+            matrix_panel->drawPixel(virtual_x, virtual_y, *px_map_16);
+            px_map_16++;
         }
     }
 
@@ -48,7 +48,7 @@ LedMatrix::LedMatrix()
     mxconfig.driver = static_cast<HUB75_I2S_CFG::shift_driver>(HUB75_I2S_CFG::shift_driver::SHIFTREG);
     mxconfig.line_decoder = static_cast<HUB75_I2S_CFG::line_driver>(HUB75_I2S_CFG::line_driver::TYPE138);
     mxconfig.double_buff = false;
-    mxconfig.i2sspeed = static_cast<HUB75_I2S_CFG::clk_speed>(HUB75_I2S_CFG::clk_speed::HZ_20M);
+    mxconfig.i2sspeed = static_cast<HUB75_I2S_CFG::clk_speed>(HUB75_I2S_CFG::clk_speed::HZ_8M);
     mxconfig.latch_blanking = 2; //CONFIG_LED_MATRIX_LATCH_BLANKING;
     mxconfig.clkphase = true;
     mxconfig.min_refresh_rate = 60; //CONFIG_LED_MATRIX_MIN_REFRESH_RATE;
@@ -60,36 +60,36 @@ LedMatrix::LedMatrix()
     display->clearScreen();
     // display->setLatBlanking(4); // See https://github.com/mrcodetastic/ESP32-HUB75-MatrixPanel-DMA Latch Blanking for more information
 
-    int32_t horizontalResolution = CONFIG_LED_MATRIX_MODULE_WIDTH * CONFIG_LED_MATRIX_PIXEL_WIDTH;
-    int32_t verticalResolution = CONFIG_LED_MATRIX_MODULE_HEIGHT * CONFIG_LED_MATRIX_PIXEL_HEIGHT;
+    int32_t horizontal_resolution = CONFIG_LED_MATRIX_MODULE_WIDTH * CONFIG_LED_MATRIX_PIXEL_WIDTH;
+    int32_t vertical_resolution = CONFIG_LED_MATRIX_MODULE_HEIGHT * CONFIG_LED_MATRIX_PIXEL_HEIGHT;
 
-    ESP_LOGI(TAG, "Display resolution: %ld x %ld", horizontalResolution, verticalResolution);
+    ESP_LOGI(TAG, "Display resolution: %ld x %ld", horizontal_resolution, vertical_resolution);
 
     #define BYTES_PER_PIXEL (LV_COLOR_FORMAT_GET_SIZE(LV_COLOR_FORMAT_RGB565))
-    size_t lvBufferSize = horizontalResolution * verticalResolution * BYTES_PER_PIXEL;
-    uint8_t *lvBuffer = static_cast<uint8_t*>(heap_caps_malloc(lvBufferSize, MALLOC_CAP_DEFAULT));
-    if (lvBuffer == nullptr)
+    size_t lv_buffer_size = horizontal_resolution * vertical_resolution * BYTES_PER_PIXEL;
+    uint8_t *lv_buffer = static_cast<uint8_t*>(heap_caps_malloc(lv_buffer_size, MALLOC_CAP_DEFAULT));
+    if (lv_buffer == nullptr)
     {
         ESP_LOGE(TAG, "Failed to allocate lvBuffer on the heap!");
         return;
     }
 
-    m_display = lv_display_create(horizontalResolution, verticalResolution);
-    lv_display_set_flush_cb(m_display, flushCB);
+    m_display = lv_display_create(horizontal_resolution, vertical_resolution);
+    lv_display_set_flush_cb(m_display, flush_cb);
     lv_display_set_user_data(m_display, display);
-    lv_display_set_buffers(m_display, lvBuffer, NULL, lvBufferSize, LV_DISPLAY_RENDER_MODE_FULL);
+    lv_display_set_buffers(m_display, lv_buffer, NULL, lv_buffer_size, LV_DISPLAY_RENDER_MODE_FULL);
 }
 
 LedMatrix::~LedMatrix()
 {
 }
 
-lv_display_t *LedMatrix::getLvDisplay()
+lv_display_t *LedMatrix::get_lv_display()
 {
     return m_display;
 }
 
-void LedMatrix::setBrightness(float brightness)
+void LedMatrix::set_brightness(float brightness)
 {
     if (brightness > 100.0)
     {
@@ -99,7 +99,7 @@ void LedMatrix::setBrightness(float brightness)
     {
         brightness = 0.0;
     }
-    uint8_t brightnessByte = static_cast<uint8_t>(std::round((brightness / 100.0f) * 255.0f));
+    uint8_t brightness_byte = static_cast<uint8_t>(std::round((brightness / 100.0f) * 255.0f));
     MatrixPanel_I2S_DMA *display = static_cast<MatrixPanel_I2S_DMA*>(lv_display_get_user_data(m_display));
-    display->setPanelBrightness(brightnessByte);
+    display->setPanelBrightness(brightness_byte);
 }

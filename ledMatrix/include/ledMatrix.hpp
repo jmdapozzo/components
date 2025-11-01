@@ -3,11 +3,6 @@
 #include <lvgl.h>
 #include <esp_lvgl_port.h>
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 namespace macdap
 {
     class LedMatrix
@@ -21,17 +16,12 @@ namespace macdap
     public:
         LedMatrix(LedMatrix const&) = delete;
         void operator=(LedMatrix const &) = delete;
-        static LedMatrix &getInstance()
+        static LedMatrix &get_instance()
         {
             static LedMatrix instance;
             return instance;
         }
-        void setBrightness(float brightness);
-        lv_display_t *getLvDisplay();
+        lv_display_t *get_lv_display();
+        void set_brightness(float brightness);
     };
 }
-
-#ifdef __cplusplus
-}
-#endif
-

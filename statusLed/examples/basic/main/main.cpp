@@ -8,7 +8,7 @@ extern "C" void app_main(void)
 {
     ESP_LOGI(TAG, "Status Led Test Program");
 
-    macdap::StatusLed &statusLed = macdap::StatusLed::getInstance();
+    macdap::StatusLed &statusLed = macdap::StatusLed::get_instance();
 
     ESP_LOGI(TAG, "Initial Status Led State");
 

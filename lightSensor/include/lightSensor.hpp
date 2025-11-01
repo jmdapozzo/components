@@ -3,11 +3,6 @@
 #include "esp_err.h"
 #include <driver/i2c_master.h>
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 namespace macdap
 {
     typedef enum {
@@ -23,29 +18,25 @@ namespace macdap
     {
 
     private:
-        i2c_master_dev_handle_t m_i2cDeviceHandle;
+        i2c_master_dev_handle_t m_i2c_device_handle;
         LightSensor();
         ~LightSensor();
 
     public:
         LightSensor(LightSensor const&) = delete;
         void operator=(LightSensor const &) = delete;
-        static LightSensor &getInstance()
+        static LightSensor &get_instance()
         {
             static LightSensor instance;
             return instance;
         }
 
         esp_err_t reset();
-        esp_err_t powerDown();
-        esp_err_t powerOn();
-        esp_err_t setMeasureMode(const measure_mode_t measureMode);
-        esp_err_t getIlluminance(float *illuminance);
-        esp_err_t setMeasureTime(const uint8_t measureTime);
+        esp_err_t power_down();
+        esp_err_t power_on();
+        esp_err_t set_measure_mode(const measure_mode_t measure_mode);
+        esp_err_t get_illuminance(float *illuminance);
+        esp_err_t set_measure_time(const uint8_t measure_time);
 
     };
 }
-
-#ifdef __cplusplus
-}
-#endif

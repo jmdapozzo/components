@@ -1,4 +1,4 @@
-version: "0.0.1"
+version: "0.1.0"
 license: "MIT"
 description: "Component to manage an event loop."
 url: https://github.com/jmdapozzo/components/tree/main/eventLoop

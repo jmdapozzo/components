@@ -15,7 +15,7 @@ static led_strip_handle_t configure_led(void)
         .strip_gpio_num = CONFIG_STATUS_LED_GPIO,
         .max_leds = 1,
         .led_model = LED_MODEL_WS2812,
-        .color_component_format = LED_STRIP_COLOR_COMPONENT_FMT_RGB,
+        .color_component_format = LED_STRIP_COLOR_COMPONENT_FMT_GRB,
         .flags = {
             .invert_out = false,
         }};
@@ -92,16 +92,16 @@ void StatusLed::set_status(Status status)
         ESP_ERROR_CHECK(led_strip_set_pixel(m_ledStrip, 0, 0, 0, 0));
         break;
     case Status::Booting:
-        ESP_ERROR_CHECK(led_strip_set_pixel(m_ledStrip, 0, 0, 0, m_brightness));
+        ESP_ERROR_CHECK(led_strip_set_pixel(m_ledStrip, 0, m_brightness, m_brightness, m_brightness));
         break;
     case Status::Commissioning:
-        ESP_ERROR_CHECK(led_strip_set_pixel(m_ledStrip, 0, m_brightness, 0, 0));
+        ESP_ERROR_CHECK(led_strip_set_pixel(m_ledStrip, 0, m_brightness, m_brightness, 0));
         break;
-    case Status::RunningPhase0:
-        ESP_ERROR_CHECK(led_strip_set_pixel(m_ledStrip, 0, 0, 0, 0));
-        break;
-    case Status::RunningPhase1:
+    case Status::WaitingForNetwork:
         ESP_ERROR_CHECK(led_strip_set_pixel(m_ledStrip, 0, 0, m_brightness, 0));
+        break;
+    case Status::Running:
+        ESP_ERROR_CHECK(led_strip_set_pixel(m_ledStrip, 0, 0, 0, m_brightness));
         break;
     case Status::Error:
         ESP_ERROR_CHECK(led_strip_set_pixel(m_ledStrip, 0, m_brightness, 0, 0));

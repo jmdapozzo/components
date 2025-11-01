@@ -25,22 +25,22 @@ using namespace macdap;
 
 static const char *TAG = "management";
 
-static void getBuildNumber(const esp_app_desc_t *appDescription, char *str, size_t size) {
+static void get_build_number(const esp_app_desc_t *app_description, char *str, size_t size) {
     struct tm tm;
     char buf[64];
 
-    snprintf(buf, sizeof(buf), "%s %s", appDescription->date, appDescription->time);
+    snprintf(buf, sizeof(buf), "%s %s", app_description->date, app_description->time);
     strptime(buf, "%b %d %Y %H:%M:%S", &tm);
     snprintf(str, size, "%lld", mktime(&tm));
 }
 
-static esp_err_t initHeaders(esp_http_client_handle_t client)
+static esp_err_t init_headers(esp_http_client_handle_t client)
 {
-    macdap::TokenManager &tokenManager = macdap::TokenManager::getInstance();
+    macdap::TokenManager &tokenManager = macdap::TokenManager::get_instance();
     char authorisation[2048];
-    if (tokenManager.getAuthorisation(authorisation, sizeof(authorisation)) != ESP_OK)
+    if (tokenManager.get_authorisation(authorisation, sizeof(authorisation)) != ESP_OK)
     {
-        ESP_LOGE(TAG, "tokenManager.getAuthorisation failed");
+        ESP_LOGE(TAG, "tokenManager.get_authorisation failed");
         return ESP_FAIL;
     }
     if (esp_http_client_set_header(client, "authorization", authorisation) != ESP_OK)
@@ -49,21 +49,21 @@ static esp_err_t initHeaders(esp_http_client_handle_t client)
         return ESP_FAIL;
     }
 
-    const esp_app_desc_t *appDescription = esp_app_get_description();
-    if (esp_http_client_set_header(client, "macdap-app-title", appDescription->project_name) != ESP_OK)
+    const esp_app_desc_t *app_description = esp_app_get_description();
+    if (esp_http_client_set_header(client, "macdap-app-title", app_description->project_name) != ESP_OK)
     {
         ESP_LOGE(TAG, "Failed to set macdap-app-title header");
         return ESP_FAIL;
     }
-    if (esp_http_client_set_header(client, "macdap-app-version", appDescription->version) != ESP_OK)
+    if (esp_http_client_set_header(client, "macdap-app-version", app_description->version) != ESP_OK)
     {
         ESP_LOGE(TAG, "Failed to set macdap-app-version header");
         return ESP_FAIL;
     }
     
-    char buildNumber[32];
-    getBuildNumber(appDescription, buildNumber, sizeof(buildNumber));
-    if (esp_http_client_set_header(client, "macdap-app-build-number", buildNumber) != ESP_OK)
+    char build_number[32];
+    get_build_number(app_description, build_number, sizeof(build_number));
+    if (esp_http_client_set_header(client, "macdap-app-build-number", build_number) != ESP_OK)
     {
         ESP_LOGE(TAG, "Failed to set macdap-app-build-number header");
         return ESP_FAIL;
@@ -74,15 +74,15 @@ static esp_err_t initHeaders(esp_http_client_handle_t client)
         return ESP_FAIL;
     }
 
-    uint64_t macAddress = 0LL;
-    if (esp_efuse_mac_get_default((uint8_t *)(&macAddress)) != ESP_OK)
+    uint64_t mac_address = 0LL;
+    if (esp_efuse_mac_get_default((uint8_t *)(&mac_address)) != ESP_OK)
     {
         ESP_LOGE(TAG, "Failed to get MAC address");
         return ESP_FAIL;
     }
-    char macAddressStr[17];
-    snprintf(macAddressStr, sizeof(macAddressStr), "%016llx", macAddress);
-    if (esp_http_client_set_header(client, "macdap-platform-id", macAddressStr) != ESP_OK)
+    char mac_address_str[17];
+    snprintf(mac_address_str, sizeof(mac_address_str), "%016llx", mac_address);
+    if (esp_http_client_set_header(client, "macdap-platform-id", mac_address_str) != ESP_OK)
     {
         ESP_LOGE(TAG, "Failed to set macdap-platform-id header");
         return ESP_FAIL;
@@ -91,7 +91,7 @@ static esp_err_t initHeaders(esp_http_client_handle_t client)
     return ESP_OK;
 }
 
-static void otaEventHandler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
+static void ota_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
     if (event_base == ESP_HTTPS_OTA_EVENT)
     {
@@ -128,7 +128,7 @@ static void otaEventHandler(void *arg, esp_event_base_t event_base, int32_t even
     }
 }
 
-static esp_err_t httpEventHandler(esp_http_client_event_handle_t event)
+static esp_err_t http_event_handler(esp_http_client_event_handle_t event)
 {
     Management *management = (Management *)event->user_data;
 
@@ -155,30 +155,30 @@ static esp_err_t httpEventHandler(esp_http_client_event_handle_t event)
         {
             if (!esp_http_client_is_chunked_response(event->client))
             {
-                int64_t copyLength = 0;
-                int64_t contentLength = esp_http_client_get_content_length(event->client);
+                int64_t copy_length = 0;
+                int64_t content_length = esp_http_client_get_content_length(event->client);
 
-                copyLength = MIN(event->data_len, (contentLength - management->m_outputLength));
-                if (copyLength)
+                copy_length = MIN(event->data_len, (content_length - management->m_output_buffer_length));
+                if (copy_length)
                 {
-                    if (management->m_outputLength + copyLength > sizeof(management->m_outputBuffer))
+                    if (management->m_output_buffer_length + copy_length > sizeof(management->m_output_buffer))
                     {
                         ESP_LOGE(TAG, "Output buffer overflow from %s", url);
                         return ESP_FAIL;
                     }
-                    memcpy(management->m_outputBuffer + management->m_outputLength, event->data, copyLength);
+                    memcpy(management->m_output_buffer + management->m_output_buffer_length, event->data, copy_length);
                 }
-                management->m_outputLength += copyLength;
+                management->m_output_buffer_length += copy_length;
             }
             else
             {
-                if (management->m_outputLength + event->data_len > sizeof(management->m_outputBuffer))
+                if (management->m_output_buffer_length + event->data_len > sizeof(management->m_output_buffer))
                 {
                     ESP_LOGE(TAG, "Output buffer overflow from %s", url);
                     return ESP_FAIL;
                 }
-                memcpy(management->m_outputBuffer + management->m_outputLength, event->data, event->data_len);
-                management->m_outputLength += event->data_len;
+                memcpy(management->m_output_buffer + management->m_output_buffer_length, event->data, event->data_len);
+                management->m_output_buffer_length += event->data_len;
             }
         }
         break;
@@ -186,7 +186,7 @@ static esp_err_t httpEventHandler(esp_http_client_event_handle_t event)
         ESP_LOGD(TAG, "HTTP_EVENT_ON_FINISH");
         if (management != nullptr)
         {
-            management->m_outputLength = 0;
+            management->m_output_buffer_length = 0;
         }
         break;
     case HTTP_EVENT_DISCONNECTED:
@@ -199,7 +199,7 @@ static esp_err_t httpEventHandler(esp_http_client_event_handle_t event)
     return ESP_OK;
 }
 
-static esp_err_t doConnection(Management *management)
+static esp_err_t do_connection(Management *management)
 {
     esp_http_client_config_t http_client_config = {};
     http_client_config.url = CONFIG_REST_SERVICE_ENDPOINT_CONNECTION,
@@ -207,7 +207,7 @@ static esp_err_t doConnection(Management *management)
     http_client_config.crt_bundle_attach = esp_crt_bundle_attach;
     http_client_config.method = HTTP_METHOD_POST,
     http_client_config.cert_pem = nullptr,
-    http_client_config.event_handler = httpEventHandler;
+    http_client_config.event_handler = http_event_handler;
     http_client_config.user_data = management;
     http_client_config.buffer_size_tx = 4096;  // TODO reduce this
     http_client_config.timeout_ms = 15000;
@@ -219,30 +219,30 @@ static esp_err_t doConnection(Management *management)
         return ESP_FAIL;
     }
 
-    if (initHeaders(client) != ESP_OK)
+    if (init_headers(client) != ESP_OK)
     {
         ESP_LOGE(TAG, "initHeaders failed");
         esp_http_client_cleanup(client);
         return ESP_FAIL;
     }
 
-    const esp_app_desc_t *appDescription = esp_app_get_description();
-    uint64_t macAddress = 0LL;
-    if (esp_efuse_mac_get_default((uint8_t *)(&macAddress)) != ESP_OK)
+    const esp_app_desc_t *app_description = esp_app_get_description();
+    uint64_t mac_address = 0LL;
+    if (esp_efuse_mac_get_default((uint8_t *)(&mac_address)) != ESP_OK)
     {
         ESP_LOGE(TAG, "esp_efuse_mac_get_default failed");
         esp_http_client_cleanup(client);
         return ESP_FAIL;
     }
 
-    char buildNumber[32];
-    getBuildNumber(appDescription, buildNumber, sizeof(buildNumber));
-    char postData[256];
-    snprintf(postData, sizeof(postData), FORMAT_DEVICE_CONNECTION_POST_DATA, CONFIG_APP_PLATFORM, macAddress, appDescription->project_name, appDescription->version, buildNumber);
-    esp_http_client_set_post_field(client, postData, strlen(postData));
+    char build_number[32];
+    get_build_number(app_description, build_number, sizeof(build_number));
+    char post_data[256];
+    snprintf(post_data, sizeof(post_data), FORMAT_DEVICE_CONNECTION_POST_DATA, CONFIG_APP_PLATFORM, mac_address, app_description->project_name, app_description->version, build_number);
+    esp_http_client_set_post_field(client, post_data, strlen(post_data));
     esp_http_client_set_header(client, "Content-Type", "application/x-www-form-urlencoded");
 
-    ESP_LOGI(TAG, "doConnection POST at %s data %s", CONFIG_REST_SERVICE_ENDPOINT_CONNECTION, postData);
+    ESP_LOGI(TAG, "do_connection POST at %s data %s", CONFIG_REST_SERVICE_ENDPOINT_CONNECTION, post_data);
 
     if (esp_http_client_perform(client) != ESP_OK)
     {
@@ -253,14 +253,14 @@ static esp_err_t doConnection(Management *management)
 
     if (esp_http_client_get_content_length(client) > 0)
     {
-        cJSON *root = cJSON_Parse(management->m_outputBuffer);
-        bool postDeviceConnection = cJSON_IsTrue(cJSON_GetObjectItem(root, "postDeviceConnection"));
+        cJSON *root = cJSON_Parse(management->m_output_buffer);
+        bool post_device_connection = cJSON_IsTrue(cJSON_GetObjectItem(root, "postDeviceConnection"));
         cJSON_Delete(root);
 
-        if (!postDeviceConnection)
+        if (!post_device_connection)
         {
             int32_t status = esp_http_client_get_status_code(client);
-            ESP_LOGE(TAG, "postDeviceConnection failed, status=%ld", status);
+            ESP_LOGE(TAG, "post_device_connection failed, status=%ld", status);
             esp_http_client_cleanup(client);
             return ESP_FAIL;
         }
@@ -283,20 +283,20 @@ static esp_err_t doConnection(Management *management)
     return ESP_OK;
 }
 
-static esp_err_t update(updateFirmware_t updateFirmware)
+static esp_err_t update(updateFirmware_t update_firmware)
 {
-    if (esp_event_handler_register(ESP_HTTPS_OTA_EVENT, ESP_EVENT_ANY_ID, &otaEventHandler, nullptr) != ESP_OK)
+    if (esp_event_handler_register(ESP_HTTPS_OTA_EVENT, ESP_EVENT_ANY_ID, &ota_event_handler, nullptr) != ESP_OK)
     {
         ESP_LOGE(TAG, "esp_event_handler_register failed");
     }
 
     esp_http_client_config_t http_client_config = {};
-    http_client_config.url = updateFirmware.url,
+    http_client_config.url = update_firmware.url,
     http_client_config.transport_type = HTTP_TRANSPORT_OVER_SSL;
     http_client_config.crt_bundle_attach = esp_crt_bundle_attach;
     http_client_config.cert_pem = nullptr,
     http_client_config.user_agent = "ESP32-http-Update";
-    http_client_config.event_handler = httpEventHandler;
+    http_client_config.event_handler = http_event_handler;
     http_client_config.user_data = nullptr;
     http_client_config.keep_alive_enable = true;
 
@@ -304,7 +304,7 @@ static esp_err_t update(updateFirmware_t updateFirmware)
     memset(&ota_config, 0, sizeof(esp_https_ota_config_t));
     ota_config.http_config = &http_client_config;
 
-    ESP_LOGI(TAG, "Ready to update firmware (%ld) from %s", updateFirmware.size, updateFirmware.url);
+    ESP_LOGI(TAG, "Ready to update firmware (%ld) from %s", update_firmware.size, update_firmware.url);
     esp_err_t result = esp_https_ota(&ota_config);
     if (result == ESP_OK)
     {
@@ -317,7 +317,7 @@ static esp_err_t update(updateFirmware_t updateFirmware)
         ESP_LOGE(TAG, "esp_https_ota failed");
     }
 
-    if (esp_event_handler_unregister(ESP_HTTPS_OTA_EVENT, ESP_EVENT_ANY_ID, &otaEventHandler) != ESP_OK)
+    if (esp_event_handler_unregister(ESP_HTTPS_OTA_EVENT, ESP_EVENT_ANY_ID, &ota_event_handler) != ESP_OK)
     {
         ESP_LOGE(TAG, "esp_event_handler_unregister failed");
     }
@@ -325,7 +325,7 @@ static esp_err_t update(updateFirmware_t updateFirmware)
     return result;
 }
 
-static esp_err_t doFirmwareUpdate(Management *management)
+static esp_err_t do_firmware_update(Management *management)
 {
     esp_http_client_config_t http_client_config = {};
     http_client_config.url = CONFIG_REST_SERVICE_ENDPOINT_UPDATE,
@@ -333,7 +333,7 @@ static esp_err_t doFirmwareUpdate(Management *management)
     http_client_config.crt_bundle_attach = esp_crt_bundle_attach;
     http_client_config.method = HTTP_METHOD_GET,
     http_client_config.cert_pem = nullptr,
-    http_client_config.event_handler = httpEventHandler;
+    http_client_config.event_handler = http_event_handler;
     http_client_config.user_data = management;
     http_client_config.buffer_size_tx = 4096;
 
@@ -344,7 +344,7 @@ static esp_err_t doFirmwareUpdate(Management *management)
         return ESP_FAIL;
     }
 
-    if (initHeaders(client) != ESP_OK)
+    if (init_headers(client) != ESP_OK)
     {
         ESP_LOGE(TAG, "initHeaders failed");
         esp_http_client_cleanup(client);
@@ -360,9 +360,9 @@ static esp_err_t doFirmwareUpdate(Management *management)
 
     if (esp_http_client_get_content_length(client) > 0)
     {
-        updateFirmware_t updateFirmware;
-        ESP_LOG_BUFFER_CHAR(TAG, management->m_outputBuffer, esp_http_client_get_content_length(client));
-        cJSON *root = cJSON_Parse(management->m_outputBuffer);
+        updateFirmware_t update_firmware;
+        ESP_LOG_BUFFER_CHAR(TAG, management->m_output_buffer, esp_http_client_get_content_length(client));
+        cJSON *root = cJSON_Parse(management->m_output_buffer);
         const char *name = cJSON_GetObjectItem(root, "name")->valuestring;
         const char *type = cJSON_GetObjectItem(root, "type")->valuestring;
         const char *date = cJSON_GetObjectItem(root, "date")->valuestring;
@@ -370,24 +370,24 @@ static esp_err_t doFirmwareUpdate(Management *management)
         int size = cJSON_GetObjectItem(root, "size")->valueint;
         const char *version = cJSON_GetObjectItem(root, "version")->valuestring;
         const char *url = cJSON_GetObjectItem(root, "url")->valuestring;
-        strncpy(updateFirmware.name, name, sizeof(updateFirmware.name) - 1);
-        strncpy(updateFirmware.type, type, sizeof(updateFirmware.type) - 1);
-        strncpy(updateFirmware.date, date, sizeof(updateFirmware.date) - 1);
-        strncpy(updateFirmware.time, time, sizeof(updateFirmware.time) - 1);
-        updateFirmware.size = size;
-        strncpy(updateFirmware.version, version, sizeof(updateFirmware.version) - 1);
-        strncpy(updateFirmware.url, url, sizeof(updateFirmware.url) - 1);
+        strncpy(update_firmware.name, name, sizeof(update_firmware.name) - 1);
+        strncpy(update_firmware.type, type, sizeof(update_firmware.type) - 1);
+        strncpy(update_firmware.date, date, sizeof(update_firmware.date) - 1);
+        strncpy(update_firmware.time, time, sizeof(update_firmware.time) - 1);
+        update_firmware.size = size;
+        strncpy(update_firmware.version, version, sizeof(update_firmware.version) - 1);
+        strncpy(update_firmware.url, url, sizeof(update_firmware.url) - 1);
         cJSON_Delete(root);
 
-        ESP_LOGD(TAG, "name (%d): %s", strlen(updateFirmware.name), updateFirmware.name);
-        ESP_LOGD(TAG, "type (%d): %s", strlen(updateFirmware.type), updateFirmware.type);
-        ESP_LOGD(TAG, "date (%d): %s", strlen(updateFirmware.date), updateFirmware.date);
-        ESP_LOGD(TAG, "time (%d): %s", strlen(updateFirmware.time), updateFirmware.time);
-        ESP_LOGD(TAG, "size: %ld", updateFirmware.size);
-        ESP_LOGD(TAG, "version (%d): %s", strlen(updateFirmware.version), updateFirmware.version);
-        ESP_LOGD(TAG, "url (%d): %s", strlen(updateFirmware.url), updateFirmware.url);
+        ESP_LOGD(TAG, "name (%d): %s", strlen(update_firmware.name), update_firmware.name);
+        ESP_LOGD(TAG, "type (%d): %s", strlen(update_firmware.type), update_firmware.type);
+        ESP_LOGD(TAG, "date (%d): %s", strlen(update_firmware.date), update_firmware.date);
+        ESP_LOGD(TAG, "time (%d): %s", strlen(update_firmware.time), update_firmware.time);
+        ESP_LOGD(TAG, "size: %ld", update_firmware.size);
+        ESP_LOGD(TAG, "version (%d): %s", strlen(update_firmware.version), update_firmware.version);
+        ESP_LOGD(TAG, "url (%d): %s", strlen(update_firmware.url), update_firmware.url);
 
-        if (update(updateFirmware) != ESP_OK)
+        if (update(update_firmware) != ESP_OK)
         {
             ESP_LOGE(TAG, "update failed");
             esp_http_client_cleanup(client);
@@ -404,21 +404,21 @@ static esp_err_t doFirmwareUpdate(Management *management)
     return ESP_OK;
 }
 
-static void localTask(void *parameter)
+static void local_task(void *parameter)
 {
     Management *management = (Management *)parameter;
 
     vTaskDelay(pdMS_TO_TICKS(STARTUP_DELAY));
 
-    char *taskName = pcTaskGetName(nullptr);
-    ESP_LOGI(TAG, "Starting %s", taskName);
+    char *task_name = pcTaskGetName(nullptr);
+    ESP_LOGI(TAG, "Starting %s", task_name);
 
-    management->m_outputLength = 0;
+    management->m_output_buffer_length = 0;
 
     bool connected = false;
     while (!connected)
     {
-        if (doConnection(management) == ESP_OK)
+        if (do_connection(management) == ESP_OK)
         {
             connected = true;
         }
@@ -431,15 +431,15 @@ static void localTask(void *parameter)
 
     while (true)
     {
-        if (doFirmwareUpdate(management) != ESP_OK)
+        if (do_firmware_update(management) != ESP_OK)
         {
-            ESP_LOGE(TAG, "doFirmwareUpdate failed");
+            ESP_LOGE(TAG, "do_firmware_update failed");
         }
-        uint16_t hourCounter = (xTaskGetTickCount() % 24) + 1;
-        ESP_LOGI(TAG, "Next Update Firmware check in %d hours", hourCounter);
-        while (hourCounter > 0)
+        uint16_t hour_counter = (xTaskGetTickCount() % 24) + 1;
+        ESP_LOGI(TAG, "Next Update Firmware check in %d hours", hour_counter);
+        while (hour_counter > 0)
         {
-            hourCounter--;
+            hour_counter--;
             vTaskDelay(pdMS_TO_TICKS(10 * 1000)); // TODO restore this
             // vTaskDelay(pdMS_TO_TICKS(60 * 60 * 1000));
         }
@@ -450,32 +450,39 @@ static void localTask(void *parameter)
 
 Management::Management()
 {
-    esp_log_level_set(TAG, ESP_LOG_VERBOSE);
-    ESP_LOGI(TAG, "Initializing...");
+    if (!m_initialized)
+    {
+        esp_log_level_set(TAG, ESP_LOG_VERBOSE);
+        ESP_LOGI(TAG, "Initializing...");
 
-    if (m_taskHandle == nullptr)
-    {
-        if (xTaskCreate(
-                localTask,
-                TAG,
-                STACK_SIZE,
-                this,
-                tskIDLE_PRIORITY,
-                &m_taskHandle) != pdPASS)
+        if (m_task_handle == nullptr)
         {
-            ESP_LOGE(TAG, "Failed to create task");
+            if (xTaskCreate(
+                    local_task,
+                    TAG,
+                    STACK_SIZE,
+                    this,
+                    tskIDLE_PRIORITY,
+                    &m_task_handle) == pdPASS)
+            {
+                m_initialized = true;
+            } else {
+                ESP_LOGE(TAG, "Failed to create task");
+            }
+        } else {
+            ESP_LOGW(TAG, "Management already initialized");
         }
-    }
-    else
-    {
+    } else {
         ESP_LOGW(TAG, "Management already initialized");
     }
 }
 
 Management::~Management()
 {
-    if (m_taskHandle != nullptr)
+    if (m_task_handle != nullptr)
     {
-        vTaskDelete(m_taskHandle);
+        vTaskDelete(m_task_handle);
     }
+
+    m_initialized = false;
 }
