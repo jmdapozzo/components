@@ -29,8 +29,6 @@ namespace macdap
     public:
         Management(Management const &) = delete;
         void operator=(Management const &) = delete;
-        char m_output_buffer[4096];
-        int64_t m_output_buffer_length;
         static Management &get_instance()
         {
             static Management instance;

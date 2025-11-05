@@ -21,7 +21,6 @@ using namespace macdap;
 #define CONFIG_REST_SERVICE_ENDPOINT_CONNECTION CONFIG_REST_SERVICE_ENDPOINT "/device/v3/connection"
 #define CONFIG_REST_SERVICE_ENDPOINT_UPDATE CONFIG_REST_SERVICE_ENDPOINT "/device/v3/update"
 #define FORMAT_DEVICE_CONNECTION_POST_DATA "platform_type=%s&platform_id=%016llx&title=%s&version=%s&build_number=%s"
-#define URL_MAX_LENGTH 2048
 
 static const char *TAG = "management";
 
@@ -128,96 +127,10 @@ static void ota_event_handler(void *arg, esp_event_base_t event_base, int32_t ev
     }
 }
 
-static esp_err_t http_event_handler(esp_http_client_event_handle_t event)
-{
-    Management *management = (Management *)event->user_data;
-
-    char url[128];
-    esp_http_client_get_url(event->client, url, sizeof(url));
-    
-    switch (event->event_id)
-    {
-    case HTTP_EVENT_ERROR:
-        ESP_LOGD(TAG, "HTTP_EVENT_ERROR");
-        break;
-    case HTTP_EVENT_ON_CONNECTED:
-        ESP_LOGD(TAG, "HTTP HTTP_EVENT_ON_CONNECTED, %s", url);
-        break;
-    case HTTP_EVENT_HEADER_SENT:
-        ESP_LOGD(TAG, "HTTP_EVENT_HEADER_SENT");
-        break;
-    case HTTP_EVENT_ON_HEADER:
-        ESP_LOGD(TAG, "HTTP_EVENT_ON_HEADER, key=%s, value=%s", event->header_key, event->header_value);
-        break;
-    case HTTP_EVENT_ON_DATA:
-        ESP_LOGD(TAG, "HTTP_EVENT_ON_DATA, len=%d", event->data_len);
-        if (management != nullptr)
-        {
-            if (!esp_http_client_is_chunked_response(event->client))
-            {
-                int64_t copy_length = 0;
-                int64_t content_length = esp_http_client_get_content_length(event->client);
-
-                copy_length = MIN(event->data_len, (content_length - management->m_output_buffer_length));
-                if (copy_length > 0)
-                {
-                    // Ensure we don't overflow the buffer, leaving space for null terminator
-                    int64_t available_space = sizeof(management->m_output_buffer) - management->m_output_buffer_length - 1;
-                    if (copy_length > available_space)
-                    {
-                        ESP_LOGW(TAG, "Truncating response data to prevent buffer overflow from %s", url);
-                        copy_length = available_space;
-                    }
-                    
-                    if (copy_length > 0)
-                    {
-                        memcpy(management->m_output_buffer + management->m_output_buffer_length, event->data, copy_length);
-                        management->m_output_buffer_length += copy_length;
-                    }
-                }
-            }
-            else
-            {
-                // For chunked responses, also check buffer boundaries
-                int64_t available_space = sizeof(management->m_output_buffer) - management->m_output_buffer_length - 1;
-                int64_t copy_length = MIN(event->data_len, available_space);
-                
-                if (copy_length <= 0)
-                {
-                    ESP_LOGW(TAG, "Output buffer full, discarding chunked data from %s", url);
-                }
-                else
-                {
-                    if (copy_length < event->data_len)
-                    {
-                        ESP_LOGW(TAG, "Truncating chunked response data to prevent buffer overflow from %s", url);
-                    }
-                    memcpy(management->m_output_buffer + management->m_output_buffer_length, event->data, copy_length);
-                    management->m_output_buffer_length += copy_length;
-                }
-            }
-        }
-        break;
-    case HTTP_EVENT_ON_FINISH:
-        ESP_LOGD(TAG, "HTTP_EVENT_ON_FINISH");
-        // Don't reset buffer length here as we need to read the response after the request completes
-        // The buffer will be reset at the start of the next request
-        break;
-    case HTTP_EVENT_DISCONNECTED:
-        ESP_LOGD(TAG, "HTTP HTTP_EVENT_DISCONNECTED, %s", url);
-        break;
-    case HTTP_EVENT_REDIRECT:
-        ESP_LOGD(TAG, "HTTP_EVENT_REDIRECT");
-        break;
-    }
-    return ESP_OK;
-}
-
 static esp_err_t do_connection(Management *management)
 {
-    // Reset buffer state before making request
-    management->m_output_buffer_length = 0;
-    memset(management->m_output_buffer, 0, sizeof(management->m_output_buffer));
+    char response_buffer[1024];
+    int response_length = 0;
     
     esp_http_client_config_t http_client_config = {};
     http_client_config.url = CONFIG_REST_SERVICE_ENDPOINT_CONNECTION,
@@ -225,9 +138,7 @@ static esp_err_t do_connection(Management *management)
     http_client_config.crt_bundle_attach = esp_crt_bundle_attach;
     http_client_config.method = HTTP_METHOD_POST,
     http_client_config.cert_pem = nullptr,
-    http_client_config.event_handler = http_event_handler;
-    http_client_config.user_data = management;
-    http_client_config.buffer_size_tx = 4096;  // TODO reduce this
+    http_client_config.buffer_size_tx = 4096;
     http_client_config.timeout_ms = 15000;
 
     esp_http_client_handle_t client = esp_http_client_init(&http_client_config);
@@ -260,102 +171,124 @@ static esp_err_t do_connection(Management *management)
     esp_http_client_set_post_field(client, post_data, strlen(post_data));
     esp_http_client_set_header(client, "Content-Type", "application/x-www-form-urlencoded");
 
-    ESP_LOGI(TAG, "do_connection POST at %s data %s", CONFIG_REST_SERVICE_ENDPOINT_CONNECTION, post_data);
+    ESP_LOGI(TAG, "Connecting to server %s...", CONFIG_REST_SERVICE_ENDPOINT_CONNECTION);
 
-    if (esp_http_client_perform(client) != ESP_OK)
+    if (esp_http_client_open(client, strlen(post_data)) != ESP_OK)
     {
-        ESP_LOGE(TAG, "esp_http_client_perform failed");
+        ESP_LOGE(TAG, "esp_http_client_open failed");
         esp_http_client_cleanup(client);
         return ESP_FAIL;
     }
 
+    // Write the POST data
+    if (esp_http_client_write(client, post_data, strlen(post_data)) < 0)
+    {
+        ESP_LOGE(TAG, "esp_http_client_write failed");
+        esp_http_client_close(client);
+        esp_http_client_cleanup(client);
+        return ESP_FAIL;
+    }
+
+    // Fetch headers
+    int content_length = esp_http_client_fetch_headers(client);
     int status = esp_http_client_get_status_code(client);
+
     if (status != 200)
     {
         ESP_LOGE(TAG, "HTTP POST request failed with status: %d", status);
-        // Log response content if available for debugging
-        if (esp_http_client_get_content_length(client) > 0 && management->m_output_buffer_length > 0)
-        {
-            management->m_output_buffer[MIN(management->m_output_buffer_length, sizeof(management->m_output_buffer) - 1)] = '\0';
-            ESP_LOGE(TAG, "Error response: %s", management->m_output_buffer);
-        }
+        esp_http_client_close(client);
         esp_http_client_cleanup(client);
         return ESP_FAIL;
     }
 
-    if (esp_http_client_get_content_length(client) > 0)
+    // Read response data
+    memset(response_buffer, 0, sizeof(response_buffer));
+    if (content_length > 0)
     {
-        // Null-terminate the response buffer to ensure safe parsing
-        management->m_output_buffer[MIN(management->m_output_buffer_length, sizeof(management->m_output_buffer) - 1)] = '\0';
-        
-        ESP_LOGD(TAG, "Received response length: %lld", management->m_output_buffer_length);
-        ESP_LOGD(TAG, "Received response: %s", management->m_output_buffer);
-        
-        cJSON *root = cJSON_Parse(management->m_output_buffer);
-        if (root == NULL)
+        response_length = esp_http_client_read(client, response_buffer, sizeof(response_buffer) - 1);
+    }
+    else
+    {
+        response_length = 0;
+    }
+
+    // Close the connection
+    esp_http_client_close(client);
+    
+    if (response_length <= 0)
+    {
+        if (status == 200)
         {
-            ESP_LOGE(TAG, "Failed to parse JSON response (length=%lld): '%s'", 
-                     management->m_output_buffer_length, management->m_output_buffer);
-            ESP_LOGE(TAG, "JSON Parse Error: %s", cJSON_GetErrorPtr());
+            ESP_LOGI(TAG, "Server connection successful");
             esp_http_client_cleanup(client);
-            return ESP_FAIL;
+            return ESP_OK;
         }
-
-        // Check if this is an error response
-        cJSON *error_obj = cJSON_GetObjectItem(root, "error");
-        cJSON *message_obj = cJSON_GetObjectItem(root, "message");
-        
-        if (error_obj != NULL || message_obj != NULL)
+        else
         {
-            // This is an error response from the server
-            const char *error_message = "Unknown error";
-            const char *error_code = "N/A";
-            
-            if (message_obj != NULL && cJSON_IsString(message_obj))
-            {
-                error_message = message_obj->valuestring;
-            }
-            
-            if (error_obj != NULL)
-            {
-                cJSON *code_obj = cJSON_GetObjectItem(error_obj, "code");
-                if (code_obj != NULL && cJSON_IsString(code_obj))
-                {
-                    error_code = code_obj->valuestring;
-                }
-            }
-            
-            ESP_LOGW(TAG, "Server returned error - Code: %s, Message: %s", error_code, error_message);
-            cJSON_Delete(root);
-            esp_http_client_cleanup(client);
-            return ESP_FAIL;
-        }
-
-        // Check for successful connection response
-        cJSON *post_device_connection_obj = cJSON_GetObjectItem(root, "postDeviceConnection");
-        bool post_device_connection = false;
-        
-        if (post_device_connection_obj != NULL)
-        {
-            post_device_connection = cJSON_IsTrue(post_device_connection_obj);
-        }
-        
-        cJSON_Delete(root);
-
-        if (!post_device_connection)
-        {
-            ESP_LOGE(TAG, "postDeviceConnection not successful, status=%d", status);
+            ESP_LOGE(TAG, "Failed to read response data (length=%d, status=%d)", response_length, status);
             esp_http_client_cleanup(client);
             return ESP_FAIL;
         }
     }
-
-    if (esp_http_client_cleanup(client))
+    
+    cJSON *root = cJSON_Parse(response_buffer);
+    if (root == NULL)
     {
-        ESP_LOGE(TAG, "esp_http_client_cleanup failed");
+        ESP_LOGE(TAG, "Failed to parse JSON response: '%s'", response_buffer);
+        esp_http_client_cleanup(client);
         return ESP_FAIL;
     }
 
+    // Check if this is an error response
+    cJSON *error_obj = cJSON_GetObjectItem(root, "error");
+    cJSON *message_obj = cJSON_GetObjectItem(root, "message");
+    
+    if (error_obj != NULL || message_obj != NULL)
+    {
+        // This is an error response from the server
+        const char *error_message = "Unknown error";
+        const char *error_code = "N/A";
+        
+        if (message_obj != NULL && cJSON_IsString(message_obj))
+        {
+            error_message = message_obj->valuestring;
+        }
+        
+        if (error_obj != NULL)
+        {
+            cJSON *code_obj = cJSON_GetObjectItem(error_obj, "code");
+            if (code_obj != NULL && cJSON_IsString(code_obj))
+            {
+                error_code = code_obj->valuestring;
+            }
+        }
+        
+        ESP_LOGW(TAG, "Server returned error - Code: %s, Message: %s", error_code, error_message);
+        cJSON_Delete(root);
+        esp_http_client_cleanup(client);
+        return ESP_FAIL;
+    }
+
+    // Check for successful connection response
+    cJSON *post_device_connection_obj = cJSON_GetObjectItem(root, "postDeviceConnection");
+    bool post_device_connection = false;
+    
+    if (post_device_connection_obj != NULL)
+    {
+        post_device_connection = cJSON_IsTrue(post_device_connection_obj);
+    }
+    
+    cJSON_Delete(root);
+
+    if (!post_device_connection)
+    {
+        ESP_LOGE(TAG, "Server rejected connection");
+        esp_http_client_cleanup(client);
+        return ESP_FAIL;
+    }
+
+    esp_http_client_cleanup(client);
+    ESP_LOGI(TAG, "Server connection established");
     return ESP_OK;
 }
 
@@ -372,7 +305,6 @@ static esp_err_t update(updateFirmware_t update_firmware)
     http_client_config.crt_bundle_attach = esp_crt_bundle_attach;
     http_client_config.cert_pem = nullptr,
     http_client_config.user_agent = "ESP32-http-Update";
-    http_client_config.event_handler = http_event_handler;
     http_client_config.user_data = nullptr;
     http_client_config.keep_alive_enable = true;
 
@@ -403,9 +335,8 @@ static esp_err_t update(updateFirmware_t update_firmware)
 
 static esp_err_t do_firmware_update(Management *management)
 {
-    // Reset buffer state before making request
-    management->m_output_buffer_length = 0;
-    memset(management->m_output_buffer, 0, sizeof(management->m_output_buffer));
+    char response_buffer[1024];
+    int response_length = 0;
     
     esp_http_client_config_t http_client_config = {};
     http_client_config.url = CONFIG_REST_SERVICE_ENDPOINT_UPDATE,
@@ -413,8 +344,6 @@ static esp_err_t do_firmware_update(Management *management)
     http_client_config.crt_bundle_attach = esp_crt_bundle_attach;
     http_client_config.method = HTTP_METHOD_GET,
     http_client_config.cert_pem = nullptr,
-    http_client_config.event_handler = http_event_handler;
-    http_client_config.user_data = management;
     http_client_config.buffer_size_tx = 4096;
 
     esp_http_client_handle_t client = esp_http_client_init(&http_client_config);
@@ -431,144 +360,136 @@ static esp_err_t do_firmware_update(Management *management)
         return ESP_FAIL;
     }
 
-    if (esp_http_client_perform(client) != ESP_OK)
+    // Use esp_http_client_open for GET request
+    if (esp_http_client_open(client, 0) != ESP_OK)
     {
-        ESP_LOGE(TAG, "esp_http_client_perform failed");
+        ESP_LOGE(TAG, "esp_http_client_open failed");
         esp_http_client_cleanup(client);
         return ESP_FAIL;
     }
 
+    // Fetch headers
+    int content_length = esp_http_client_fetch_headers(client);
     int status = esp_http_client_get_status_code(client);
+
     if (status != 200)
     {
         ESP_LOGE(TAG, "HTTP GET request for firmware update failed with status: %d", status);
-        // Log response content if available for debugging
-        if (esp_http_client_get_content_length(client) > 0 && management->m_output_buffer_length > 0)
-        {
-            management->m_output_buffer[MIN(management->m_output_buffer_length, sizeof(management->m_output_buffer) - 1)] = '\0';
-            ESP_LOGE(TAG, "Error response: %s", management->m_output_buffer);
-        }
+        esp_http_client_close(client);
         esp_http_client_cleanup(client);
         return ESP_FAIL;
     }
 
-    if (esp_http_client_get_content_length(client) > 0)
+    // Read response data
+    memset(response_buffer, 0, sizeof(response_buffer));
+    if (content_length > 0)
     {
-        // Null-terminate the response buffer to ensure safe parsing
-        management->m_output_buffer[MIN(management->m_output_buffer_length, sizeof(management->m_output_buffer) - 1)] = '\0';
+        response_length = esp_http_client_read(client, response_buffer, sizeof(response_buffer) - 1);
         
-        updateFirmware_t update_firmware;
-        memset(&update_firmware, 0, sizeof(update_firmware)); // Initialize to zero
-        
-        ESP_LOGD(TAG, "Firmware update response length: %lld", management->m_output_buffer_length);
-        ESP_LOG_BUFFER_CHAR(TAG, management->m_output_buffer, esp_http_client_get_content_length(client));
-        
-        cJSON *root = cJSON_Parse(management->m_output_buffer);
-        if (root == NULL)
+        if (response_length <= 0)
         {
-            ESP_LOGE(TAG, "Failed to parse JSON response for firmware update (length=%lld): '%s'", 
-                     management->m_output_buffer_length, management->m_output_buffer);
-            ESP_LOGE(TAG, "JSON Parse Error: %s", cJSON_GetErrorPtr());
-            // Log response as hex dump for debugging
-            if (management->m_output_buffer_length > 0)
-            {
-                ESP_LOG_BUFFER_HEX(TAG, management->m_output_buffer, MIN(management->m_output_buffer_length, 256));
-            }
-            esp_http_client_cleanup(client);
-            return ESP_FAIL;
-        }
-
-        // Check if this is an error response
-        cJSON *error_obj = cJSON_GetObjectItem(root, "error");
-        cJSON *message_obj = cJSON_GetObjectItem(root, "message");
-        
-        if (error_obj != NULL || message_obj != NULL)
-        {
-            const char *error_message = "Unknown error";
-            if (message_obj != NULL && cJSON_IsString(message_obj))
-            {
-                error_message = message_obj->valuestring;
-            }
-            ESP_LOGW(TAG, "Server returned error for firmware update: %s", error_message);
-            cJSON_Delete(root);
-            esp_http_client_cleanup(client);
-            return ESP_FAIL;
-        }
-
-        // Safely extract firmware update information
-        cJSON *name_obj = cJSON_GetObjectItem(root, "name");
-        cJSON *type_obj = cJSON_GetObjectItem(root, "type");
-        cJSON *date_obj = cJSON_GetObjectItem(root, "date");
-        cJSON *time_obj = cJSON_GetObjectItem(root, "time");
-        cJSON *size_obj = cJSON_GetObjectItem(root, "size");
-        cJSON *version_obj = cJSON_GetObjectItem(root, "version");
-        cJSON *url_obj = cJSON_GetObjectItem(root, "url");
-
-        // Validate that all required fields are present and have correct types
-        if (!cJSON_IsString(name_obj) || !cJSON_IsString(type_obj) || 
-            !cJSON_IsString(date_obj) || !cJSON_IsString(time_obj) ||
-            !cJSON_IsNumber(size_obj) || !cJSON_IsString(version_obj) || 
-            !cJSON_IsString(url_obj))
-        {
-            ESP_LOGE(TAG, "Missing or invalid fields in firmware update response");
-            cJSON_Delete(root);
-            esp_http_client_cleanup(client);
-            return ESP_FAIL;
-        }
-
-        // Safely copy strings with bounds checking
-        strncpy(update_firmware.name, name_obj->valuestring, sizeof(update_firmware.name) - 1);
-        update_firmware.name[sizeof(update_firmware.name) - 1] = '\0';
-        
-        strncpy(update_firmware.type, type_obj->valuestring, sizeof(update_firmware.type) - 1);
-        update_firmware.type[sizeof(update_firmware.type) - 1] = '\0';
-        
-        strncpy(update_firmware.date, date_obj->valuestring, sizeof(update_firmware.date) - 1);
-        update_firmware.date[sizeof(update_firmware.date) - 1] = '\0';
-        
-        strncpy(update_firmware.time, time_obj->valuestring, sizeof(update_firmware.time) - 1);
-        update_firmware.time[sizeof(update_firmware.time) - 1] = '\0';
-        
-        update_firmware.size = (uint32_t)size_obj->valueint;
-        
-        strncpy(update_firmware.version, version_obj->valuestring, sizeof(update_firmware.version) - 1);
-        update_firmware.version[sizeof(update_firmware.version) - 1] = '\0';
-        
-        strncpy(update_firmware.url, url_obj->valuestring, sizeof(update_firmware.url) - 1);
-        update_firmware.url[sizeof(update_firmware.url) - 1] = '\0';
-        
-        cJSON_Delete(root);
-
-        ESP_LOGD(TAG, "name (%d): %s", strlen(update_firmware.name), update_firmware.name);
-        ESP_LOGD(TAG, "type (%d): %s", strlen(update_firmware.type), update_firmware.type);
-        ESP_LOGD(TAG, "date (%d): %s", strlen(update_firmware.date), update_firmware.date);
-        ESP_LOGD(TAG, "time (%d): %s", strlen(update_firmware.time), update_firmware.time);
-        ESP_LOGD(TAG, "size: %ld", update_firmware.size);
-        ESP_LOGD(TAG, "version (%d): %s", strlen(update_firmware.version), update_firmware.version);
-        ESP_LOGD(TAG, "url (%d): %s", strlen(update_firmware.url), update_firmware.url);
-
-        // Validate URL before attempting update
-        if (strlen(update_firmware.url) == 0)
-        {
-            ESP_LOGE(TAG, "Empty firmware update URL received");
-            esp_http_client_cleanup(client);
-            return ESP_FAIL;
-        }
-
-        if (update(update_firmware) != ESP_OK)
-        {
-            ESP_LOGE(TAG, "update failed");
+            ESP_LOGE(TAG, "Failed to read firmware update response data");
+            esp_http_client_close(client);
             esp_http_client_cleanup(client);
             return ESP_FAIL;
         }
     }
-
-    if (esp_http_client_cleanup(client))
+    else
     {
-        ESP_LOGE(TAG, "esp_http_client_cleanup failed");
+        esp_http_client_close(client);
+        esp_http_client_cleanup(client);
+        return ESP_OK;
+    }
+
+    // Close the connection
+    esp_http_client_close(client);
+    
+    // Null-terminate the response buffer
+    response_buffer[response_length] = '\0';
+    
+    updateFirmware_t update_firmware;
+    memset(&update_firmware, 0, sizeof(update_firmware));
+    
+    cJSON *root = cJSON_Parse(response_buffer);
+    if (root == NULL)
+    {
+        ESP_LOGE(TAG, "Failed to parse firmware update JSON response");
+        esp_http_client_cleanup(client);
         return ESP_FAIL;
     }
 
+    // Check if this is an error response
+    cJSON *error_obj = cJSON_GetObjectItem(root, "error");
+    cJSON *message_obj = cJSON_GetObjectItem(root, "message");
+    
+    if (error_obj != NULL || message_obj != NULL)
+    {
+        const char *error_message = "Unknown error";
+        if (message_obj != NULL && cJSON_IsString(message_obj))
+        {
+            error_message = message_obj->valuestring;
+        }
+        ESP_LOGW(TAG, "Server returned error for firmware update: %s", error_message);
+        cJSON_Delete(root);
+        esp_http_client_cleanup(client);
+        return ESP_FAIL;
+    }
+
+    // Safely extract firmware update information
+    cJSON *name_obj = cJSON_GetObjectItem(root, "name");
+    cJSON *type_obj = cJSON_GetObjectItem(root, "type");
+    cJSON *date_obj = cJSON_GetObjectItem(root, "date");
+    cJSON *time_obj = cJSON_GetObjectItem(root, "time");
+    cJSON *size_obj = cJSON_GetObjectItem(root, "size");
+    cJSON *version_obj = cJSON_GetObjectItem(root, "version");
+    cJSON *url_obj = cJSON_GetObjectItem(root, "url");
+
+    // Validate that all required fields are present and have correct types
+    if (!cJSON_IsString(name_obj) || !cJSON_IsString(type_obj) || 
+        !cJSON_IsString(date_obj) || !cJSON_IsString(time_obj) ||
+        !cJSON_IsNumber(size_obj) || !cJSON_IsString(version_obj) || 
+        !cJSON_IsString(url_obj))
+    {
+        ESP_LOGE(TAG, "Missing or invalid fields in firmware update response");
+        cJSON_Delete(root);
+        esp_http_client_cleanup(client);
+        return ESP_FAIL;
+    }
+
+    // Safely copy strings with bounds checking
+    strncpy(update_firmware.name, name_obj->valuestring, sizeof(update_firmware.name) - 1);
+    update_firmware.name[sizeof(update_firmware.name) - 1] = '\0';
+    
+    strncpy(update_firmware.type, type_obj->valuestring, sizeof(update_firmware.type) - 1);
+    update_firmware.type[sizeof(update_firmware.type) - 1] = '\0';
+    
+    strncpy(update_firmware.date, date_obj->valuestring, sizeof(update_firmware.date) - 1);
+    update_firmware.date[sizeof(update_firmware.date) - 1] = '\0';
+    
+    strncpy(update_firmware.time, time_obj->valuestring, sizeof(update_firmware.time) - 1);
+    update_firmware.time[sizeof(update_firmware.time) - 1] = '\0';
+    
+    update_firmware.size = (uint32_t)size_obj->valueint;
+    
+    strncpy(update_firmware.version, version_obj->valuestring, sizeof(update_firmware.version) - 1);
+    update_firmware.version[sizeof(update_firmware.version) - 1] = '\0';
+    
+    strncpy(update_firmware.url, url_obj->valuestring, sizeof(update_firmware.url) - 1);
+    update_firmware.url[sizeof(update_firmware.url) - 1] = '\0';
+    
+    cJSON_Delete(root);
+
+    ESP_LOGI(TAG, "Starting firmware update: %s v%s (%ld bytes)", 
+             update_firmware.name, update_firmware.version, update_firmware.size);
+
+    if (update(update_firmware) != ESP_OK)
+    {
+        ESP_LOGE(TAG, "Firmware update failed");
+        esp_http_client_cleanup(client);
+        return ESP_FAIL;
+    }
+
+    esp_http_client_cleanup(client);
     return ESP_OK;
 }
 
@@ -580,8 +501,6 @@ static void local_task(void *parameter)
 
     char *task_name = pcTaskGetName(nullptr);
     ESP_LOGI(TAG, "Starting %s", task_name);
-
-    management->m_output_buffer_length = 0;
 
     bool connected = false;
     while (!connected)
@@ -603,18 +522,13 @@ static void local_task(void *parameter)
         {
             ESP_LOGW(TAG, "Firmware update check failed, will retry later");
         }
-        else
-        {
-            ESP_LOGI(TAG, "Firmware update check completed successfully");
-        }
         
         uint16_t hour_counter = (xTaskGetTickCount() % 24) + 1;
         ESP_LOGI(TAG, "Next firmware update check in %d hours", hour_counter);
         while (hour_counter > 0)
         {
             hour_counter--;
-            vTaskDelay(pdMS_TO_TICKS(10 * 1000)); // TODO restore this
-            // vTaskDelay(pdMS_TO_TICKS(60 * 60 * 1000));
+            vTaskDelay(pdMS_TO_TICKS(10 * 1000)); // TODO: restore to 60 * 60 * 1000 for production
         }
     }
 
@@ -625,7 +539,6 @@ Management::Management()
 {
     if (!m_initialized)
     {
-        esp_log_level_set(TAG, ESP_LOG_VERBOSE);
         ESP_LOGI(TAG, "Initializing...");
 
         if (m_task_handle == nullptr)
@@ -642,11 +555,7 @@ Management::Management()
             } else {
                 ESP_LOGE(TAG, "Failed to create task");
             }
-        } else {
-            ESP_LOGW(TAG, "Management already initialized");
         }
-    } else {
-        ESP_LOGW(TAG, "Management already initialized");
     }
 }
 
