@@ -28,8 +28,6 @@ namespace macdap
     public:
         TokenManager(TokenManager const&) = delete;
         void operator=(TokenManager const &) = delete;
-        char m_output_buffer[2048];
-        int64_t m_output_buffer_length;
         static TokenManager &get_instance()
         {
             static TokenManager instance;

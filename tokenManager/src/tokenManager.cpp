@@ -6,7 +6,7 @@
 #include "esp_crt_bundle.h"
 #include "cJSON.h"
 
-#define LOCAL_TASK_STACKSIZE 8000
+#define LOCAL_TASK_STACKSIZE 12000
 #define REFRESH_RATE_OFFSET_SEC 60
 #define RETRY_RATE_SECS 30
 #define MAX_HTTP_OUTPUT_BUFFER 2048
@@ -15,90 +15,22 @@ using namespace macdap;
 
 static const char *TAG = "tokenManager";
 
-static esp_err_t client_event_handler(esp_http_client_event_handle_t event)
-{
-    TokenManager *tokenManager = (TokenManager *)event->user_data;
-
-    char url[128];
-    esp_http_client_get_url(event->client, url, sizeof(url));
-
-    switch (event->event_id)
-    {
-    case HTTP_EVENT_ERROR:
-        ESP_LOGD(TAG, "HTTP_EVENT_ERROR");
-        break;
-    case HTTP_EVENT_ON_CONNECTED:
-        ESP_LOGD(TAG, "HTTP HTTP_EVENT_ON_CONNECTED, %s", url);
-    break;
-    case HTTP_EVENT_HEADER_SENT:
-        ESP_LOGD(TAG, "HTTP_EVENT_HEADER_SENT");
-        break;
-    case HTTP_EVENT_ON_HEADER:
-        ESP_LOGD(TAG, "HTTP_EVENT_ON_HEADER, key=%s, value=%s", event->header_key, event->header_value);
-        break;
-    case HTTP_EVENT_ON_DATA:
-        ESP_LOGD(TAG, "HTTP_EVENT_ON_DATA, len=%d", event->data_len);
-        if (tokenManager != nullptr)
-        {
-            if (!esp_http_client_is_chunked_response(event->client))
-            {
-                int copy_length = 0;
-                int content_length = esp_http_client_get_content_length(event->client);
-
-                copy_length = MIN(event->data_len, (content_length - tokenManager->m_output_buffer_length));
-                if (copy_length)
-                {
-                    if (tokenManager->m_output_buffer_length + copy_length > sizeof(tokenManager->m_output_buffer))
-                    {
-                        ESP_LOGE(TAG, "Output buffer overflow from %s", url);
-                        return ESP_FAIL;
-                    }
-                    memcpy(tokenManager->m_output_buffer + tokenManager->m_output_buffer_length, event->data, copy_length);
-                }
-                tokenManager->m_output_buffer_length += copy_length;
-            }
-            else
-            {
-                if (tokenManager->m_output_buffer_length + event->data_len > sizeof(tokenManager->m_output_buffer))
-                {
-                    ESP_LOGE(TAG, "Output buffer overflow from %s", url);
-                    return ESP_FAIL;
-                }
-                memcpy(tokenManager->m_output_buffer + tokenManager->m_output_buffer_length, event->data, event->data_len);
-                tokenManager->m_output_buffer_length += event->data_len;
-            }
-        }
-        break;
-    case HTTP_EVENT_ON_FINISH:
-        ESP_LOGD(TAG, "HTTP_EVENT_ON_FINISH");
-        if (tokenManager != nullptr)
-        {
-            tokenManager->m_output_buffer_length = 0;
-        }
-        break;
-    case HTTP_EVENT_DISCONNECTED:
-        ESP_LOGD(TAG, "HTTP HTTP_EVENT_DISCONNECTED, %s", url);
-    break;
-    case HTTP_EVENT_REDIRECT:
-        ESP_LOGD(TAG, "HTTP_EVENT_REDIRECT");
-        break;
-    }
-    return ESP_OK;
-}
-
 static esp_err_t get_access_token(TokenManager *tokenManager)
 {
+    char response_buffer[2048];
+    int response_length = 0;
+    
     esp_http_client_config_t http_client_config = {};    
-    http_client_config.url = CONFIG_TOKEN_MANAGER_ENDPOINT CONFIG_TOKEN_MANAGER_API_REQUEST,
+    http_client_config.url = CONFIG_TOKEN_MANAGER_ENDPOINT CONFIG_TOKEN_MANAGER_API_REQUEST;
     http_client_config.transport_type = HTTP_TRANSPORT_OVER_SSL;
     http_client_config.crt_bundle_attach = esp_crt_bundle_attach;
-    http_client_config.method = HTTP_METHOD_POST,
-    http_client_config.cert_pem = nullptr,
-    http_client_config.event_handler = client_event_handler;
-    http_client_config.user_data = tokenManager;
+    http_client_config.method = HTTP_METHOD_POST;
+    http_client_config.cert_pem = nullptr;
+    http_client_config.buffer_size_tx = 4096;
+    http_client_config.timeout_ms = 15000;
 
     esp_http_client_handle_t client = esp_http_client_init(&http_client_config);
-    if (client == NULL)
+    if (client == nullptr)
     {
         ESP_LOGE(TAG, "esp_http_client_init failed");
         return ESP_FAIL;
@@ -108,43 +40,113 @@ static esp_err_t get_access_token(TokenManager *tokenManager)
     esp_http_client_set_post_field(client, post_data, strlen(post_data));
     esp_http_client_set_header(client, "Content-Type", "application/x-www-form-urlencoded");
 
-    if (esp_http_client_perform(client) != ESP_OK)
+    if (esp_http_client_open(client, strlen(post_data)) != ESP_OK)
     {
-        ESP_LOGE(TAG, "esp_http_client_perform failed");
+        ESP_LOGE(TAG, "esp_http_client_open failed");
         esp_http_client_cleanup(client);
         return ESP_FAIL;
     }
 
-    if (esp_http_client_get_content_length(client) > 0)
+    // Write the POST data
+    if (esp_http_client_write(client, post_data, strlen(post_data)) < 0)
     {
-        cJSON *root = cJSON_Parse(tokenManager->m_output_buffer);
-        const char *access_token = cJSON_GetObjectItem(root, "access_token")->valuestring;
-        const uint32_t expires_in = cJSON_GetObjectItem(root, "expires_in")->valueint;
-        const char *token_type = cJSON_GetObjectItem(root, "token_type")->valuestring;
-        esp_err_t result = tokenManager->set_token(access_token, expires_in, token_type);
-        if (result != ESP_OK)
-        {
-            ESP_LOGE(TAG, "tokenManager->set_token failed");
-        }
-
-        cJSON_Delete(root);
+        ESP_LOGE(TAG, "esp_http_client_write failed");
+        esp_http_client_close(client);
+        esp_http_client_cleanup(client);
+        return ESP_FAIL;
     }
 
+    // Fetch headers
+    int content_length = esp_http_client_fetch_headers(client);
     int status = esp_http_client_get_status_code(client);
+
     if (status != 200)
     {
-        ESP_LOGE(TAG, "HTTP POST request failed: %d", status);
+        ESP_LOGE(TAG, "HTTP POST request failed with status: %d", status);
+        esp_http_client_close(client);
         esp_http_client_cleanup(client);
         return ESP_FAIL;
     }
 
-    if (esp_http_client_cleanup(client))
+    // Read response data
+    memset(response_buffer, 0, sizeof(response_buffer));
+    if (content_length > 0)
     {
-        ESP_LOGE(TAG, "esp_http_client_cleanup failed");
+        response_length = esp_http_client_read(client, response_buffer, sizeof(response_buffer) - 1);
+        
+        if (response_length <= 0)
+        {
+            ESP_LOGE(TAG, "Failed to read response data");
+            esp_http_client_close(client);
+            esp_http_client_cleanup(client);
+            return ESP_FAIL;
+        }
+    }
+    else
+    {
+        ESP_LOGE(TAG, "No response content");
+        esp_http_client_close(client);
+        esp_http_client_cleanup(client);
         return ESP_FAIL;
     }
 
-    return ESP_OK;
+    // Close the connection
+    esp_http_client_close(client);
+    
+    // Null-terminate the response buffer
+    response_buffer[response_length] = '\0';
+
+    cJSON *root = cJSON_Parse(response_buffer);
+    if (root == NULL)
+    {
+        ESP_LOGE(TAG, "Failed to parse JSON response");
+        esp_http_client_cleanup(client);
+        return ESP_FAIL;
+    }
+
+    // Check for error response
+    cJSON *error_obj = cJSON_GetObjectItem(root, "error");
+    if (error_obj != NULL)
+    {
+        const char *error_desc = "Unknown error";
+        cJSON *error_desc_obj = cJSON_GetObjectItem(root, "error_description");
+        if (error_desc_obj != NULL && cJSON_IsString(error_desc_obj))
+        {
+            error_desc = error_desc_obj->valuestring;
+        }
+        ESP_LOGE(TAG, "Token request error: %s", error_desc);
+        cJSON_Delete(root);
+        esp_http_client_cleanup(client);
+        return ESP_FAIL;
+    }
+
+    // Extract token information
+    cJSON *access_token_obj = cJSON_GetObjectItem(root, "access_token");
+    cJSON *expires_in_obj = cJSON_GetObjectItem(root, "expires_in");
+    cJSON *token_type_obj = cJSON_GetObjectItem(root, "token_type");
+
+    if (!cJSON_IsString(access_token_obj) || !cJSON_IsNumber(expires_in_obj) || !cJSON_IsString(token_type_obj))
+    {
+        ESP_LOGE(TAG, "Invalid token response format");
+        cJSON_Delete(root);
+        esp_http_client_cleanup(client);
+        return ESP_FAIL;
+    }
+
+    const char *access_token = access_token_obj->valuestring;
+    const uint32_t expires_in = (uint32_t)expires_in_obj->valueint;
+    const char *token_type = token_type_obj->valuestring;
+    
+    esp_err_t result = tokenManager->set_token(access_token, expires_in, token_type);
+    if (result != ESP_OK)
+    {
+        ESP_LOGE(TAG, "tokenManager->set_token failed");
+    }
+
+    cJSON_Delete(root);
+    esp_http_client_cleanup(client);
+    
+    return result;
 }
 
 static void local_task(void *parameter)
@@ -153,8 +155,6 @@ static void local_task(void *parameter)
 
     char *task_name = pcTaskGetName(nullptr);
     ESP_LOGI(TAG, "Starting %s", task_name);
-
-    tokenManager->m_output_buffer_length = 0;
 
     while (true)
     {
@@ -175,7 +175,7 @@ static void local_task(void *parameter)
         {
             ESP_LOGE(TAG, "get_access_token failed");
         }
-        ESP_LOGI(TAG, "Next access token refresh in %lu seconds", next_refresh);
+        
         next_refresh = 60 * (1000 / portTICK_PERIOD_MS); //TODO restore this
         // nextRefresh = nextRefresh * (1000 / portTICK_PERIOD_MS);
         vTaskDelay(next_refresh);
@@ -188,7 +188,6 @@ TokenManager::TokenManager()
 {
     if (!m_initialized)
     {
-        esp_log_level_set(TAG, ESP_LOG_VERBOSE);
         ESP_LOGI(TAG, "Initializing...");
 
         m_semaphore_handle = xSemaphoreCreateMutex();

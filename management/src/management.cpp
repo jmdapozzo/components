@@ -42,6 +42,7 @@ static esp_err_t init_headers(esp_http_client_handle_t client)
         ESP_LOGE(TAG, "tokenManager.get_authorisation failed");
         return ESP_FAIL;
     }
+    
     if (esp_http_client_set_header(client, "authorization", authorisation) != ESP_OK)
     {
         ESP_LOGE(TAG, "esp_http_client_set_header failed");
@@ -133,11 +134,11 @@ static esp_err_t do_connection(Management *management)
     int response_length = 0;
     
     esp_http_client_config_t http_client_config = {};
-    http_client_config.url = CONFIG_REST_SERVICE_ENDPOINT_CONNECTION,
+    http_client_config.url = CONFIG_REST_SERVICE_ENDPOINT_CONNECTION;
     http_client_config.transport_type = HTTP_TRANSPORT_OVER_SSL;
     http_client_config.crt_bundle_attach = esp_crt_bundle_attach;
-    http_client_config.method = HTTP_METHOD_POST,
-    http_client_config.cert_pem = nullptr,
+    http_client_config.method = HTTP_METHOD_POST;
+    http_client_config.cert_pem = nullptr;
     http_client_config.buffer_size_tx = 4096;
     http_client_config.timeout_ms = 15000;
 
@@ -338,12 +339,15 @@ static esp_err_t do_firmware_update(Management *management)
     char response_buffer[1024];
     int response_length = 0;
     
+    // Clear all memory to avoid using stale data
+    memset(response_buffer, 0, sizeof(response_buffer));
+    
     esp_http_client_config_t http_client_config = {};
-    http_client_config.url = CONFIG_REST_SERVICE_ENDPOINT_UPDATE,
+    http_client_config.url = CONFIG_REST_SERVICE_ENDPOINT_UPDATE;
     http_client_config.transport_type = HTTP_TRANSPORT_OVER_SSL;
     http_client_config.crt_bundle_attach = esp_crt_bundle_attach;
-    http_client_config.method = HTTP_METHOD_GET,
-    http_client_config.cert_pem = nullptr,
+    http_client_config.method = HTTP_METHOD_GET;
+    http_client_config.cert_pem = nullptr;
     http_client_config.buffer_size_tx = 4096;
 
     esp_http_client_handle_t client = esp_http_client_init(&http_client_config);
@@ -374,7 +378,25 @@ static esp_err_t do_firmware_update(Management *management)
 
     if (status != 200)
     {
-        ESP_LOGE(TAG, "HTTP GET request for firmware update failed with status: %d", status);
+        // Try to read error response for debugging
+        if (content_length > 0)
+        {
+            memset(response_buffer, 0, sizeof(response_buffer));
+            int error_response_length = esp_http_client_read(client, response_buffer, sizeof(response_buffer) - 1);
+            if (error_response_length > 0)
+            {
+                response_buffer[error_response_length] = '\0';
+                ESP_LOGE(TAG, "HTTP GET request for firmware update failed with status: %d, response: '%s'", status, response_buffer);
+            }
+            else
+            {
+                ESP_LOGE(TAG, "HTTP GET request for firmware update failed with status: %d (no response body)", status);
+            }
+        }
+        else
+        {
+            ESP_LOGE(TAG, "HTTP GET request for firmware update failed with status: %d (no content)", status);
+        }
         esp_http_client_close(client);
         esp_http_client_cleanup(client);
         return ESP_FAIL;
@@ -490,6 +512,7 @@ static esp_err_t do_firmware_update(Management *management)
     }
 
     esp_http_client_cleanup(client);
+    
     return ESP_OK;
 }
 
