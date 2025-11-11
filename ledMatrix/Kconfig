@@ -61,8 +61,7 @@ menu "MacDap Led Matrix"
 
 	config LED_MATRIX_HUB75_ADDRE
 		int "ADDRE GPIO number"
-		default -1
-		# default 21
+		default 21
 		range -1 LED_MATRIX_GPIO_RANGE_MAX
 
 	config LED_MATRIX_HUB75_CLK

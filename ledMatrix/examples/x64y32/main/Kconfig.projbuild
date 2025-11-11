@@ -1,0 +1,75 @@
+menu "Test Application Configuration"
+
+    config DISPLAY_LOGO
+        bool "Display Logo on led matrix"
+        default y
+        help
+            Enabling this option will display the logo on the led matrix.
+
+    config DISPLAY_GREETING
+        bool "Display Greeting on led matrix"
+        default y
+        help
+            Enabling this option will display the greeting on the led matrix.
+
+    config DISPLAY_MAIN_MESSAGE
+        bool "Display Main Message on led matrix"
+        default y
+        help
+            Enabling this option will display the main message on the led matrix.
+
+    config DISPLAY_QR_CODE
+        bool "Display QR Code on led matrix"
+        default y
+        help
+            Enabling this option will display the QR code on the led matrix.
+
+    config DISPLAY_DOT
+        bool "Display Dot on led matrix"
+        default y
+        help
+            Enabling this option will display the dot on the led matrix.
+    
+    config DISPLAY_HORIZONTAL_LINE
+        bool "Display Horizontal Line on led matrix"
+        default y
+        help
+            Enabling this option will display the horizontal line on the led matrix.
+    
+    config DISPLAY_VERTICAL_LINE
+        bool "Display Vertical Line on led matrix"
+        default y
+        help
+            Enabling this option will display the vertical line on the led matrix.
+
+    config DISPLAY_X
+        bool "Display X on led matrix"
+        default y
+        help
+            Enabling this option will display the X on the led matrix.
+
+    config DISPLAY_MESSAGE
+        bool "Display Message on led matrix"
+        default y
+        help
+            Enabling this option will display the message on the led matrix.
+
+    config DISPLAY_SPINNER
+        bool "Display Spinner on led matrix"
+        default y
+        help
+            Enabling this option will display the spinner on the led matrix.
+
+    config DISPLAY_LED
+        bool "Display LED on led matrix"
+        default y
+        help
+            Enabling this option will display the LED on the led matrix.
+
+    config DISPLAY_TOP_BOTTOM_MESSAGE
+        bool "Display Top and Bottom Message on led matrix"
+        default y
+        help
+            Enabling this option will display the top and bottom message on the led matrix.
+
+endmenu

@@ -121,7 +121,67 @@ void Graphics::qrcode(lv_display_t *display, const char *data, lv_color_t light_
 #endif
 }
 
-void Graphics::cross(lv_display_t *display, lv_style_t *style)
+void Graphics::dot(lv_display_t *display, lv_style_t *style, int32_t x, int32_t y)
+{
+    if (seize_lvgl())
+    {
+        lv_obj_t *screen = lv_display_get_screen_active(display);
+
+        lv_obj_t *dot = lv_obj_create(screen);
+        lv_obj_set_size(dot, x, y);
+        if (style != nullptr) {
+            lv_obj_add_style(dot, style, LV_STATE_DEFAULT);
+        }
+
+        release_lvgl();
+    }
+}
+
+void Graphics::horizontal(lv_display_t *display, lv_style_t *style)
+{
+    if (seize_lvgl())
+    {
+        lv_obj_t *screen = lv_display_get_screen_active(display);
+
+        int32_t width = lv_display_get_horizontal_resolution(display);
+        int32_t height = lv_display_get_vertical_resolution(display);
+
+        ESP_LOGI(TAG, "Display horizontal line resolution: %dx%d", width, height);
+
+        lv_point_precise_t horizontal_line_points[] = { {0, height/2}, {width, height/2} };
+
+        lv_obj_t *horizontal_line = lv_line_create(screen);
+        lv_line_set_points(horizontal_line, horizontal_line_points, 2);
+        if (style != nullptr) {
+            lv_obj_add_style(horizontal_line, style, LV_STATE_DEFAULT);
+        }
+
+        release_lvgl();
+    }
+}
+void Graphics::vertical(lv_display_t *display, lv_style_t *style)
+{
+    if (seize_lvgl())
+    {
+        lv_obj_t *screen = lv_display_get_screen_active(display);
+
+        int32_t width = lv_display_get_horizontal_resolution(display);
+        int32_t height = lv_display_get_vertical_resolution(display);
+
+        ESP_LOGI(TAG, "Display vertical line resolution: %dx%d", width, height);
+
+        lv_point_precise_t vertical_line_points[] = { {width/2, 0}, {width/2, height} };
+
+        lv_obj_t *vertical_line = lv_line_create(screen);
+        lv_line_set_points(vertical_line, vertical_line_points, 2);
+        if (style != nullptr) {
+            lv_obj_add_style(vertical_line, style, LV_STATE_DEFAULT);
+        }
+
+        release_lvgl();
+    }
+}
+void Graphics::x(lv_display_t *display, lv_style_t *style)
 {
     if (seize_lvgl())
     {

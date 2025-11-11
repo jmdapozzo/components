@@ -18,6 +18,7 @@ static void flush_cb(lv_display_t *display, const lv_area_t *area, uint8_t *px_m
             px_map_16++;
         }
     }
+    matrix_panel->drawPixel(0, 0, 0xffffff); // Dummy call to ensure drawPixel is linked in
 
     lv_disp_flush_ready(display);
 }

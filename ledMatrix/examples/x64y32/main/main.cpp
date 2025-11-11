@@ -63,7 +63,7 @@ extern "C" void app_main(void)
     lv_style_set_align(&_style_base, LV_ALIGN_CENTER);
     lv_style_set_text_color(&_style_base, lv_palette_main(LV_PALETTE_GREEN));
     lv_style_set_width(&_style_base, width);
-    lv_style_set_line_width(&_style_base, 3);
+    lv_style_set_line_width(&_style_base, 1);
     lv_style_set_line_color(&_style_base, lv_palette_main(LV_PALETTE_BLUE));
     lv_style_set_line_rounded(&_style_base, true);
     lv_style_set_anim(&_style_base, &_animation);
@@ -91,43 +91,79 @@ extern "C" void app_main(void)
 
     graphics.background(lv_display, lv_color_black());
 
-    float brightness = 1.0;
+    float brightness = 25.0;
     ledMatrix.set_brightness(brightness);
 
+#ifdef CONFIG_DISPLAY_LOGO
     graphics.logo(lv_display, &colorLogoNoText64x64);
     vTaskDelay(pdMS_TO_TICKS(3000));
     graphics.clear(lv_display);
+#endif
 
+#ifdef CONFIG_DISPLAY_GREETING
     graphics.message(lv_display, &_style_greeting_top, "Test");
     graphics.message(lv_display, &_style_greeting_bottom, "Version 0.0.0");
     vTaskDelay(pdMS_TO_TICKS(3000));
     graphics.clear(lv_display);
+#endif
 
+#ifdef CONFIG_DISPLAY_MAIN_MESSAGE
     graphics.message(lv_display, &_style_main_message, "MacDap Inc.");
     vTaskDelay(pdMS_TO_TICKS(3000));
     graphics.clear(lv_display);
+#endif
 
+#ifdef CONFIG_DISPLAY_QR_CODE
     graphics.qrcode(lv_display, "https://macdap.com");
     vTaskDelay(pdMS_TO_TICKS(3000));
     graphics.clear(lv_display);
+#endif
 
-    graphics.cross(lv_display, &_style_base);
+#ifdef CONFIG_DISPLAY_DOT
+    graphics.dot(lv_display, &_style_base, 8, 8);
     vTaskDelay(pdMS_TO_TICKS(3000));
     graphics.clear(lv_display);
+#endif
 
+#ifdef CONFIG_DISPLAY_HORIZONTAL_LINE
+    graphics.horizontal(lv_display, &_style_base);
+    vTaskDelay(pdMS_TO_TICKS(3000));
+    graphics.clear(lv_display);
+#endif
+
+#ifdef CONFIG_DISPLAY_VERTICAL_LINE
+    graphics.vertical(lv_display, &_style_base);
+    vTaskDelay(pdMS_TO_TICKS(3000));
+    graphics.clear(lv_display);
+#endif
+
+#ifdef CONFIG_DISPLAY_X
+    graphics.x(lv_display, &_style_base);
+    vTaskDelay(pdMS_TO_TICKS(3000));
+    graphics.clear(lv_display);
+#endif
+
+#ifdef CONFIG_DISPLAY_MESSAGE
     graphics.message(lv_display, &_style_main_message, "This is a MacDap application!");
     vTaskDelay(pdMS_TO_TICKS(5000));
     graphics.clear(lv_display);
+#endif
 
+#ifdef CONFIG_DISPLAY_SPINNER
     graphics.spinner(lv_display, height/2, &_style_base);
     vTaskDelay(pdMS_TO_TICKS(5000));
     graphics.clear(lv_display);
+#endif
 
+#ifdef CONFIG_DISPLAY_LED
     int palette_idx = 0;
-    lv_obj_t *heartbeat = graphics.led(lv_display, 32, lv_palette_main(palettes[palette_idx]));
+    lv_obj_t *heartbeat = graphics.led(lv_display, height/4, lv_palette_main(palettes[palette_idx]));
+#endif
 
+#ifdef CONFIG_DISPLAY_TOP_BOTTOM_MESSAGE
     graphics.message(lv_display, &_style_main_message_top, "Test program Version 0.0.0 from MacDap Inc.");
     graphics.message(lv_display, &_style_main_message_bottom, "MacDap Inc. the best");
+#endif
 
 #ifdef CONFIG_HEAP_TASK_TRACKING
     esp_dump_per_task_heap_info();
@@ -138,6 +174,8 @@ extern "C" void app_main(void)
     while (true)
     {
         vTaskDelay(pdMS_TO_TICKS(1000));
+
+#ifdef CONFIG_DISPLAY_LED        
         if (phase)
         {
             phase = false;
@@ -168,6 +206,7 @@ extern "C" void app_main(void)
                 lvgl_port_unlock();
             }
         }
+#endif
     }
 }
 
