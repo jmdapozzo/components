@@ -175,6 +175,7 @@ static void local_task(void *parameter)
         {
             ESP_LOGE(TAG, "get_access_token failed");
         }
+        ESP_LOGI(TAG, "Next access token refresh in %lu seconds", next_refresh);
         
         next_refresh = 60 * (1000 / portTICK_PERIOD_MS); //TODO restore this
         // nextRefresh = nextRefresh * (1000 / portTICK_PERIOD_MS);
