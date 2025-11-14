@@ -312,6 +312,47 @@ static void parse_zda(esp_gps_t *esp_gps)
 }
 #endif
 
+#if CONFIG_NMEA_STATEMENT_TXT
+static void parse_txt(esp_gps_t *esp_gps)
+{
+    /* Process GNTXT statement */
+    static uint8_t txt_type = 0;
+    static char txt_message[128] = {0};
+    
+    switch (esp_gps->item_num) {
+    case 1: /* Total number of sentences for this message */
+        break;
+    case 2: /* Sentence number */
+        break;
+    case 3: /* Text identifier (00=Error, 01=Warning, 02=Notice, 07=User) */
+        txt_type = (uint8_t)strtol(esp_gps->item_str, NULL, 10);
+        break;
+    case 4: /* Text message */
+        strncpy(txt_message, esp_gps->item_str, sizeof(txt_message) - 1);
+        txt_message[sizeof(txt_message) - 1] = '\0';
+        
+        /* Log message according to its type */
+        switch (txt_type) {
+        case 0: /* Error */
+            ESP_LOGW(TAG, "GPS TXT Generic: %s", txt_message);
+            break;
+        case 1: /* Error */
+            ESP_LOGE(TAG, "GPS TXT Error: %s", txt_message);
+            break;
+        case 2: /* Information */
+            ESP_LOGI(TAG, "GPS TXT Information: %s", txt_message);
+            break;
+        default: /* Unknown type */
+            ESP_LOGE(TAG, "GPS TXT Unknown type %d: %s", txt_type, txt_message);
+            break;
+        }
+        break;
+    default:
+        break;
+    }
+}
+#endif
+
 static esp_err_t parse_item(esp_gps_t *esp_gps)
 {
     esp_err_t err = ESP_OK;
@@ -352,6 +393,11 @@ static esp_err_t parse_item(esp_gps_t *esp_gps)
 #if CONFIG_NMEA_STATEMENT_ZDA
         else if (strstr(esp_gps->item_str, "ZDA")) {
             esp_gps->cur_statement = StatementZda;
+        }
+#endif
+#if CONFIG_NMEA_STATEMENT_TXT
+        else if (strstr(esp_gps->item_str, "TXT")) {
+            esp_gps->cur_statement = StatementTxt;
         }
 #endif
         else {
@@ -396,6 +442,11 @@ static esp_err_t parse_item(esp_gps_t *esp_gps)
 #if CONFIG_NMEA_STATEMENT_ZDA
     else if (esp_gps->cur_statement == StatementZda) {
         parse_zda(esp_gps);
+    }
+#endif
+#if CONFIG_NMEA_STATEMENT_TXT
+    else if (esp_gps->cur_statement == StatementTxt) {
+        parse_txt(esp_gps);
     }
 #endif
     else {
@@ -487,6 +538,11 @@ static esp_err_t gps_decode(esp_gps_t *esp_gps, size_t len)
 #if CONFIG_NMEA_STATEMENT_ZDA
                 case StatementZda:
                     esp_gps->parsed_statement |= 1 << StatementZda;
+                    break;
+#endif
+#if CONFIG_NMEA_STATEMENT_TXT
+                case StatementTxt:
+                    // TXT statements are processed immediately and don't affect GPS update cycle
                     break;
 #endif
                 default:
@@ -680,8 +736,13 @@ GPS::GPS()
 #if CONFIG_NMEA_STATEMENT_ZDA
     esp_gps->all_statements |= (1 << StatementZda);
 #endif
+#if CONFIG_NMEA_STATEMENT_ZDA
+    esp_gps->all_statements |= (1 << StatementZda);
+#endif
 
-    esp_gps->all_statements &= 0xFE;
+    // Exclude StatementUnknown from mandatory statements
+    // TXT statements are not added to all_statements as they are informational only
+    esp_gps->all_statements &= ~(1 << StatementUnknown);
 
     uart_config_t uart_config = {
         .baud_rate = 9600,

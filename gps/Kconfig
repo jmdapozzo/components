@@ -142,6 +142,14 @@ menu "MacDap GPS Configuration"
 
                 - UTC day, month, and year, and local time zone offset;
 
+        config NMEA_STATEMENT_TXT
+            bool "TXT Statement"
+            default y
+            help
+                Enabling this option will parse the following parameter from TXT statement:
+
+                - Text messages with different severity levels (Error, Warning, Notice, User);
+
     endmenu
 
 endmenu

@@ -59,6 +59,7 @@ namespace macdap
         StatementGll,         /*!< GLL */
         StatementVtg,         /*!< VTG */
         StatementZda,         /*!< ZDA */
+        StatementTxt,         /*!< TXT */
     } nmea_statement_t;
 
     typedef struct {
