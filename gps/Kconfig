@@ -11,7 +11,7 @@ menu "MacDap GPS Configuration"
 
 	choice GPS_UART
 		prompt "UART Number"
-        default GPS_UART_NUMBER_1
+        default GPS_UART_NUMBER_0
 		help
 			Select GPS UART Number
 		config GPS_UART_NUMBER_0

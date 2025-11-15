@@ -26,7 +26,7 @@ typedef struct {
     gps_t parent;                                  /*!< Parent class */
     uint8_t *buffer;                               /*!< Runtime buffer */
     esp_event_loop_handle_t event_loop_hdl;        /*!< Event loop handle */
-    SemaphoreHandle_t semaphoreHandle;           /*!< Semaphore handle */
+    SemaphoreHandle_t semaphore_handle;             /*!< Semaphore handle */
     QueueHandle_t event_queue;                     /*!< UART event queue handle */
 } esp_gps_t;
 
@@ -643,8 +643,8 @@ void GPS::ReleaseResources()
 
     uart_driver_delete(static_cast<uart_port_t>(CONFIG_GPS_UART_NUMBER));
 
-    if (_esp_gps->semaphoreHandle) {
-        vSemaphoreDelete(_esp_gps->semaphoreHandle);
+    if (_esp_gps->semaphore_handle) {
+        vSemaphoreDelete(_esp_gps->semaphore_handle);
     }
 
     if (m_taskHandle) {
@@ -678,9 +678,14 @@ static void onGPSEvent(void* handler_arg, esp_event_base_t base, int32_t event_i
 }
 #endif
 
-GPS::GPS()
+GPS::GPS(esp_event_loop_handle_t event_loop_hdl)
 {
     ESP_LOGI(TAG, "Initializing...");
+
+    if (!event_loop_hdl) {
+        ESP_LOGE(TAG, "Event loop handle is required but not provided");
+        return;
+    }
 
     if (CONFIG_GPS_PPS != -1)
     {
@@ -700,16 +705,16 @@ GPS::GPS()
         return;
     }
 
-    esp_gps->semaphoreHandle = xSemaphoreCreateMutex();
-    if (!esp_gps->semaphoreHandle)
+    esp_gps->semaphore_handle = xSemaphoreCreateMutex();
+    if (!esp_gps->semaphore_handle)
     {
         ESP_LOGE(TAG, "xSemaphoreCreateMutex failed");
         ReleaseResources();
         return;
     }
 
-    macdap::EventLoop &eventLoop = macdap::EventLoop::get_instance();
-    esp_gps->event_loop_hdl = eventLoop.get_event_loop_handle();
+    // Use the provided event loop handle
+    esp_gps->event_loop_hdl = event_loop_hdl;
 
 #if CONFIG_GPS_EVENT_LOG
     esp_event_handler_register_with(esp_gps->event_loop_hdl, GPS_EVENTS, ESP_EVENT_ANY_ID, onGPSEvent, NULL);
@@ -798,7 +803,32 @@ GPS::~GPS()
     ReleaseResources();
 }
 
-void GPS::getPosition()
+gps_t GPS::get_gps_data()
 {
+    if (_esp_gps) {
+        return _esp_gps->parent;
+    }
+    
+    // Return empty/default GPS data if not initialized
+    gps_t empty_gps = {};
+    return empty_gps;
+}
+
+esp_err_t GPS::register_event_handler(esp_event_handler_t event_handler, void* handler_arg)
+{
+    if (!_esp_gps || !_esp_gps->event_loop_hdl) {
+        return ESP_ERR_INVALID_STATE;
+    }
+    
+    return esp_event_handler_register_with(_esp_gps->event_loop_hdl, GPS_EVENTS, ESP_EVENT_ANY_ID, event_handler, handler_arg);
+}
+
+esp_err_t GPS::unregister_event_handler(esp_event_handler_t event_handler)
+{
+    if (!_esp_gps || !_esp_gps->event_loop_hdl) {
+        return ESP_ERR_INVALID_STATE;
+    }
+    
+    return esp_event_handler_unregister_with(_esp_gps->event_loop_hdl, GPS_EVENTS, ESP_EVENT_ANY_ID, event_handler);
 }
 

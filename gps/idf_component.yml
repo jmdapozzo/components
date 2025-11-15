@@ -2,9 +2,4 @@ version: "0.0.1"
 license: "MIT"
 description: "GPS used for MacDap's projects"
 url: https://github.com/jmdapozzo/components/tree/main/gps
-dependencies:
-  jmdapozzo/eventLoop:
-      version: main
-      git: https://github.com/jmdapozzo/components.git
-      path: eventLoop
      

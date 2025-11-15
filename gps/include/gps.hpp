@@ -1,10 +1,10 @@
 #pragma once
 
 #include "esp_err.h"
+#include "esp_event.h"
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <freertos/semphr.h>
-#include "eventLoop.hpp"
 
 #define GPS_MAX_SATELLITES_IN_USE (12)
 #define GPS_MAX_SATELLITES_IN_VIEW (16)
@@ -88,18 +88,20 @@ namespace macdap
 
     private:
         TaskHandle_t m_taskHandle = nullptr;
-        GPS();
+        GPS(esp_event_loop_handle_t event_loop_hdl);
         ~GPS();
         void ReleaseResources();
 
     public:
         GPS(GPS const&) = delete;
         void operator=(GPS const &) = delete;
-        static GPS &get_instance()
+        static GPS &get_instance(esp_event_loop_handle_t event_loop_hdl)
         {
-            static GPS instance;
+            static GPS instance(event_loop_hdl);
             return instance;
         }
-        void getPosition();
+        gps_t get_gps_data();
+        esp_err_t register_event_handler(esp_event_handler_t event_handler, void* handler_arg = nullptr);
+        esp_err_t unregister_event_handler(esp_event_handler_t event_handler);
     };
 }

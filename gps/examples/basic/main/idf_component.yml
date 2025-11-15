@@ -1,3 +1,5 @@
 dependencies:
+  jmdapozzo/eventLoop:
+    override_path: "../../../../eventLoop"
   jmdapozzo/gps:
     override_path: "../../../"
