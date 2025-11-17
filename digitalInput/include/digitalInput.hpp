@@ -1,6 +1,5 @@
 #pragma once
-
-#include "eventLoop.hpp"
+#include "esp_event.h"
 #include "driver/gpio.h"
 #include "driver/gpio_filter.h"
 
@@ -19,15 +18,15 @@ namespace macdap
     {
 
     private:
-        DigitalInput();
+        DigitalInput(esp_event_loop_handle_t event_loop_handle);
         ~DigitalInput();
 
     public:
         DigitalInput(DigitalInput const&) = delete;
         void operator=(DigitalInput const &) = delete;
-        static DigitalInput &get_instance()
+        static DigitalInput &get_instance(esp_event_loop_handle_t event_loop_handle)
         {
-            static DigitalInput instance;
+            static DigitalInput instance(event_loop_handle);
             return instance;
         }
         esp_err_t add_input(gpio_num_t gpioNumber);

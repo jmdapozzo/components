@@ -32,12 +32,16 @@ static void on_digital_input_event(void* handler_arg, esp_event_base_t base, int
 }
 #endif
 
-DigitalInput::DigitalInput()
+DigitalInput::DigitalInput(esp_event_loop_handle_t event_loop_handle)
 {
     ESP_LOGI(TAG, "Initializing...");
 
-    macdap::EventLoop &eventLoop = macdap::EventLoop::get_instance();
-    _event_loop_handle = eventLoop.get_event_loop_handle();
+    if (!event_loop_handle) {
+        ESP_LOGE(TAG, "Event loop handle is required but not provided");
+        return;
+    }
+
+    _event_loop_handle = event_loop_handle;
 
 #if CONFIG_DIGITAL_INPUT_EVENT_LOG
     esp_event_handler_register_with(_event_loop_handle, GPIO_EVENTS, ESP_EVENT_ANY_ID, on_digital_input_event, NULL);
