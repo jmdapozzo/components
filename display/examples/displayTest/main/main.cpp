@@ -101,7 +101,7 @@ extern "C" void app_main(void)
     vTaskDelay(pdMS_TO_TICKS(3000));
     graphics.clear(lv_display);
 
-    graphics.cross(lv_display, &_style_base);
+    graphics.x(lv_display, &_style_base);
     vTaskDelay(pdMS_TO_TICKS(3000));
     graphics.clear(lv_display);
 

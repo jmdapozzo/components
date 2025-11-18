@@ -15,7 +15,7 @@
 
 using namespace macdap;
 
-#define STACK_SIZE 8000
+#define STACK_SIZE 18000
 #define STARTUP_DELAY 10000
 #define RETRY_DELAY 5000
 #define CONFIG_REST_SERVICE_ENDPOINT_CONNECTION CONFIG_REST_SERVICE_ENDPOINT "/device/v3/connection"
