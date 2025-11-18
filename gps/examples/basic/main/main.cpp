@@ -31,10 +31,10 @@ extern "C" void app_main(void)
 
     // Get event loop handle from the EventLoop component
     macdap::EventLoop &eventLoop = macdap::EventLoop::get_instance();
-    esp_event_loop_handle_t event_loop_hdl = eventLoop.get_event_loop_handle();
+    esp_event_loop_handle_t event_loop_handle = eventLoop.get_event_loop_handle();
 
     // Initialize GPS with the event loop handle
-    macdap::GPS &gps = macdap::GPS::get_instance(event_loop_hdl);
+    macdap::GPS &gps = macdap::GPS::get_instance(event_loop_handle);
 
     // Register for GPS events in the main application
     esp_err_t ret = gps.register_event_handler(gps_event_handler, nullptr);
