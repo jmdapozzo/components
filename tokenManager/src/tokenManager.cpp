@@ -9,7 +9,8 @@
 #define LOCAL_TASK_STACKSIZE 12000
 #define REFRESH_RATE_OFFSET_SEC 60
 #define RETRY_RATE_SECS 30
-#define MAX_HTTP_OUTPUT_BUFFER 2048
+#define BUFFER_SIZE_TX 4096
+#define BUFFER_SIZE_RX 2048
 
 using namespace macdap;
 
@@ -17,7 +18,7 @@ static const char *TAG = "tokenManager";
 
 static esp_err_t get_access_token(TokenManager *tokenManager)
 {
-    char response_buffer[2048];
+    char response_buffer[BUFFER_SIZE_RX];
     int response_length = 0;
     
     esp_http_client_config_t http_client_config = {};    
@@ -26,7 +27,7 @@ static esp_err_t get_access_token(TokenManager *tokenManager)
     http_client_config.crt_bundle_attach = esp_crt_bundle_attach;
     http_client_config.method = HTTP_METHOD_POST;
     http_client_config.cert_pem = nullptr;
-    http_client_config.buffer_size_tx = 4096;
+    http_client_config.buffer_size_tx = BUFFER_SIZE_TX;
     http_client_config.timeout_ms = 15000;
 
     esp_http_client_handle_t client = esp_http_client_init(&http_client_config);
