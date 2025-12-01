@@ -4,6 +4,8 @@
 #include <esp_log.h>
 #include <esp_err.h>
 #include <driver/uart.h>
+#include <vector>
+#include <icons.h>
 
 #define NMEA_PARSER_RUNTIME_BUFFER_SIZE (CONFIG_GPS_RING_BUFFER_SIZE / 2)
 #define NMEA_MAX_STATEMENT_ITEM_LENGTH (16)
@@ -25,14 +27,17 @@ typedef struct {
     char item_str[NMEA_MAX_STATEMENT_ITEM_LENGTH]; /*!< Current item */
     gps_t parent;                                  /*!< Parent class */
     uint8_t *buffer;                               /*!< Runtime buffer */
-    esp_event_loop_handle_t event_loop_handle;        /*!< Event loop handle */
-    SemaphoreHandle_t semaphore_handle;             /*!< Semaphore handle */
+    esp_event_loop_handle_t event_loop_handle;     /*!< Event loop handle */
+    SemaphoreHandle_t semaphore_handle;            /*!< Semaphore handle */
     QueueHandle_t event_queue;                     /*!< UART event queue handle */
 } esp_gps_t;
 
 static const char *TAG = "gps";
+
 ESP_EVENT_DEFINE_BASE(GPS_EVENTS);
+
 static esp_gps_t *_esp_gps = NULL;
+static std::vector<lv_obj_t*> _icons;
 
 static float parse_lat_long(esp_gps_t *esp_gps)
 {
@@ -51,6 +56,49 @@ static inline uint8_t convert_two_digit2number(const char *digit_char)
 static inline uint16_t convert_four_digit2number(const char *digit_char)
 {
     return 1000 * (digit_char[0] - '0') + 100 * (digit_char[1] - '0') + 10 * (digit_char[2] - '0') + (digit_char[3] - '0');
+}
+
+static void update_status(lv_obj_t *icon, gps_t *gps)
+{
+    lv_coord_t height = lv_obj_get_height(icon);
+    
+    lv_image_dsc_t *icon_src = nullptr;
+    if (gps != nullptr && gps->valid)
+    {
+        switch (height)
+        {
+            case 32:
+                icon_src = (gps->fix != GpsFixInvalid) ? (lv_image_dsc_t *)&gps_fix_32 : (lv_image_dsc_t *)&gps_32;
+            break;
+            case 16:
+                icon_src = (gps->fix != GpsFixInvalid) ? (lv_image_dsc_t *)&gps_fix_16 : (lv_image_dsc_t *)&gps_16;
+            break;
+            default:
+                ESP_LOGE(TAG, "Unexpected GPS icon height: %d", height);
+            break;
+        }
+    }
+    else
+    {
+        switch(height)
+        {
+            case 32:
+                icon_src = (lv_image_dsc_t *)&gps_slash_32;
+            break;
+            case 16:
+                icon_src = (lv_image_dsc_t *)&gps_slash_16;
+            break;
+            default:
+                ESP_LOGE(TAG, "Unexpected GPS icon height: %d", height);
+            break;
+        }
+    }
+    if (icon_src != nullptr) {
+        if (lvgl_port_lock(0)) {
+            lv_img_set_src(icon, icon_src);
+            lvgl_port_unlock();
+        }
+    }
 }
 
 static void parse_utc_time(esp_gps_t *esp_gps)
@@ -552,6 +600,9 @@ static esp_err_t gps_decode(esp_gps_t *esp_gps, size_t len)
                 if (((esp_gps->parsed_statement) & esp_gps->all_statements) == esp_gps->all_statements) {
                     esp_gps->parsed_statement = 0;
                     /* Send signal to notify that GPS information has been updated */
+                    for (const auto& icon : _icons) {
+                        update_status(icon, &(esp_gps->parent));
+                    }
                     esp_event_post_to(esp_gps->event_loop_handle, GPS_EVENTS, GpsUpdate, &(esp_gps->parent), sizeof(gps_t), 100 / portTICK_PERIOD_MS);
                 }
             } else {
@@ -559,6 +610,9 @@ static esp_err_t gps_decode(esp_gps_t *esp_gps, size_t len)
             }
             if (esp_gps->cur_statement == StatementUnknown) {
                 /* Send signal to notify that one unknown statement has been met */
+                for (const auto& icon : _icons) {
+                    update_status(icon, nullptr);
+                }
                 esp_event_post_to(esp_gps->event_loop_handle, GPS_EVENTS, GpsUnknown, esp_gps->buffer, len, 100 / portTICK_PERIOD_MS);
             }
         }
@@ -814,10 +868,22 @@ gps_t GPS::get_gps_data()
     return empty_gps;
 }
 
+esp_err_t GPS::add_lv_obj_icon(lv_obj_t *lv_obj_icon)
+{
+    if (lv_obj_icon == nullptr) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    _icons.push_back(lv_obj_icon);
+
+    return ESP_OK;
+}
+
+
 esp_err_t GPS::register_event_handler(esp_event_handler_t event_handler, void* handler_arg)
 {
-    if (!_esp_gps || !_esp_gps->event_loop_handle) {
-        return ESP_ERR_INVALID_STATE;
+    if (!_esp_gps || !event_handler) {
+        return ESP_ERR_INVALID_ARG;
     }
     
     return esp_event_handler_register_with(_esp_gps->event_loop_handle, GPS_EVENTS, ESP_EVENT_ANY_ID, event_handler, handler_arg);
@@ -825,8 +891,8 @@ esp_err_t GPS::register_event_handler(esp_event_handler_t event_handler, void* h
 
 esp_err_t GPS::unregister_event_handler(esp_event_handler_t event_handler)
 {
-    if (!_esp_gps || !_esp_gps->event_loop_handle) {
-        return ESP_ERR_INVALID_STATE;
+    if (!_esp_gps || !event_handler) {
+        return ESP_ERR_INVALID_ARG;
     }
     
     return esp_event_handler_unregister_with(_esp_gps->event_loop_handle, GPS_EVENTS, ESP_EVENT_ANY_ID, event_handler);

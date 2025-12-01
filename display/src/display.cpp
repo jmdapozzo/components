@@ -4,28 +4,17 @@
 #include <esp_log.h>
 #include <driver/i2c_master.h>
 #include <esp_lcd_panel_io.h>
-#include <esp_lcd_panel_ops.h>
 #include <lvgl.h>
 #include <esp_lcd_panel_dev.h>
-#include <esp_lcd_panel_ssd1306.h>
-
-#if CONFIG_EXAMPLE_LCD_CONTROLLER_SH1107
-#include "esp_lcd_sh1107.h"
-#else
 #include "esp_lcd_panel_vendor.h"
-#endif
+#include <esp_lcd_panel_ssd1306.h>
 
 using namespace macdap;
 
 #define LCD_PIXEL_CLOCK_HZ    (400 * 1000)
 
-#if CONFIG_LCD_CONTROLLER_SSD1306
 #define DISP_WIDTH              128
-#define DISP_HEIGHT             CONFIG_SSD1306_HEIGHT
-#elif CONFIG_LCD_CONTROLLER_SH1107
-#define DISP_WIDTH              64
-#define DISP_HEIGHT             128
-#endif
+#define DISP_HEIGHT             CONFIG_DISPLAY_HEIGHT
 
 #define LCD_CMD_BITS           8
 #define LCD_PARAM_BITS         8
@@ -50,15 +39,7 @@ Display::Display()
     i2c_config.control_phase_bytes = 1;               // According to SSD1306 datasheet
     i2c_config.lcd_cmd_bits = LCD_CMD_BITS;           // According to SSD1306 datasheet
     i2c_config.lcd_param_bits = LCD_CMD_BITS;         // According to SSD1306 datasheet
-#if CONFIG_LCD_CONTROLLER_SSD1306
     i2c_config.dc_bit_offset = 6;                     // According to SSD1306 datasheet
-#elif CONFIG_LCD_CONTROLLER_SH1107
-    i2c_config.dc_bit_offset = 0;                     // According to SH1107 datasheet
-    i2c_config.flags =
-    {
-        .disable_control_phase = 1
-    }
-#endif
 
     esp_lcd_panel_io_handle_t io_handle = NULL;
     ESP_ERROR_CHECK(esp_lcd_new_panel_io_i2c(i2c_master_bus_handle, &i2c_config, &io_handle));
@@ -67,7 +48,6 @@ Display::Display()
     dev_config.bits_per_pixel = 1;
     dev_config.reset_gpio_num = CONFIG_GPIO_RESET;
 
-#if CONFIG_LCD_CONTROLLER_SSD1306
     ESP_LOGI(TAG, "Install SSD1306 panel driver");
     esp_lcd_panel_ssd1306_config_t ssd1306_config;
     ssd1306_config.height = DISP_HEIGHT;
@@ -76,18 +56,11 @@ Display::Display()
 
     dev_config.vendor_config = &ssd1306_config;
     ESP_ERROR_CHECK(esp_lcd_new_panel_ssd1306(io_handle, &dev_config, &panel_handle));
-#elif CONFIG_LCD_CONTROLLER_SH1107
-    ESP_LOGI(TAG, "Install SH1107 panel driver");
-    ESP_ERROR_CHECK(esp_lcd_new_panel_sh1107(io_handle, &dev_config, &panel_handle));
-#endif
-
+    
     ESP_ERROR_CHECK(esp_lcd_panel_reset(panel_handle));
     ESP_ERROR_CHECK(esp_lcd_panel_init(panel_handle));
     ESP_ERROR_CHECK(esp_lcd_panel_disp_on_off(panel_handle, true));
-
-#if CONFIG_EXAMPLE_LCD_CONTROLLER_SH1107
     ESP_ERROR_CHECK(esp_lcd_panel_invert_color(panel_handle, true));
-#endif
 
     const lvgl_port_display_cfg_t port_display_cfg = {
         .io_handle = io_handle,
@@ -117,4 +90,3 @@ lv_display_t *Display::get_lv_display()
 {
     return m_lv_display;
 }
-

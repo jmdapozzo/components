@@ -1,4 +1,9 @@
 idf_component_register(
-    SRCS "src/temperatureSensor.cpp"
-    PRIV_REQUIRES driver
-    INCLUDE_DIRS "include")
+    SRCS
+        "src/temperatureSensor.cpp"
+    PRIV_REQUIRES
+        esp_event
+        esp_timer
+        driver
+    INCLUDE_DIRS
+        "include")

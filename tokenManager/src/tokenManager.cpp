@@ -6,7 +6,7 @@
 #include "esp_crt_bundle.h"
 #include "cJSON.h"
 
-#define LOCAL_TASK_STACKSIZE 12000
+#define LOCAL_TASK_STACKSIZE 10000
 #define REFRESH_RATE_OFFSET_SEC 60
 #define RETRY_RATE_SECS 30
 #define BUFFER_SIZE_TX 4096

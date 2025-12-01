@@ -5,6 +5,8 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <freertos/semphr.h>
+#include <lvgl.h>
+#include <esp_lvgl_port.h>
 
 #define GPS_MAX_SATELLITES_IN_USE (12)
 #define GPS_MAX_SATELLITES_IN_VIEW (16)
@@ -13,6 +15,15 @@ ESP_EVENT_DECLARE_BASE(GPS_EVENTS);
 
 namespace macdap
 {
+    typedef enum {
+        Inactive,
+        NoFix,
+        Acquiring,
+        Active,
+        Crosshair,
+        Path
+    } gps_icons_t;
+
     typedef enum {
         GpsUpdate, /*!< GPS information has been updated */
         GpsUnknown /*!< Unknown statements detected */
@@ -101,6 +112,7 @@ namespace macdap
             return instance;
         }
         gps_t get_gps_data();
+        esp_err_t add_lv_obj_icon(lv_obj_t *lv_obj_icon);
         esp_err_t register_event_handler(esp_event_handler_t event_handler, void* handler_arg = nullptr);
         esp_err_t unregister_event_handler(esp_event_handler_t event_handler);
     };

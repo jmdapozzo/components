@@ -2,4 +2,7 @@ version: "0.0.1"
 license: "MIT"
 description: "Temperature Sensor component for MacDap's projects"
 url: https://github.com/jmdapozzo/components/tree/main/temperatureSensor
+dependencies:
+  lvgl/lvgl: "^9"
+  esp_lvgl_port: "^2"
      

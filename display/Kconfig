@@ -10,37 +10,22 @@ menu "MacDap Display Configuration"
 		default 30 if IDF_TARGET_ESP32C6
 		default 27 if IDF_TARGET_ESP32H2
 
-    choice LCD_CONTROLLER
-        prompt "LCD controller model"
-        default LCD_CONTROLLER_SSD1306
+    choice DISPLAY_HEIGHT
+        prompt "Height in pixels"
+        default DISPLAY_HEIGHT_64
         help
-            Select LCD controller model
+            Height of the display in pixels. a.k.a vertical resolution
 
-        config LCD_CONTROLLER_SSD1306
-            bool "SSD1306"
-
-        config LCD_CONTROLLER_SH1107
-            bool "SH1107"
+        config DISPLAY_HEIGHT_64
+            bool "64"
+        config DISPLAY_HEIGHT_32
+            bool "32"
     endchoice
 
-    if LCD_CONTROLLER_SSD1306
-        choice SSD1306_HEIGHT
-            prompt "SSD1306 Height in pixels"
-            default SSD1306_HEIGHT_64
-            help
-                Height of the display in pixels. a.k.a vertical resolution
-
-            config SSD1306_HEIGHT_64
-                bool "64"
-            config SSD1306_HEIGHT_32
-                bool "32"
-        endchoice
-
-        config SSD1306_HEIGHT
-            int
-            default 64 if SSD1306_HEIGHT_64
-            default 32 if SSD1306_HEIGHT_32
-    endif
+    config DISPLAY_HEIGHT
+        int
+        default 64 if DISPLAY_HEIGHT_64
+        default 32 if DISPLAY_HEIGHT_32
 
     config I2C_LCD_CONTROLLER_ADDR
         hex "I2C LCD Controller Address"

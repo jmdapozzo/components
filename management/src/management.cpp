@@ -15,7 +15,7 @@
 
 using namespace macdap;
 
-#define STACK_SIZE 18000
+#define STACK_SIZE 10000
 #define STARTUP_DELAY 10000
 #define RETRY_DELAY 5000
 #define CONFIG_REST_SERVICE_ENDPOINT_CONNECTION CONFIG_REST_SERVICE_ENDPOINT "/device/v3/connection"
@@ -28,6 +28,9 @@ static void get_build_number(const esp_app_desc_t *app_description, char *str, s
     struct tm tm;
     char buf[64];
 
+    // Initialize all fields to zero to avoid uninitialized values
+    memset(&tm, 0, sizeof(tm));
+    
     snprintf(buf, sizeof(buf), "%s %s", app_description->date, app_description->time);
     strptime(buf, "%b %d %Y %H:%M:%S", &tm);
     snprintf(str, size, "%lld", mktime(&tm));
@@ -534,7 +537,6 @@ static void local_task(void *parameter)
         }
         else
         {
-            ESP_LOGE(TAG, "Failed to connect to server");
             vTaskDelay(pdMS_TO_TICKS(RETRY_DELAY));
         }
     }

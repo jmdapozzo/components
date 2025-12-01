@@ -17,4 +17,10 @@ menu "MacDap Temperature Sensor Configuration"
         help
             I2C Temperature Sensor Address.
 
+    config TEMPERATURE_SENSOR_POLLING_INTERVAL_SEC
+        int "Temperature Sensor Polling Interval (Seconds)"
+        range 0 3600
+        default 5
+        help
+            Interval in seconds between temperature sensor readings. Set to 0 to disable polling.
 endmenu

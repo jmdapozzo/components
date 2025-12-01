@@ -2,4 +2,6 @@ version: "0.0.1"
 license: "MIT"
 description: "GPS used for MacDap's projects"
 url: https://github.com/jmdapozzo/components/tree/main/gps
-     
+dependencies:
+  lvgl/lvgl: "^9"
+  esp_lvgl_port: "^2"

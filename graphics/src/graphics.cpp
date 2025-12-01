@@ -63,18 +63,23 @@ void Graphics::background(lv_display_t *display, lv_color_t color)
     }
 }
 
-void Graphics::logo(lv_display_t *display, const void *src)
+lv_obj_t *Graphics::logo(lv_display_t *display, const void *src, lv_style_t *style)
 {
+    lv_obj_t *logo = nullptr;
+
     if (seize_lvgl())
     {
         lv_obj_t *screen = lv_display_get_screen_active(display);
 
-        lv_obj_t *logo = lv_image_create(screen);
+        logo = lv_image_create(screen);
         lv_image_set_src(logo, src);
-        lv_obj_align(logo, LV_ALIGN_LEFT_MID, 0, 0);
+        if (style != nullptr) {
+            lv_obj_add_style(logo, style, LV_STATE_DEFAULT);
+        }
 
         release_lvgl();
     }
+    return logo;
 }
 
 lv_obj_t *Graphics::message(lv_display_t *display, lv_style_t *style, const char *message, lv_label_long_mode_t long_mode)
@@ -181,7 +186,7 @@ void Graphics::vertical(lv_display_t *display, lv_style_t *style)
         release_lvgl();
     }
 }
-void Graphics::x(lv_display_t *display, lv_style_t *style)
+void Graphics::cross(lv_display_t *display, lv_style_t *style)
 {
     if (seize_lvgl())
     {
@@ -243,3 +248,192 @@ lv_obj_t *Graphics::led(lv_display_t *display, int32_t size, lv_color_t color)
     }
     return led;
 }
+
+void Graphics::delete_widget(lv_obj_t *widget)
+{
+    if (widget != nullptr)
+    {
+        if (seize_lvgl())
+        {
+            lv_obj_delete(widget);
+            release_lvgl();
+        }
+    }
+}
+
+lv_obj_t *Graphics::create_wifi_status_icon(lv_display_t *display, WifiStatus status, IconSize size, int32_t x, int32_t y)
+{
+    const lv_image_dsc_t *icon_src = nullptr;
+    
+    if (size == IconSize::SIZE_32)
+    {
+        switch (status)
+        {
+            case WifiStatus::NONE:                  icon_src = &wifi_none_32; break;
+            case WifiStatus::LOW:                   icon_src = &wifi_low_32; break;
+            case WifiStatus::MEDIUM:                icon_src = &wifi_medium_32; break;
+            case WifiStatus::HIGH:                  icon_src = &wifi_high_32; break;
+            case WifiStatus::DISCONNECTED_SLASH:    icon_src = &wifi_slash_32; break;
+            case WifiStatus::DISCONNECTED_X:        icon_src = &wifi_x_32; break;
+            case WifiStatus::BROADCAST:             icon_src = &broadcast_32; break;
+            default:                                icon_src = &wifi_none_32; break;
+        }
+    }
+    else
+    {
+        switch (status)
+        {
+            case WifiStatus::NONE:                  icon_src = &wifi_none_16; break;
+            case WifiStatus::LOW:                   icon_src = &wifi_low_16; break;
+            case WifiStatus::MEDIUM:                icon_src = &wifi_medium_16; break;
+            case WifiStatus::HIGH:                  icon_src = &wifi_high_16; break;
+            case WifiStatus::DISCONNECTED_SLASH:    icon_src = &wifi_slash_16; break;
+            case WifiStatus::DISCONNECTED_X:        icon_src = &wifi_x_16; break;
+            case WifiStatus::BROADCAST:             icon_src = &broadcast_16; break;
+            default:                                icon_src = &wifi_none_16; break;
+        }
+    }
+    
+    if (seize_lvgl())
+    {
+        lv_obj_t *icon = lv_img_create(lv_display_get_screen_active(display));
+        lv_img_set_src(icon, icon_src);
+        lv_obj_set_pos(icon, x, y);
+        release_lvgl();
+        return icon;
+    }
+    return nullptr;
+}
+
+bool Graphics::update_wifi_status_icon(lv_obj_t *icon_widget, WifiStatus status, IconSize size)
+{
+    if (!icon_widget) return false;
+    
+    const lv_image_dsc_t *icon_src = nullptr;
+    
+    if (size == IconSize::SIZE_32)
+    {
+        switch (status)
+        {
+            case WifiStatus::NONE:                  icon_src = &wifi_none_32; break;
+            case WifiStatus::LOW:                   icon_src = &wifi_low_32; break;
+            case WifiStatus::MEDIUM:                icon_src = &wifi_medium_32; break;
+            case WifiStatus::HIGH:                  icon_src = &wifi_high_32; break;
+            case WifiStatus::DISCONNECTED_SLASH:    icon_src = &wifi_slash_32; break;
+            case WifiStatus::DISCONNECTED_X:        icon_src = &wifi_x_32; break;
+            case WifiStatus::BROADCAST:             icon_src = &broadcast_32; break;
+            default:                                icon_src = &wifi_none_32; break;
+        }
+    }
+    else
+    {
+        switch (status)
+        {
+            case WifiStatus::NONE:                  icon_src = &wifi_none_16; break;
+            case WifiStatus::LOW:                   icon_src = &wifi_low_16; break;
+            case WifiStatus::MEDIUM:                icon_src = &wifi_medium_16; break;
+            case WifiStatus::HIGH:                  icon_src = &wifi_high_16; break;
+            case WifiStatus::DISCONNECTED_SLASH:    icon_src = &wifi_slash_16; break;
+            case WifiStatus::DISCONNECTED_X:        icon_src = &wifi_x_16; break;
+            case WifiStatus::BROADCAST:             icon_src = &broadcast_16; break;
+            default:                                icon_src = &wifi_none_16; break;
+        }
+    }
+    
+    if (seize_lvgl())
+    {
+        lv_img_set_src(icon_widget, icon_src);
+        release_lvgl();
+        return true;
+    }
+    return false;
+}
+
+lv_obj_t *Graphics::create_cellular_status_icon(lv_display_t *display, CellularStatus status, IconSize size, int32_t x, int32_t y)
+{
+    const lv_image_dsc_t *icon_src = nullptr;
+    
+    if (size == IconSize::SIZE_32)
+    {
+        switch (status)
+        {
+            case CellularStatus::NONE:                  icon_src = &cell_signal_none_32; break;
+            case CellularStatus::LOW:                   icon_src = &cell_signal_low_32; break;
+            case CellularStatus::MEDIUM:                icon_src = &cell_signal_medium_32; break;
+            case CellularStatus::HIGH:                  icon_src = &cell_signal_high_32; break;
+            case CellularStatus::FULL:                  icon_src = &cell_signal_full_32; break;
+            case CellularStatus::DISCONNECTED_SLASH:    icon_src = &cell_signal_slash_32; break;
+            case CellularStatus::DISCONNECTED_X:        icon_src = &cell_signal_x_32; break;
+            default:                                    icon_src = &cell_signal_none_32; break;
+        }
+    }
+    else
+    {
+        switch (status)
+        {
+            case CellularStatus::NONE:                  icon_src = &cell_signal_none_16; break;
+            case CellularStatus::LOW:                   icon_src = &cell_signal_low_16; break;
+            case CellularStatus::MEDIUM:                icon_src = &cell_signal_medium_16; break;
+            case CellularStatus::HIGH:                  icon_src = &cell_signal_high_16; break;
+            case CellularStatus::FULL:                  icon_src = &cell_signal_full_16; break;
+            case CellularStatus::DISCONNECTED_SLASH:    icon_src = &cell_signal_slash_16; break;
+            case CellularStatus::DISCONNECTED_X:        icon_src = &cell_signal_x_16; break;
+            default:                                    icon_src = &cell_signal_none_16; break;
+        }
+    }
+    
+    if (seize_lvgl())
+    {
+        lv_obj_t *icon = lv_img_create(lv_display_get_screen_active(display));
+        lv_img_set_src(icon, icon_src);
+        lv_obj_set_pos(icon, x, y);
+        release_lvgl();
+        return icon;
+    }
+    return nullptr;
+}
+
+bool Graphics::update_cellular_status_icon(lv_obj_t *icon_widget, CellularStatus status, IconSize size)
+{
+    if (!icon_widget) return false;
+    
+    const lv_image_dsc_t *icon_src = nullptr;
+    
+    if (size == IconSize::SIZE_32)
+    {
+        switch (status)
+        {
+            case CellularStatus::NONE:                  icon_src = &cell_signal_none_32; break;
+            case CellularStatus::LOW:                   icon_src = &cell_signal_low_32; break;
+            case CellularStatus::MEDIUM:                icon_src = &cell_signal_medium_32; break;
+            case CellularStatus::HIGH:                  icon_src = &cell_signal_high_32; break;
+            case CellularStatus::FULL:                  icon_src = &cell_signal_full_32; break;
+            case CellularStatus::DISCONNECTED_SLASH:    icon_src = &cell_signal_slash_32; break;
+            case CellularStatus::DISCONNECTED_X:        icon_src = &cell_signal_x_32; break;
+            default:                                    icon_src = &cell_signal_none_32; break;
+        }
+    }
+    else
+    {
+        switch (status)
+        {
+            case CellularStatus::NONE:                  icon_src = &cell_signal_none_16; break;
+            case CellularStatus::LOW:                   icon_src = &cell_signal_low_16; break;
+            case CellularStatus::MEDIUM:                icon_src = &cell_signal_medium_16; break;
+            case CellularStatus::HIGH:                  icon_src = &cell_signal_high_16; break;
+            case CellularStatus::FULL:                  icon_src = &cell_signal_full_16; break;
+            case CellularStatus::DISCONNECTED_SLASH:    icon_src = &cell_signal_slash_16; break;
+            case CellularStatus::DISCONNECTED_X:        icon_src = &cell_signal_x_16; break;
+            default:                                    icon_src = &cell_signal_none_16; break;
+        }
+    }
+    
+    if (seize_lvgl())
+    {
+        lv_img_set_src(icon_widget, icon_src);
+        release_lvgl();
+        return true;
+    }
+    return false;
+}
+

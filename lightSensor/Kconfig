@@ -17,4 +17,11 @@ menu "MacDap Light Sensor Configuration"
         help
             I2C Light Sensor Address.
 
+    config LIGHT_SENSOR_POLLING_INTERVAL_SEC
+        int "Light Sensor Polling Interval (Seconds)"
+        range 0 3600
+        default 5
+        help
+            Interval in seconds between light sensor readings. Set to 0 to disable polling.
+
 endmenu
