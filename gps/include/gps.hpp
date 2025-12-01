@@ -99,18 +99,19 @@ namespace macdap
 
     private:
         TaskHandle_t m_taskHandle = nullptr;
-        GPS(esp_event_loop_handle_t event_loop_handle);
+        GPS();
         ~GPS();
         void ReleaseResources();
 
     public:
         GPS(GPS const&) = delete;
         void operator=(GPS const &) = delete;
-        static GPS &get_instance(esp_event_loop_handle_t event_loop_handle)
+        static GPS &get_instance()
         {
-            static GPS instance(event_loop_handle);
+            static GPS instance;
             return instance;
         }
+        void set_event_loop_handle(esp_event_loop_handle_t event_loop_handle);
         gps_t get_gps_data();
         esp_err_t add_lv_obj_icon(lv_obj_t *lv_obj_icon);
         esp_err_t register_event_handler(esp_event_handler_t event_handler, void* handler_arg = nullptr);

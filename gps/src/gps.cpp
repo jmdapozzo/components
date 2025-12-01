@@ -30,6 +30,7 @@ typedef struct {
     esp_event_loop_handle_t event_loop_handle;     /*!< Event loop handle */
     SemaphoreHandle_t semaphore_handle;            /*!< Semaphore handle */
     QueueHandle_t event_queue;                     /*!< UART event queue handle */
+    std::vector<lv_obj_t*> icons;
 } esp_gps_t;
 
 static const char *TAG = "gps";
@@ -37,7 +38,6 @@ static const char *TAG = "gps";
 ESP_EVENT_DEFINE_BASE(GPS_EVENTS);
 
 static esp_gps_t *_esp_gps = NULL;
-static std::vector<lv_obj_t*> _icons;
 
 static float parse_lat_long(esp_gps_t *esp_gps)
 {
@@ -600,20 +600,24 @@ static esp_err_t gps_decode(esp_gps_t *esp_gps, size_t len)
                 if (((esp_gps->parsed_statement) & esp_gps->all_statements) == esp_gps->all_statements) {
                     esp_gps->parsed_statement = 0;
                     /* Send signal to notify that GPS information has been updated */
-                    for (const auto& icon : _icons) {
+                    for (const auto& icon : esp_gps->icons) {
                         update_status(icon, &(esp_gps->parent));
                     }
-                    esp_event_post_to(esp_gps->event_loop_handle, GPS_EVENTS, GpsUpdate, &(esp_gps->parent), sizeof(gps_t), 100 / portTICK_PERIOD_MS);
+                    if (esp_gps->event_loop_handle) {
+                        esp_event_post_to(esp_gps->event_loop_handle, GPS_EVENTS, GpsUpdate, &(esp_gps->parent), sizeof(gps_t), 100 / portTICK_PERIOD_MS);
+                    }
                 }
             } else {
                 ESP_LOGD(TAG, "CRC Error for statement:%s", esp_gps->buffer);
             }
             if (esp_gps->cur_statement == StatementUnknown) {
                 /* Send signal to notify that one unknown statement has been met */
-                for (const auto& icon : _icons) {
+                for (const auto& icon : esp_gps->icons) {
                     update_status(icon, nullptr);
                 }
-                esp_event_post_to(esp_gps->event_loop_handle, GPS_EVENTS, GpsUnknown, esp_gps->buffer, len, 100 / portTICK_PERIOD_MS);
+                if (esp_gps->event_loop_handle) {
+                    esp_event_post_to(esp_gps->event_loop_handle, GPS_EVENTS, GpsUnknown, esp_gps->buffer, len, 100 / portTICK_PERIOD_MS);
+                }
             }
         }
         /* Other non-space character */
@@ -732,14 +736,9 @@ static void onGPSEvent(void* handler_arg, esp_event_base_t base, int32_t event_i
 }
 #endif
 
-GPS::GPS(esp_event_loop_handle_t event_loop_handle)
+GPS::GPS()
 {
     ESP_LOGI(TAG, "Initializing...");
-
-    if (!event_loop_handle) {
-        ESP_LOGE(TAG, "Event loop handle is required but not provided");
-        return;
-    }
 
     if (CONFIG_GPS_PPS != -1)
     {
@@ -766,9 +765,6 @@ GPS::GPS(esp_event_loop_handle_t event_loop_handle)
         ReleaseResources();
         return;
     }
-
-    // Use the provided event loop handle
-    esp_gps->event_loop_handle = event_loop_handle;
 
 #if CONFIG_GPS_EVENT_LOG
     esp_event_handler_register_with(esp_gps->event_loop_handle, GPS_EVENTS, ESP_EVENT_ANY_ID, onGPSEvent, NULL);
@@ -857,6 +853,15 @@ GPS::~GPS()
     ReleaseResources();
 }
 
+void GPS::set_event_loop_handle(esp_event_loop_handle_t event_loop_handle)
+{
+    if (_esp_gps){
+        _esp_gps->event_loop_handle = event_loop_handle;
+    } else {
+        ESP_LOGE(TAG, "GPS not initialized, cannot set event loop handle");
+    }
+}
+
 gps_t GPS::get_gps_data()
 {
     if (_esp_gps) {
@@ -874,7 +879,7 @@ esp_err_t GPS::add_lv_obj_icon(lv_obj_t *lv_obj_icon)
         return ESP_ERR_INVALID_ARG;
     }
 
-    _icons.push_back(lv_obj_icon);
+    _esp_gps->icons.push_back(lv_obj_icon);
 
     return ESP_OK;
 }
