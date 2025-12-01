@@ -77,20 +77,22 @@ TemperatureSensor::TemperatureSensor()
 {
     ESP_LOGI(TAG, "Initializing...");
 
+    i2c_master_bus_handle_t i2c_master_bus_handle;
+    ESP_ERROR_CHECK(i2c_master_get_bus_handle(0, &i2c_master_bus_handle));
+    if (i2c_master_probe(i2c_master_bus_handle, CONFIG_I2C_TEMPERATURE_SENSOR_ADDR, 100) != ESP_OK)
+    {
+        ESP_LOGW(TAG, "I2C device not found");
+        m_is_present = false;
+        return;
+    }
+    m_is_present = true;
+
     ESP_LOGI(TAG, "Setup the internal temperature sensor, set min/max values to -10 ~ 80 °C");
     temperature_sensor_config_t temperature_sensor_config = {
         .range_min = -10,
         .range_max = 80,
     };
     ESP_ERROR_CHECK(temperature_sensor_install(&temperature_sensor_config, &m_temperature_sensor_handle));
-
-    i2c_master_bus_handle_t i2c_master_bus_handle;
-    ESP_ERROR_CHECK(i2c_master_get_bus_handle(0, &i2c_master_bus_handle));
-    if (i2c_master_probe(i2c_master_bus_handle, CONFIG_I2C_TEMPERATURE_SENSOR_ADDR, 100) != ESP_OK)
-    {
-        ESP_LOGW(TAG, "I2C device not found");
-        return;
-    }
 
     m_semaphore_handle = xSemaphoreCreateMutex();
 

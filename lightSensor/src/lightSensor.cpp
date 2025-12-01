@@ -94,8 +94,10 @@ LightSensor::LightSensor()
     if (i2c_master_probe(i2c_master_bus_handle, CONFIG_I2C_LIGHT_SENSOR_ADDR, 100) != ESP_OK)
     {
         ESP_LOGW(TAG, "I2C device not found");
+        m_is_present = false;
         return;
     }
+    m_is_present = true;
 
     m_semaphore_handle = xSemaphoreCreateMutex();
 

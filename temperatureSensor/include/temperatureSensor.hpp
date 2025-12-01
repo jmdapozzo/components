@@ -52,6 +52,7 @@ namespace macdap
     {
 
     private:
+        bool m_is_present;
         temperature_sensor_handle_t m_temperature_sensor_handle;
         i2c_master_dev_handle_t m_i2c_device_handle;
         SemaphoreHandle_t m_semaphore_handle;
@@ -70,6 +71,7 @@ namespace macdap
             static TemperatureSensor instance;
             return instance;
         }
+        bool is_present() { return m_is_present; }
         esp_event_loop_handle_t get_event_loop_handle() const { return m_event_loop_handle; }
         void set_event_loop_handle(esp_event_loop_handle_t event_loop_handle) { m_event_loop_handle = event_loop_handle; }
         std::vector<lv_obj_t*> get_labels_vector() const { return m_labels; }
