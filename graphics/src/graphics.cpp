@@ -82,7 +82,7 @@ lv_obj_t *Graphics::logo(lv_display_t *display, const void *src, lv_style_t *sty
     return logo;
 }
 
-lv_obj_t *Graphics::message(lv_display_t *display, lv_style_t *style, const char *message, lv_label_long_mode_t long_mode)
+lv_obj_t *Graphics::message(lv_display_t *display, const char *message, lv_style_t *style, lv_label_long_mode_t long_mode)
 {
     lv_obj_t *label = nullptr;
 

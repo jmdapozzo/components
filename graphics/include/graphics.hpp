@@ -60,7 +60,7 @@ namespace macdap
         void background(lv_display_t *display,lv_color_t color);
         void delete_widget(lv_obj_t *widget);
         lv_obj_t *logo(lv_display_t *display, const void *src, lv_style_t *style = nullptr);
-        lv_obj_t *message(lv_display_t *display, lv_style_t *style = nullptr, const char *message = "", lv_label_long_mode_t long_mode = LV_LABEL_LONG_SCROLL_CIRCULAR);
+        lv_obj_t *message(lv_display_t *display, const char *message = "", lv_style_t *style = nullptr, lv_label_long_mode_t long_mode = LV_LABEL_LONG_SCROLL_CIRCULAR);
         void qrcode(lv_display_t *display, const char *data, lv_color_t light_color = lv_color_white(), lv_color_t dark_color = lv_color_black());
         void dot(lv_display_t *display, lv_style_t *style = nullptr, int32_t x = 0, int32_t y = 0);
         void horizontal(lv_display_t *display, lv_style_t *style = nullptr);
