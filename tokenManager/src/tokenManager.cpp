@@ -178,8 +178,7 @@ static void local_task(void *parameter)
         }
         ESP_LOGI(TAG, "Next access token refresh in %lu seconds", next_refresh);
         
-        next_refresh = 60 * (1000 / portTICK_PERIOD_MS); //TODO restore this
-        // nextRefresh = nextRefresh * (1000 / portTICK_PERIOD_MS);
+        next_refresh = next_refresh * (1000 / portTICK_PERIOD_MS);
         vTaskDelay(next_refresh);
     }
 

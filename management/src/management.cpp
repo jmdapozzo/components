@@ -553,7 +553,7 @@ static void local_task(void *parameter)
         while (hour_counter > 0)
         {
             hour_counter--;
-            vTaskDelay(pdMS_TO_TICKS(10 * 1000)); // TODO: restore to 60 * 60 * 1000 for production
+            vTaskDelay(pdMS_TO_TICKS(60 * 60 * 1000));
         }
     }
 
