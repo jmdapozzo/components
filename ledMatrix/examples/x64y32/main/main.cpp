@@ -46,8 +46,6 @@ extern "C" void app_main(void)
     lv_display_t *lv_display = ledMatrix.get_lv_display();
     graphics.init(lv_display);
 
-    ESP_LOGI(TAG, "Free heap: %d", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
-
     int32_t width = lv_display_get_horizontal_resolution(lv_display);
     int32_t height = lv_display_get_vertical_resolution(lv_display);
 
