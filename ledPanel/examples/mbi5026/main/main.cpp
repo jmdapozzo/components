@@ -1,8 +1,6 @@
 #include <ledPanel.hpp>
 #include <graphics.hpp>
 #include <esp_log.h>
-#include <logo.h>
-#include <font.h>
 
 static const char *TAG = "mbi5026";
 
@@ -56,17 +54,20 @@ extern "C" void app_main(void)
     vTaskDelay(pdMS_TO_TICKS(3000));
     graphics.clear(lv_display);
 
-    graphics.message(lv_display, &_style_greeting_top, "mbi5026");
-    graphics.message(lv_display, &_style_greeting_bottom, "0.0.0");
+    graphics.message(lv_display, "mbi5026", &_style_greeting_top);
+    graphics.message(lv_display, "0.0.0", &_style_greeting_bottom);
     vTaskDelay(pdMS_TO_TICKS(3000));
     graphics.clear(lv_display);
 
-    graphics.message(lv_display, &_style_main_message, "MacDap");
+    graphics.message(lv_display, "MacDap", &_style_main_message);
     vTaskDelay(pdMS_TO_TICKS(3000));
     graphics.clear(lv_display);
 
-    graphics.message(lv_display, &_style_main_message, "Test program, Version 0.0.0 from MacDap Inc.");
+    graphics.cross(lv_display);
+    vTaskDelay(pdMS_TO_TICKS(3000));
+    graphics.clear(lv_display);
 
+    graphics.message(lv_display, "Test program, Version 0.0.0 from MacDap Inc.", &_style_main_message);
     while (true)
     {
         vTaskDelay(pdMS_TO_TICKS(1000));

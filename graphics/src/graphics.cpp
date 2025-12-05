@@ -82,26 +82,6 @@ lv_obj_t *Graphics::logo(lv_display_t *display, const void *src, lv_style_t *sty
     return logo;
 }
 
-lv_obj_t *Graphics::message(lv_display_t *display, const char *message, lv_style_t *style, lv_label_long_mode_t long_mode)
-{
-    lv_obj_t *label = nullptr;
-
-    if (seize_lvgl())
-    {
-        lv_obj_t *screen = lv_display_get_screen_active(display);
-
-        label = lv_label_create(screen);
-        if (style != nullptr) {
-            lv_obj_add_style(label, style, LV_STATE_DEFAULT);
-        }
-        lv_label_set_long_mode(label, long_mode);
-        lv_label_set_text(label, message);
-
-        release_lvgl();
-    }
-    return label;
-}
-
 void Graphics::qrcode(lv_display_t *display, const char *data, lv_color_t light_color, lv_color_t dark_color)
 {
 #ifdef CONFIG_LV_USE_QRCODE
@@ -151,8 +131,6 @@ void Graphics::horizontal(lv_display_t *display, lv_style_t *style)
         int32_t width = lv_display_get_horizontal_resolution(display);
         int32_t height = lv_display_get_vertical_resolution(display);
 
-        ESP_LOGI(TAG, "Display horizontal line resolution: %dx%d", width, height);
-
         lv_point_precise_t horizontal_line_points[] = { {0, height/2}, {width, height/2} };
 
         lv_obj_t *horizontal_line = lv_line_create(screen);
@@ -172,8 +150,6 @@ void Graphics::vertical(lv_display_t *display, lv_style_t *style)
 
         int32_t width = lv_display_get_horizontal_resolution(display);
         int32_t height = lv_display_get_vertical_resolution(display);
-
-        ESP_LOGI(TAG, "Display vertical line resolution: %dx%d", width, height);
 
         lv_point_precise_t vertical_line_points[] = { {width/2, 0}, {width/2, height} };
 
@@ -259,6 +235,39 @@ void Graphics::delete_widget(lv_obj_t *widget)
             release_lvgl();
         }
     }
+}
+
+lv_obj_t *Graphics::create_message(lv_display_t *display, const char *message, lv_style_t *style, lv_label_long_mode_t long_mode)
+{
+    lv_obj_t *label = nullptr;
+
+    if (seize_lvgl())
+    {
+        lv_obj_t *screen = lv_display_get_screen_active(display);
+
+        label = lv_label_create(screen);
+        if (style != nullptr) {
+            lv_obj_add_style(label, style, LV_STATE_DEFAULT);
+        }
+        lv_label_set_long_mode(label, long_mode);
+        lv_label_set_text(label, message);
+
+        release_lvgl();
+    }
+    return label;
+}
+
+bool Graphics::update_message(lv_obj_t *message_widget, const char *message)
+{
+    if (message_widget == nullptr || message == nullptr) return false;
+
+    if (seize_lvgl())
+    {
+        lv_label_set_text(message_widget, message);
+        release_lvgl();
+        return true;
+    }
+    return false;
 }
 
 lv_obj_t *Graphics::create_wifi_status_icon(lv_display_t *display, WifiStatus status, IconSize size, int32_t x, int32_t y)

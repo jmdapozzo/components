@@ -340,7 +340,7 @@ static void send_data(uint8_t data)
 
 void LedPanel::send_buffer(void *buffer, size_t buffer_size)
 {
-    void *current_data = buffer;
+    uint8_t *current_data = static_cast<uint8_t *>(buffer);
 
     gpio_set_level(static_cast<gpio_num_t>(CONFIG_LED_PANEL_LATCH), LOW);
     for (int8_t buffer_index = 0; buffer_index < buffer_size; buffer_index++)
@@ -432,13 +432,13 @@ void LedPanel::set_brightness(float brightness)
     ESP_ERROR_CHECK(ledc_set_duty(static_cast<ledc_mode_t>(CONFIG_LED_PANEL_LEDC_MODE), static_cast<ledc_channel_t>(CONFIG_LED_PANEL_LEDC_CHANNEL), duty_cycle));
     ESP_ERROR_CHECK(ledc_update_duty(static_cast<ledc_mode_t>(CONFIG_LED_PANEL_LEDC_MODE), static_cast<ledc_channel_t>(CONFIG_LED_PANEL_LEDC_CHANNEL)));
 #elif CONFIG_LED_PANEL_TYPE_MAX7219
+    xSemaphoreTake(_panel_buffer_mutex, portMAX_DELAY);
     uint8_t duty_cycle = static_cast<uint8_t>(roundf((brightness / 100.0f) * MAX_INTENSITY));
     for (int chip = 0; chip < m_max_7219_buffer_len; chip++)
     {
         m_max_7219_buffer[chip].command = REG_INTENSITY;
         m_max_7219_buffer[chip].data = duty_cycle;
     }
-    xSemaphoreTake(_panel_buffer_mutex, portMAX_DELAY);
     send_buffer(m_max_7219_buffer, m_max_7219_buffer_len * sizeof(max_7219_buffer_t));
     xSemaphoreGive(_panel_buffer_mutex);
 #endif

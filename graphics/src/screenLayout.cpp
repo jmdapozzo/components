@@ -76,7 +76,6 @@ ScreenLayout::ScreenLayout(lv_display_t *display,
         lv_label_set_text(header_label, header_text);
         lv_obj_set_flex_grow(header_label, 1);
         lv_obj_set_style_text_align(header_label, LV_TEXT_ALIGN_CENTER, 0);
-        lv_obj_set_style_text_font(header_label, &lv_font_montserrat_12, 0);
         if (header_style != nullptr) {
             lv_obj_add_style(header_label, header_style, LV_STATE_DEFAULT);
         }
@@ -115,7 +114,6 @@ ScreenLayout::ScreenLayout(lv_display_t *display,
         lv_obj_set_width(footer_label, screen_width);
         lv_label_set_long_mode(footer_label, LV_LABEL_LONG_SCROLL_CIRCULAR);
         lv_obj_set_style_text_align(footer_label, LV_TEXT_ALIGN_CENTER, 0);
-        lv_obj_set_style_text_font(footer_label, &lv_font_montserrat_12, 0);
         if (footer_style != nullptr) {
             lv_obj_add_style(footer_label, footer_style, LV_STATE_DEFAULT);
         }

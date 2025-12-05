@@ -16,26 +16,26 @@ extern "C" void app_main(void)
     {
         statusLed.set_status(macdap::Status::Off);
         ESP_LOGI(TAG, "Status::Off");
-        vTaskDelay(pdMS_TO_TICKS(3000));
+        vTaskDelay(pdMS_TO_TICKS(1500));
 
         statusLed.set_status(macdap::Status::Booting);
         ESP_LOGI(TAG, "Status::Booting");
-        vTaskDelay(pdMS_TO_TICKS(3000));
+        vTaskDelay(pdMS_TO_TICKS(5100));
 
         statusLed.set_status(macdap::Status::Commissioning);
         ESP_LOGI(TAG, "Status::Commissioning");
-        vTaskDelay(pdMS_TO_TICKS(3000));
+        vTaskDelay(pdMS_TO_TICKS(5010));
 
-        statusLed.set_status(macdap::Status::RunningPhase0);
-        ESP_LOGI(TAG, "Status::RunningPhase0");
-        vTaskDelay(pdMS_TO_TICKS(3000));
+        statusLed.set_status(macdap::Status::WaitingForNetwork);
+        ESP_LOGI(TAG, "Status::WaitingForNetwork");
+        vTaskDelay(pdMS_TO_TICKS(1500));
 
-        statusLed.set_status(macdap::Status::RunningPhase1);
-        ESP_LOGI(TAG, "Status::RunningPhase1");
-        vTaskDelay(pdMS_TO_TICKS(3000));
+        statusLed.set_status(macdap::Status::Running);
+        ESP_LOGI(TAG, "Status::Running");
+        vTaskDelay(pdMS_TO_TICKS(1500));
 
         statusLed.set_status(macdap::Status::Error);
         ESP_LOGI(TAG, "Status::Error");
-        vTaskDelay(pdMS_TO_TICKS(3000));
+        vTaskDelay(pdMS_TO_TICKS(1500));
     }
 }
