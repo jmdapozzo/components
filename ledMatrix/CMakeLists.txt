@@ -65,7 +65,8 @@ else()
 endif()
 
 # You can also use multiple options like this
-target_compile_options(${COMPONENT_TARGET} PUBLIC -DNO_GFX -DNO_FAST_FUNCTIONS -DSPIRAM_FRAMEBUFFER)
+# target_compile_options(${COMPONENT_TARGET} PUBLIC -DNO_GFX -DNO_FAST_FUNCTIONS -DSPIRAM_DMA_BUFFER)
+target_compile_options(${COMPONENT_TARGET} PUBLIC -DNO_GFX -DNO_FAST_FUNCTIONS)
 
 # All options can be found here:
 # https://github.com/mrfaptastic/ledMatrix/blob/master/doc/BuildOptions.md
