@@ -3,7 +3,7 @@
 #include <driver/i2c_master.h>
 #include <string.h>
 #include <esp_log.h>
-#include <logo.h>
+#include <logos.h>
 
 static const char *TAG = "displayTest";
 
@@ -88,12 +88,12 @@ extern "C" void app_main(void)
     vTaskDelay(pdMS_TO_TICKS(3000));
     graphics.clear(lv_display);
 
-    graphics.message(lv_display, &_style_greeting_top, "Test");
-    graphics.message(lv_display, &_style_greeting_bottom, "Version 0.0.0");
+    graphics.create_message(lv_display, "Test", &_style_greeting_top);
+    graphics.create_message(lv_display, "Version 0.0.0", &_style_greeting_bottom);
     vTaskDelay(pdMS_TO_TICKS(3000));
     graphics.clear(lv_display);
 
-    graphics.message(lv_display, &_style_main_message, "MacDap Inc.");
+    graphics.create_message(lv_display, "MacDap Inc.", &_style_main_message);
     vTaskDelay(pdMS_TO_TICKS(3000));
     graphics.clear(lv_display);
 
@@ -101,11 +101,11 @@ extern "C" void app_main(void)
     vTaskDelay(pdMS_TO_TICKS(3000));
     graphics.clear(lv_display);
 
-    graphics.x(lv_display, &_style_base);
+    graphics.cross(lv_display, &_style_base);
     vTaskDelay(pdMS_TO_TICKS(3000));
     graphics.clear(lv_display);
 
-    graphics.message(lv_display, &_style_main_message, "This is a MacDap application!");
+    graphics.create_message(lv_display, "This is a MacDap application!", &_style_main_message);
     vTaskDelay(pdMS_TO_TICKS(5000));
     graphics.clear(lv_display);
 
@@ -116,8 +116,8 @@ extern "C" void app_main(void)
     // TODO Toggling does not work
     // lv_obj_t *heartbeat = graphics.led(lv_display, lv_color_black());
 
-    graphics.message(lv_display, &_style_main_message_top, "Test program Version 0.0.0 from MacDap Inc.");
-    graphics.message(lv_display, &_style_main_message_bottom, "MacDap Inc. the best");
+    graphics.create_message(lv_display, "Test program Version 0.0.0 from MacDap Inc.", &_style_main_message_top);
+    graphics.create_message(lv_display, "MacDap Inc. the best", &_style_main_message_bottom);
 
     bool phase = false;
     while (true)
