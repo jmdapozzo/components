@@ -64,8 +64,10 @@ Display::Display()
     const lvgl_port_display_cfg_t port_display_cfg = {
         .io_handle = io_handle,
         .panel_handle = panel_handle,
+        .control_handle = nullptr,
         .buffer_size = DISP_WIDTH * DISP_HEIGHT,
         .double_buffer = true,
+        .trans_size = 0,
         .hres = DISP_WIDTH,
         .vres = DISP_HEIGHT,
         .monochrome = true,
@@ -73,7 +75,9 @@ Display::Display()
             .swap_xy = false,
             .mirror_x = true,
             .mirror_y = true,
-        }
+        },
+        .color_format = LV_COLOR_FORMAT_NATIVE,
+        .flags = {}
     };
 
     ESP_LOGI(TAG, "Display resolution: %d x %d", DISP_WIDTH, DISP_HEIGHT);

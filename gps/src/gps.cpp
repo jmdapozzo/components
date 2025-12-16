@@ -805,8 +805,10 @@ GPS::GPS()
         .parity = UART_PARITY_DISABLE,
         .stop_bits = UART_STOP_BITS_1,
         .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+        .rx_flow_ctrl_thresh = 122,
         .source_clk = UART_SCLK_DEFAULT,
-    };
+        .flags = {}
+    };    
     if (uart_driver_install(static_cast<uart_port_t>(CONFIG_GPS_UART_NUMBER), CONFIG_GPS_RING_BUFFER_SIZE, 0, UART_EVENT_QUEUE_SIZE, &esp_gps->event_queue, 0) != ESP_OK) {
         ESP_LOGE(TAG, "install uart driver failed");
         ReleaseResources();

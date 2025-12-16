@@ -91,6 +91,8 @@ TemperatureSensor::TemperatureSensor()
     temperature_sensor_config_t temperature_sensor_config = {
         .range_min = -10,
         .range_max = 80,
+        .clk_src = TEMPERATURE_SENSOR_CLK_SRC_DEFAULT,
+        .flags = {}
     };
     ESP_ERROR_CHECK(temperature_sensor_install(&temperature_sensor_config, &m_temperature_sensor_handle));
 
@@ -105,6 +107,8 @@ TemperatureSensor::TemperatureSensor()
             .dev_addr_length = I2C_ADDR_BIT_LEN_7,
             .device_address = CONFIG_I2C_TEMPERATURE_SENSOR_ADDR,
             .scl_speed_hz = 100000,
+            .scl_wait_us = 0,
+            .flags = {}
         };
 
         ESP_ERROR_CHECK(i2c_master_bus_add_device(i2c_master_bus_handle, &i2c_device_config, &m_i2c_device_handle));
@@ -117,7 +121,8 @@ TemperatureSensor::TemperatureSensor()
                 .callback = timer_callback,
                 .arg = this,
                 .dispatch_method = ESP_TIMER_TASK,
-                .name = "TemperatureSensorTimer"
+                .name = "TemperatureSensorTimer",
+                .skip_unhandled_events = false
             };
 
             esp_timer_create(&timer_args, &m_periodic_timer);

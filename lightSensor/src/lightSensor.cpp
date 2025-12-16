@@ -110,6 +110,8 @@ LightSensor::LightSensor()
             .dev_addr_length = I2C_ADDR_BIT_LEN_7,
             .device_address = CONFIG_I2C_LIGHT_SENSOR_ADDR,
             .scl_speed_hz = 100000,
+            .scl_wait_us = 0,
+            .flags = {}
         };
 
         ESP_ERROR_CHECK(i2c_master_bus_add_device(i2c_master_bus_handle, &i2c_device_config, &m_i2c_device_handle));
@@ -125,7 +127,8 @@ LightSensor::LightSensor()
                 .callback = timer_callback,
                 .arg = this,
                 .dispatch_method = ESP_TIMER_TASK,
-                .name = "LightSensorTimer"
+                .name = "LightSensorTimer",
+                .skip_unhandled_events = false
             };
 
             esp_timer_create(&timer_args, &m_periodic_timer);

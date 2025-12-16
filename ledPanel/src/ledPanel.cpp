@@ -134,6 +134,11 @@ LedPanel::LedPanel()
         .sclk_io_num = CONFIG_LED_PANEL_CLOCK,
         .quadwp_io_num = -1,
         .quadhd_io_num = -1,
+        .data4_io_num = -1,
+        .data5_io_num = -1,
+        .data6_io_num = -1,
+        .data7_io_num = -1,
+        .data_io_default_level = 0,
         .max_transfer_sz = SPI_MAX_DMA_LEN,
         .flags = SPICOMMON_BUSFLAG_MASTER | SPICOMMON_BUSFLAG_GPIO_PINS | SPICOMMON_BUSFLAG_SCLK | SPICOMMON_BUSFLAG_MOSI,
         .isr_cpu_id = ESP_INTR_CPU_AFFINITY_AUTO,
@@ -159,6 +164,7 @@ LedPanel::LedPanel()
         .cs_ena_posttrans = 0,
         .clock_speed_hz = CONFIG_LED_PANEL_INTERFACE_SPI_CLOCK_SPEED,
         .input_delay_ns = 0,
+        .sample_point = SPI_SAMPLING_POINT_PHASE_0,
         .spics_io_num = CONFIG_LED_PANEL_LATCH,
         .flags = SPI_DEVICE_NO_DUMMY,
         .queue_size = SPI_QUEUE_SIZE,
@@ -213,6 +219,7 @@ LedPanel::LedPanel()
         .timer_sel = static_cast<ledc_timer_t>(CONFIG_LED_PANEL_LEDC_TIMER),
         .duty = 0,
         .hpoint = 0,
+        .sleep_mode = LEDC_SLEEP_MODE_NO_ALIVE_NO_PD,
         .flags = {
             .output_invert = 1
         }
@@ -357,16 +364,10 @@ void LedPanel::send_buffer(void *buffer, size_t buffer_size)
 {
     // ESP_LOG_BUFFER_HEX(TAG, buffer, bufferSize);
 
-    spi_transaction_t spi_transaction = {
-        .flags = 0,
-        .cmd = 0,
-        .addr = 0,
-        .length = buffer_size * PIXEL_PER_BYTE,
-        .rxlength = 0,
-        .user = nullptr,
-        .tx_buffer = buffer,
-        .rx_buffer = nullptr
-    };
+    spi_transaction_t spi_transaction = {};
+    spi_transaction.length = buffer_size * PIXEL_PER_BYTE;
+    spi_transaction.tx_buffer = buffer;
+    spi_transaction.rx_buffer = nullptr;
     ESP_ERROR_CHECK(spi_device_transmit(m_spi, &spi_transaction));
 }
 #endif
