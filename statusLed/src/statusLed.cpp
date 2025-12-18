@@ -28,9 +28,9 @@ static const blink_step_t blink_step_connecting[] = { // Green breathe
 };
 
 static const blink_step_t blink_step_running[] = { // Blue breathe
-    {LED_BLINK_HSV, SET_HSV(240, MAX_SATURATION, 0), 0},
+    {LED_BLINK_HSV, SET_HSV(240, MAX_SATURATION, 32), 0},
     {LED_BLINK_BREATHE, LED_STATE_ON, 1000},
-    {LED_BLINK_BREATHE, LED_STATE_OFF, 1000},
+    {LED_BLINK_BREATHE, 32, 1000},
     {LED_BLINK_LOOP, 0, 0},
 };
 
