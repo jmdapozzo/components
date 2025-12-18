@@ -9,37 +9,20 @@ menu "MacDap Status Led"
 		default 19 if IDF_TARGET_ESP32C3
 		default 30 if IDF_TARGET_ESP32C6
 
-	choice STATUS_LED_TYPE
-		prompt "Led Type"
-		default STATUS_LED_TYPE_COLOR
+	choice STATUS_LED_COLOR_DRIVER
+		prompt "Color Led Driver"
+		default STATUS_LED_RMT_DRIVER
 		help
-			Select LED Panel Interface.
-		config STATUS_LED_TYPE_MONOCHROME
-			bool "Monochrome Led"
+			Select LED Driver.
+		config STATUS_LED_RMT_DRIVER
+			bool "RMT Led Driver"
 			help
-				Monochrome Led.
-		config STATUS_LED_TYPE_COLOR
-			bool "Color Led"
+				RMT Led Driver.
+		config STATUS_LED_SPI_DRIVER
+			bool "SPI Led Driver"
 			help
-				Color Led.
+				SPI Led Driver.
 	endchoice
-
-	if STATUS_LED_TYPE_COLOR
-		choice STATUS_LED_COLOR_DRIVER
-			prompt "Color Led Driver"
-			default STATUS_LED_RMT_DRIVER
-			help
-				Select LED Driver.
-			config STATUS_LED_RMT_DRIVER
-				bool "RMT Led Driver"
-				help
-					RMT Led Driver.
-			config STATUS_LED_SPI_DRIVER
-				bool "SPI Led Driver"
-				help
-					SPI Led Driver.
-		endchoice
-	endif
 
 	config STATUS_LED_GPIO
 		int "Status Led GPIO number"
@@ -48,6 +31,13 @@ menu "MacDap Status Led"
         help 
             GPIO pin number to be used as Status Led.
 
+	config STATUS_LED_GPIO_COUNT
+		int "Status Led GPIO Count"
+		default 1
+		range 1 1000
+		help 
+			Number of LEDs connected to the Status Led GPIO.
+			
 	config STATUS_LED_DEFAULT_BRIGHTNESS
 		int "Status Led Default Brightness"
 		default 10

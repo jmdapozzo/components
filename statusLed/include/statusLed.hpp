@@ -1,28 +1,26 @@
 #pragma once
 
 #include <esp_err.h>
-#include <led_strip.h>
+#include "led_indicator_strips.h"
 
 namespace macdap
 {
     enum class Status
     {
-        Off,
         Booting,
-        Commissioning,
-        WaitingForNetwork,
+        Provisioning,
+        Connecting,
         Running,
-        Error
+        OtaUpdating,
+        Error,
+        Count
     };
 
     class StatusLed
     {
 
     private:
-#ifdef CONFIG_STATUS_LED_TYPE_COLOR
-        led_strip_handle_t m_ledStrip;
-#endif
-        Status status = Status::Off;
+        led_indicator_handle_t m_led_indicator_handle;
         int8_t m_brightness = CONFIG_STATUS_LED_DEFAULT_BRIGHTNESS;
         StatusLed();
         ~StatusLed();
@@ -36,7 +34,9 @@ namespace macdap
             return instance;
         }
 
-        void clear();
+        void clear(Status status);
+        void set_on_off(bool on_off);
+        void set_brightness(int8_t brightness);
         void set_status(Status status);
     };
 }
