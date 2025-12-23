@@ -28,24 +28,6 @@ LedMatrix::LedMatrix()
     ESP_LOGI(TAG, "Initializing");
 
     HUB75_I2S_CFG mxconfig;
-    mxconfig.mx_width = CONFIG_LED_MATRIX_PIXEL_WIDTH;
-    mxconfig.mx_height = CONFIG_LED_MATRIX_PIXEL_HEIGHT;
-    mxconfig.chain_length = CONFIG_LED_MATRIX_MODULE_WIDTH * CONFIG_LED_MATRIX_MODULE_HEIGHT;
-    mxconfig.gpio = {
-          CONFIG_LED_MATRIX_HUB75_R1,
-          CONFIG_LED_MATRIX_HUB75_G1,
-          CONFIG_LED_MATRIX_HUB75_B1,
-          CONFIG_LED_MATRIX_HUB75_R2,
-          CONFIG_LED_MATRIX_HUB75_G2,
-          CONFIG_LED_MATRIX_HUB75_B2,
-          CONFIG_LED_MATRIX_HUB75_ADDRA,
-          CONFIG_LED_MATRIX_HUB75_ADDRB,
-          CONFIG_LED_MATRIX_HUB75_ADDRC,
-          CONFIG_LED_MATRIX_HUB75_ADDRD,
-          CONFIG_LED_MATRIX_HUB75_ADDRE,
-          CONFIG_LED_MATRIX_HUB75_LAT,
-          CONFIG_LED_MATRIX_HUB75_OE,
-          CONFIG_LED_MATRIX_HUB75_CLK},
     mxconfig.driver = static_cast<HUB75_I2S_CFG::shift_driver>(HUB75_I2S_CFG::shift_driver::SHIFTREG);
     mxconfig.line_decoder = static_cast<HUB75_I2S_CFG::line_driver>(HUB75_I2S_CFG::line_driver::TYPE138);
     mxconfig.double_buff = false;

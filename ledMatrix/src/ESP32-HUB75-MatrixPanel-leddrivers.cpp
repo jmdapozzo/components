@@ -44,7 +44,6 @@ void MatrixPanel_I2S_DMA::shiftDriver(const HUB75_I2S_CFG& _cfg){
     }
 }
 
-
 void MatrixPanel_I2S_DMA::fm6124init(const HUB75_I2S_CFG& _cfg) {
 
     ESP_LOGI("LEDdrivers", "MatrixPanel_I2S_DMA - initializing FM6124 driver...");

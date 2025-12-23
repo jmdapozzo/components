@@ -1,16 +1,13 @@
-#ifndef _ESP32_RGB_64_32_MATRIX_PANEL_I2S_DMA
-#define _ESP32_RGB_64_32_MATRIX_PANEL_I2S_DMA
-/***************************************************************************************/
-/* Core ESP32 hardware / idf includes!                                                 */
+
+#pragma once
+
 #include <vector>
 #include <memory>
 #include <esp_err.h>
 #include <esp_log.h>
 #include "esp_attr.h"
 #include "esp_heap_caps.h"
-
 #include "gdma_lcd_parallel16.hpp"
-#include "esp32s3-default-pins.hpp"
 
 #if defined(SPIRAM_FRAMEBUFFER)
   #pragma message "Use SPIRAM_DMA_BUFFER instead."
@@ -24,29 +21,6 @@
  * COMPILE-TIME OPTIONS                                                                     *
  *******************************************************************************************/
 // #define NO_CIE1931
-
-/* Physical / Chained HUB75(s) RGB pixel WIDTH and HEIGHT.
- *
- * This library has been tested with a 64x32 and 64x64 RGB panels.
- * If you want to chain two or more of these horizontally to make a 128x32 panel
- * you can do so with the cable and then set the CHAIN_LENGTH to '2'.
- *
- * Also, if you use a 64x64 panel, then set the MATRIX_HEIGHT to '64' and an E_PIN; it will work!
- *
- * All of this is memory permitting of course (dependant on your sketch etc.) ...
- *
- */
-#ifndef MATRIX_WIDTH
-#define MATRIX_WIDTH 64 // Single panel of 64 pixel width
-#endif
-
-#ifndef MATRIX_HEIGHT
-#define MATRIX_HEIGHT 32 // CHANGE THIS VALUE to 64 IF USING 64px HIGH panel(s) with E PIN
-#endif
-
-#ifndef CHAIN_LENGTH
-#define CHAIN_LENGTH 1 // Number of modules chained together, i.e. 4 panels chained result in virtualmatrix 64x4=256 px long
-#endif
 
 // Interesting Fact: We end up using a uint16_t to send data in parallel to the HUB75... but
 //                   given we only map to 14 physical output wires/bits, we waste 2 bits.
@@ -312,13 +286,24 @@ struct HUB75_I2S_CFG
 
   // struct constructor
   HUB75_I2S_CFG(
-      uint16_t _w = MATRIX_WIDTH,
-      uint16_t _h = MATRIX_HEIGHT,
-      uint16_t _chain = CHAIN_LENGTH,
+      uint16_t _w = CONFIG_LED_MATRIX_PIXEL_WIDTH,
+      uint16_t _h = CONFIG_LED_MATRIX_PIXEL_HEIGHT,
+      uint16_t _chain = CONFIG_LED_MATRIX_MODULE_WIDTH * CONFIG_LED_MATRIX_MODULE_HEIGHT,
       i2s_pins _pinmap = {
-          R1_PIN_DEFAULT, G1_PIN_DEFAULT, B1_PIN_DEFAULT, R2_PIN_DEFAULT, G2_PIN_DEFAULT, B2_PIN_DEFAULT,
-          A_PIN_DEFAULT, B_PIN_DEFAULT, C_PIN_DEFAULT, D_PIN_DEFAULT, E_PIN_DEFAULT,
-          LAT_PIN_DEFAULT, OE_PIN_DEFAULT, CLK_PIN_DEFAULT},
+          CONFIG_LED_MATRIX_HUB75_R1,
+          CONFIG_LED_MATRIX_HUB75_G1,
+          CONFIG_LED_MATRIX_HUB75_B1,
+          CONFIG_LED_MATRIX_HUB75_R2,
+          CONFIG_LED_MATRIX_HUB75_G2,
+          CONFIG_LED_MATRIX_HUB75_B2,
+          CONFIG_LED_MATRIX_HUB75_ADDRA,
+          CONFIG_LED_MATRIX_HUB75_ADDRB,
+          CONFIG_LED_MATRIX_HUB75_ADDRC,
+          CONFIG_LED_MATRIX_HUB75_ADDRD,
+          CONFIG_LED_MATRIX_HUB75_ADDRE,
+          CONFIG_LED_MATRIX_HUB75_LAT,
+          CONFIG_LED_MATRIX_HUB75_OE,
+          CONFIG_LED_MATRIX_HUB75_CLK},
       shift_driver _drv = SHIFTREG, 
       line_driver _line_drv = TYPE138,
       bool _dbuff = false, 
@@ -403,21 +388,6 @@ public:
     if (!config_set)
       return false;
 
-    ESP_LOGI("begin()", "Using GPIO %d for R1_PIN", m_cfg.gpio.r1);
-    ESP_LOGI("begin()", "Using GPIO %d for G1_PIN", m_cfg.gpio.g1);
-    ESP_LOGI("begin()", "Using GPIO %d for B1_PIN", m_cfg.gpio.b1);
-    ESP_LOGI("begin()", "Using GPIO %d for R2_PIN", m_cfg.gpio.r2);
-    ESP_LOGI("begin()", "Using GPIO %d for G2_PIN", m_cfg.gpio.g2);
-    ESP_LOGI("begin()", "Using GPIO %d for B2_PIN", m_cfg.gpio.b2);
-    ESP_LOGI("begin()", "Using GPIO %d for A_PIN", m_cfg.gpio.a);
-    ESP_LOGI("begin()", "Using GPIO %d for B_PIN", m_cfg.gpio.b);
-    ESP_LOGI("begin()", "Using GPIO %d for C_PIN", m_cfg.gpio.c);
-    ESP_LOGI("begin()", "Using GPIO %d for D_PIN", m_cfg.gpio.d);
-    ESP_LOGI("begin()", "Using GPIO %d for E_PIN", m_cfg.gpio.e);
-    ESP_LOGI("begin()", "Using GPIO %d for LAT_PIN", m_cfg.gpio.lat);
-    ESP_LOGI("begin()", "Using GPIO %d for OE_PIN", m_cfg.gpio.oe);
-    ESP_LOGI("begin()", "Using GPIO %d for CLK_PIN", m_cfg.gpio.clk);
-
     // initialize some specific panel drivers
     if (m_cfg.driver)
       shiftDriver(m_cfg);
@@ -427,10 +397,10 @@ public:
     m_cfg.i2sspeed = HUB75_I2S_CFG::HZ_8M;
 #endif
 	
-    ESP_LOGI("begin()", "HUB75 effective display resolution of width: %dpx height: %dpx.", m_cfg.mx_width * m_cfg.chain_length, m_cfg.mx_height);
+    ESP_LOGI("HUB75-DMA", "HUB75 effective display resolution of width: %dpx height: %dpx.", m_cfg.mx_width * m_cfg.chain_length, m_cfg.mx_height);
 	
 	if (m_cfg.mx_height % 2 != 0) {
-		ESP_LOGE("begin()", "Error: m_cfg.mx_height must be an even number!");
+		ESP_LOGE("HUB75-DMA", "Error: m_cfg.mx_height must be an even number!");
 		return false;
 	}
 
@@ -473,7 +443,6 @@ public:
   /*
    *  overload for compatibility
    */
-  bool begin(int r1, int g1 = G1_PIN_DEFAULT, int b1 = B1_PIN_DEFAULT, int r2 = R2_PIN_DEFAULT, int g2 = G2_PIN_DEFAULT, int b2 = B2_PIN_DEFAULT, int a = A_PIN_DEFAULT, int b = B_PIN_DEFAULT, int c = C_PIN_DEFAULT, int d = D_PIN_DEFAULT, int e = E_PIN_DEFAULT, int lat = LAT_PIN_DEFAULT, int oe = OE_PIN_DEFAULT, int clk = CLK_PIN_DEFAULT);
   bool begin(const HUB75_I2S_CFG &cfg);
 
   // Basic draw API (565 colour format)
@@ -781,8 +750,6 @@ inline uint16_t MatrixPanel_I2S_DMA::color565(uint8_t r, uint8_t g, uint8_t b)
 {
   return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
 }
-
-#endif
 
 // Credits: Louis Beaudoin <https://github.com/pixelmatix/SmartMatrix/tree/teensylc>
 // and Sprite_TM:           https://www.esp32.com/viewtopic.php?f=17&t=3188 and https://www.esp32.com/viewtopic.php?f=13&t=3256
