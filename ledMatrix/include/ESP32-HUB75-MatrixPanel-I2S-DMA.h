@@ -9,10 +9,6 @@
 #include "esp_heap_caps.h"
 #include "gdma_lcd_parallel16.hpp"
 
-#if defined(SPIRAM_FRAMEBUFFER)
-  #pragma message "Use SPIRAM_DMA_BUFFER instead."
-#endif
-
 #if defined(SPIRAM_DMA_BUFFER)
   #pragma message "Enabling use of PSRAM/SPIRAM based DMA Buffer"
 #endif
@@ -151,7 +147,6 @@ struct rowBitStruct
   rowBitStruct(const size_t _width, const uint8_t _depth) : width(_width), colour_depth(_depth)
   {
 
-    // #if defined(SPIRAM_FRAMEBUFFER) && defined (CONFIG_IDF_TARGET_ESP32S3)
 #if defined(SPIRAM_DMA_BUFFER)
 
     // data = (ESP32_I2S_DMA_STORAGE_TYPE *)heap_caps_aligned_alloc(64, size()+size()*double_buff, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);

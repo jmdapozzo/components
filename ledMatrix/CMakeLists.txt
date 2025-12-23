@@ -10,5 +10,4 @@ idf_component_register(
     "include"
 )
 
-# target_compile_options(${COMPONENT_TARGET} PUBLIC -DNO_GFX -DNO_FAST_FUNCTIONS -DSPIRAM_DMA_BUFFER)
-target_compile_options(${COMPONENT_TARGET} PUBLIC -DNO_GFX -DNO_FAST_FUNCTIONS)
+target_compile_options(${COMPONENT_TARGET} PUBLIC -DSPIRAM_DMA_BUFFER)
