@@ -79,7 +79,7 @@ menu "MacDap Led Panel"
 	if LED_PANEL_MATRIX_DISPLAY_TYPE
 		choice LED_PANEL_MATRIX
 			prompt "Matrix Module Format"
-			default LED_PANEL_MATRIX_M6_16X8
+			default LED_PANEL_MATRIX_M4_24X8
 			help
 				Select LED Panel Matrix
 			config LED_PANEL_MATRIX_M12_6X8
