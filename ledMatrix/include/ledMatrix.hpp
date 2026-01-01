@@ -22,6 +22,7 @@ namespace macdap
             return instance;
         }
         lv_display_t *get_lv_display();
-        void set_brightness(float brightness);
+        void set_brightness(uint8_t brightness);
+        void set_intensity(float intensity);
     };
 }

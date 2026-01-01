@@ -40,11 +40,15 @@ extern "C" void app_main(void)
 {
     ESP_LOGI(TAG, "LED Matrix Test Program");
 
+    ESP_LOGI(TAG, "SPI RAM size: %d bytes", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+
     macdap::Graphics &graphics = macdap::Graphics::get_instance();
 
     macdap::LedMatrix &ledMatrix = macdap::LedMatrix::get_instance();
     lv_display_t *lv_display = ledMatrix.get_lv_display();
     graphics.init(lv_display);
+
+    ESP_LOGI(TAG, "SPI RAM size: %d bytes", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
 
     int32_t width = lv_display_get_horizontal_resolution(lv_display);
     int32_t height = lv_display_get_vertical_resolution(lv_display);
@@ -89,8 +93,7 @@ extern "C" void app_main(void)
 
     graphics.background(lv_display, lv_color_black());
 
-    float brightness = 25.0;
-    ledMatrix.set_brightness(brightness);
+    ledMatrix.set_intensity(1.0);
 
 #ifdef CONFIG_DISPLAY_LOGO
     graphics.logo(lv_display, &colorLogoNoText64x64);

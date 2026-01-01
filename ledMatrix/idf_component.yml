@@ -5,3 +5,4 @@ url: https://github.com/jmdapozzo/components/tree/main/ledMatrix
 dependencies:
   lvgl/lvgl: "^9"
   esp_lvgl_port: "^2"
+  esphome/esp-hub75: ^0.1.7
