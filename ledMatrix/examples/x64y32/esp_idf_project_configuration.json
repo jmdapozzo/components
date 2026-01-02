@@ -1,0 +1,56 @@
+{
+  "flexcore_new": {
+    "build": {
+      "compileArgs": [],
+      "ninjaArgs": [],
+      "buildDirectoryPath": "${workspaceFolder}/build_flexcore_new",
+      "sdkconfigDefaults": [
+        "${workspaceFolder}/sdkconfig.common",
+        "${workspaceFolder}/sdkconfig.flexcore_new"
+      ],
+      "sdkconfigFilePath": ""
+    },
+    "env": {},
+    "idfTarget": "esp32s3",
+    "flashBaudRate": "",
+    "monitorBaudRate": "",
+    "openOCD": {
+      "debugLevel": -1,
+      "configs": [],
+      "args": []
+    },
+    "tasks": {
+      "preBuild": "",
+      "preFlash": "",
+      "postBuild": "",
+      "postFlash": ""
+    }
+  },
+  "flexcore_old": {
+    "build": {
+      "compileArgs": [],
+      "ninjaArgs": [],
+      "buildDirectoryPath": "${workspaceFolder}/build_flexcore_old",
+      "sdkconfigDefaults": [
+        "${workspaceFolder}/sdkconfig.common",
+        "${workspaceFolder}/sdkconfig.flexcore_old"
+      ],
+      "sdkconfigFilePath": ""
+    },
+    "env": {},
+    "idfTarget": "esp32s3",
+    "flashBaudRate": "",
+    "monitorBaudRate": "",
+    "openOCD": {
+      "debugLevel": -1,
+      "configs": [],
+      "args": []
+    },
+    "tasks": {
+      "preBuild": "",
+      "preFlash": "",
+      "postBuild": "",
+      "postFlash": ""
+    }
+  }
+}

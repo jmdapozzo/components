@@ -2,17 +2,16 @@
 
 .DS_STORE
 
-build
-
 managed_components
 dependencies.lock
-sdkconfig*
-!sdkconfig.common
-!sdkconfig.default
+
+sdkconfig
+sdkconfig.old
 
 !*.code-workspace
 
 .clangd
 
-build_log_*.txt
-build_report.*
+build*
+!build_all_examples.py
+!build_all_examples.sh
