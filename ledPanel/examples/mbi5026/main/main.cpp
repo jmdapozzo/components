@@ -54,12 +54,12 @@ extern "C" void app_main(void)
     vTaskDelay(pdMS_TO_TICKS(3000));
     graphics.clear(lv_display);
 
-    graphics.message(lv_display, "mbi5026", &_style_greeting_top);
-    graphics.message(lv_display, "0.0.0", &_style_greeting_bottom);
+    lv_obj_t *message = graphics.create_message(lv_display, "mbi5026", &_style_greeting_top);
+    graphics.update_message(message, "0.0.0");
     vTaskDelay(pdMS_TO_TICKS(3000));
     graphics.clear(lv_display);
 
-    graphics.message(lv_display, "MacDap", &_style_main_message);
+    graphics.create_message(lv_display, "MacDap", &_style_main_message);
     vTaskDelay(pdMS_TO_TICKS(3000));
     graphics.clear(lv_display);
 
@@ -67,7 +67,7 @@ extern "C" void app_main(void)
     vTaskDelay(pdMS_TO_TICKS(3000));
     graphics.clear(lv_display);
 
-    graphics.message(lv_display, "Test program, Version 0.0.0 from MacDap Inc.", &_style_main_message);
+    graphics.create_message(lv_display, "Test program, Version 0.0.0 from MacDap Inc.", &_style_main_message);
     while (true)
     {
         vTaskDelay(pdMS_TO_TICKS(1000));
