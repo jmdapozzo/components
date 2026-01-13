@@ -13,9 +13,6 @@ using namespace macdap;
 
 #define LCD_PIXEL_CLOCK_HZ    (400 * 1000)
 
-#define DISP_WIDTH              128
-#define DISP_HEIGHT             CONFIG_DISPLAY_HEIGHT
-
 #define LCD_CMD_BITS           8
 #define LCD_PARAM_BITS         8
 
@@ -27,14 +24,14 @@ Display::Display()
 
     i2c_master_bus_handle_t i2c_master_bus_handle;
     ESP_ERROR_CHECK(i2c_master_get_bus_handle(0, &i2c_master_bus_handle));
-    if (i2c_master_probe(i2c_master_bus_handle, CONFIG_I2C_LCD_CONTROLLER_ADDR, 100) != ESP_OK)
+    if (i2c_master_probe(i2c_master_bus_handle, CONFIG_OLED_DISPLAY_I2C_CONTROLLER_ADDR, 100) != ESP_OK)
     {
         ESP_LOGW(TAG, "I2C device not found");
         return;
     }
 
     esp_lcd_panel_io_i2c_config_t i2c_config;
-    i2c_config.dev_addr = CONFIG_I2C_LCD_CONTROLLER_ADDR;
+    i2c_config.dev_addr = CONFIG_OLED_DISPLAY_I2C_CONTROLLER_ADDR;
     i2c_config.scl_speed_hz = LCD_PIXEL_CLOCK_HZ;
     i2c_config.control_phase_bytes = 1;               // According to SSD1306 datasheet
     i2c_config.lcd_cmd_bits = LCD_CMD_BITS;           // According to SSD1306 datasheet
@@ -46,11 +43,11 @@ Display::Display()
 
     esp_lcd_panel_dev_config_t dev_config;
     dev_config.bits_per_pixel = 1;
-    dev_config.reset_gpio_num = CONFIG_GPIO_RESET;
+    dev_config.reset_gpio_num = CONFIG_OLED_DISPLAY_GPIO_RESET;
 
     ESP_LOGI(TAG, "Install SSD1306 panel driver");
     esp_lcd_panel_ssd1306_config_t ssd1306_config;
-    ssd1306_config.height = DISP_HEIGHT;
+    ssd1306_config.height = CONFIG_OLED_DISPLAY_HEIGHT;
 
     esp_lcd_panel_handle_t panel_handle = NULL;
 
@@ -65,11 +62,11 @@ Display::Display()
         .io_handle = io_handle,
         .panel_handle = panel_handle,
         .control_handle = nullptr,
-        .buffer_size = DISP_WIDTH * DISP_HEIGHT,
+        .buffer_size = CONFIG_OLED_DISPLAY_WIDTH * CONFIG_OLED_DISPLAY_HEIGHT,
         .double_buffer = true,
         .trans_size = 0,
-        .hres = DISP_WIDTH,
-        .vres = DISP_HEIGHT,
+        .hres = CONFIG_OLED_DISPLAY_WIDTH,
+        .vres = CONFIG_OLED_DISPLAY_HEIGHT,
         .monochrome = true,
         .rotation = {
             .swap_xy = false,
@@ -80,7 +77,7 @@ Display::Display()
         .flags = {}
     };
 
-    ESP_LOGI(TAG, "Display resolution: %d x %d", DISP_WIDTH, DISP_HEIGHT);
+    ESP_LOGI(TAG, "Display resolution: %d x %d", CONFIG_OLED_DISPLAY_WIDTH, CONFIG_OLED_DISPLAY_HEIGHT);
 
     m_lv_display = lvgl_port_add_disp(&port_display_cfg); // Warning "Callback on_color_trans_done was already set and now it was overwritten!" comes from this call.
 }

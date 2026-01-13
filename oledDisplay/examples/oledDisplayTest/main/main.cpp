@@ -5,7 +5,7 @@
 #include <esp_log.h>
 #include <logos.h>
 
-static const char *TAG = "displayTest";
+static const char *TAG = "oledDisplayTest";
 
 static lv_anim_t _animation;
 static lv_style_t _style_base;
@@ -17,7 +17,7 @@ static lv_style_t _style_main_message_bottom;
 
 extern "C" void app_main(void)
 {
-    ESP_LOGI(TAG, "LED Matrix Test Program");
+    ESP_LOGI(TAG, "OLED Display Test Program");
 
     i2c_master_bus_config_t i2c_master_bus_config = {
         .i2c_port = I2C_NUM_0,
