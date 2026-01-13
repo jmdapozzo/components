@@ -45,6 +45,6 @@ namespace macdap
         void set_buffer(uint16_t index, uint8_t data);
         void send_buffer(void *buffer, size_t buffer_size);
         void send_buffer();
-        void set_brightness(float brightness);
+        void set_intensity(float intensity);
     };
 }

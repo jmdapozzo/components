@@ -47,8 +47,8 @@ extern "C" void app_main(void)
 
     graphics.background(lv_display, lv_color_black());
 
-    float brightness = 1.0;
-    ledPanel.set_brightness(brightness);
+    float intensity = 0.01f;
+    ledPanel.set_intensity(intensity);
 
     graphics.logo(lv_display, &colorLogoNoText16x16);
     vTaskDelay(pdMS_TO_TICKS(3000));

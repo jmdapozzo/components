@@ -417,24 +417,24 @@ void LedPanel::send_buffer()
 #endif
 }
 
-void LedPanel::set_brightness(float brightness)
+void LedPanel::set_intensity(float intensity)
 {
-    if (brightness > 100.0)
+    if (intensity > 1.0)
     {
-        brightness = 100.0;
+        intensity = 1.0;
     }
-    if (brightness < 0.0)
+    if (intensity < 0.0)
     {
-        brightness = 0.0;
+        intensity = 0.0;
     }
 
 #ifdef CONFIG_LED_PANEL_TYPE_MBI5026
-    uint32_t duty_cycle = ((brightness / 100.0) * (1 << CONFIG_LED_PANEL_LEDC_DUTY_RES));
+    uint32_t duty_cycle = (intensity * (1 << CONFIG_LED_PANEL_LEDC_DUTY_RES));
     ESP_ERROR_CHECK(ledc_set_duty(static_cast<ledc_mode_t>(CONFIG_LED_PANEL_LEDC_MODE), static_cast<ledc_channel_t>(CONFIG_LED_PANEL_LEDC_CHANNEL), duty_cycle));
     ESP_ERROR_CHECK(ledc_update_duty(static_cast<ledc_mode_t>(CONFIG_LED_PANEL_LEDC_MODE), static_cast<ledc_channel_t>(CONFIG_LED_PANEL_LEDC_CHANNEL)));
 #elif CONFIG_LED_PANEL_TYPE_MAX7219
     xSemaphoreTake(_panel_buffer_mutex, portMAX_DELAY);
-    uint8_t duty_cycle = static_cast<uint8_t>(roundf((brightness / 100.0f) * MAX_INTENSITY));
+    uint8_t duty_cycle = static_cast<uint8_t>(roundf(intensity * MAX_INTENSITY));
     for (int chip = 0; chip < m_max_7219_buffer_len; chip++)
     {
         m_max_7219_buffer[chip].command = REG_INTENSITY;
