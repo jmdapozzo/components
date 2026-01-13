@@ -257,7 +257,13 @@ LedMatrix::LedMatrix()
 
     #define BYTES_PER_PIXEL (LV_COLOR_FORMAT_GET_SIZE(LV_COLOR_FORMAT_RGB565))
     size_t lv_buffer_size = horizontal_resolution * vertical_resolution * BYTES_PER_PIXEL;
+#if defined(CONFIG_SPIRAM)
+    ESP_LOGI(TAG, "Allocating lvBuffer in SPIRAM: %zu bytes", lv_buffer_size);
+    uint8_t *lv_buffer = static_cast<uint8_t*>(heap_caps_malloc(lv_buffer_size, MALLOC_CAP_SPIRAM));
+#else
+    ESP_LOGI(TAG, "Allocating lvBuffer in internal RAM: %zu bytes", lv_buffer_size);
     uint8_t *lv_buffer = static_cast<uint8_t*>(heap_caps_malloc(lv_buffer_size, MALLOC_CAP_DEFAULT));
+#endif
     if (lv_buffer == nullptr)
     {
         ESP_LOGE(TAG, "Failed to allocate lvBuffer on the heap!");
