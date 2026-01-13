@@ -1,5 +1,5 @@
 dependencies:
-  jmdapozzo/display:
+  jmdapozzo/oledDisplay:
     override_path: "../../../"
   jmdapozzo/graphics:
     override_path: "../../../../graphics"
