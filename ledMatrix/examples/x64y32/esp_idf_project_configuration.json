@@ -1,12 +1,12 @@
 {
-  "flexcore_new": {
+  "flexcore_64x64_2x4": {
     "build": {
       "compileArgs": [],
       "ninjaArgs": [],
-      "buildDirectoryPath": "${workspaceFolder}/build_flexcore_new",
+      "buildDirectoryPath": "${workspaceFolder}/build_flexcore_64x64_2x4",
       "sdkconfigDefaults": [
         "${workspaceFolder}/sdkconfig.common",
-        "${workspaceFolder}/sdkconfig.flexcore_new"
+        "${workspaceFolder}/sdkconfig.flexcore_64x64_2x4"
       ],
       "sdkconfigFilePath": ""
     },
@@ -26,14 +26,14 @@
       "postFlash": ""
     }
   },
-  "flexcore_old": {
+  "flexcore_64x32_1x2": {
     "build": {
       "compileArgs": [],
       "ninjaArgs": [],
-      "buildDirectoryPath": "${workspaceFolder}/build_flexcore_old",
+      "buildDirectoryPath": "${workspaceFolder}/build_flexcore_64x32_1x2",
       "sdkconfigDefaults": [
         "${workspaceFolder}/sdkconfig.common",
-        "${workspaceFolder}/sdkconfig.flexcore_old"
+        "${workspaceFolder}/sdkconfig.flexcore_64x32_1x2"
       ],
       "sdkconfigFilePath": ""
     },
