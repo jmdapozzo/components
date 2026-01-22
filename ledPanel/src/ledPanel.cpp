@@ -179,7 +179,13 @@ LedPanel::LedPanel()
     ESP_LOGI(TAG, "Display resolution: %ld x %ld", horizontal_resolution, vertical_resolution);
 
     m_panel_buffer_size = (vertical_resolution / PIXEL_PER_BYTE) * horizontal_resolution * sizeof(uint8_t);
+#if defined(CONFIG_SPIRAM)
+    ESP_LOGI(TAG, "Allocating m_panel_buffer in SPIRAM: %zu bytes", m_panel_buffer_size);
+    m_panel_buffer = static_cast<uint8_t*>(heap_caps_malloc(m_panel_buffer_size, MALLOC_CAP_SPIRAM));
+#else
+    ESP_LOGI(TAG, "Allocating m_panel_buffer in internal RAM: %zu bytes", m_panel_buffer_size);
     m_panel_buffer = static_cast<uint8_t*>(heap_caps_malloc(m_panel_buffer_size, MALLOC_CAP_DMA));
+#endif
     if (m_panel_buffer == nullptr)
     {
         ESP_LOGE(TAG, "Failed to allocate m_panel_buffer on the heap!");
@@ -187,8 +193,13 @@ LedPanel::LedPanel()
     }
 
     size_t lv_buffer_size = horizontal_resolution * vertical_resolution * BYTES_PER_PIXEL;
-    ESP_LOGI(TAG, "Allocating lv_buffer of size %zu", lv_buffer_size);
+#if defined(CONFIG_SPIRAM)
+    ESP_LOGI(TAG, "Allocating lvBuffer in SPIRAM: %zu bytes", lv_buffer_size);
+    uint8_t *lv_buffer = static_cast<uint8_t*>(heap_caps_malloc(lv_buffer_size, MALLOC_CAP_SPIRAM));
+#else
+    ESP_LOGI(TAG, "Allocating lvBuffer in internal RAM: %zu bytes", lv_buffer_size);
     uint8_t *lv_buffer = static_cast<uint8_t*>(heap_caps_malloc(lv_buffer_size, MALLOC_CAP_DEFAULT));
+#endif
     if (lv_buffer == nullptr)
     {
         ESP_LOGE(TAG, "Failed to allocate lv_buffer on the heap!");
