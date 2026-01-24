@@ -1,0 +1,6 @@
+version: "0.0.1"
+license: "MIT"
+description: "PCF8574 8-Bit I/O Expander component for MacDap's projects"
+url: https://github.com/jmdapozzo/components/tree/main/ioExpander
+dependencies:
+  idf: ">=5.0"

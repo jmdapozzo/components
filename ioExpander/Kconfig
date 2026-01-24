@@ -1,0 +1,58 @@
+menu "MacDap I/O Expander Configuration"
+
+    choice IO_EXPANDER_MODEL
+        prompt "I/O Expander model"
+        default IO_EXPANDER_PCF8574
+        help
+            Select I/O Expander model
+
+        config IO_EXPANDER_PCF8574
+            bool "PCF8574/PCF8574A"
+    endchoice
+
+    config I2C_IO_EXPANDER_ADDR
+        hex "I2C I/O Expander Address"
+        range 0 0x7f
+        default 0x20
+        help
+            I2C address of the PCF8574 I/O Expander.
+            PCF8574: 0x20-0x27 (depending on A0-A2 pins)
+            PCF8574A: 0x38-0x3F (depending on A0-A2 pins)
+            Default is 0x20.
+
+    config I2C_PORT_NUM
+        int "I2C Port Number"
+        range 0 1
+        default 0
+        help
+            I2C port number to use for I/O Expander communication. Default is 0.
+
+    config IO_EXPANDER_ENABLE_INTERRUPT
+        bool "Enable interrupt support"
+        default y
+        help
+            Enable interrupt support for pin change detection.
+            The PCF8574 INT pin should be connected to the ESP32 GPIO
+            specified below.
+
+    config IO_EXPANDER_INTERRUPT_GPIO
+        int "Interrupt GPIO pin"
+        depends on IO_EXPANDER_ENABLE_INTERRUPT
+        range -1 48
+        default 5
+        help
+            GPIO pin connected to the PCF8574 INT pin.
+            The INT pin goes low when any input pin changes state.
+            Set to -1 to disable interrupt support.
+
+    config IO_EXPANDER_DEBOUNCE_MS
+        int "Debounce time in milliseconds"
+        depends on IO_EXPANDER_ENABLE_INTERRUPT
+        range 1 1000
+        default 50
+        help
+            Debounce time in milliseconds for interrupt detection.
+            This prevents multiple interrupts from mechanical switch bounce.
+            Typical values: 10-100ms for buttons, 1-10ms for digital signals.
+
+endmenu

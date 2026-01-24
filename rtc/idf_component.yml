@@ -1,0 +1,6 @@
+version: "0.0.1"
+license: "MIT"
+description: "MCP7940 Real-Time Clock (RTC) component for MacDap's projects"
+url: https://github.com/jmdapozzo/components/tree/main/rtc
+dependencies:
+  idf: ">=5.0"

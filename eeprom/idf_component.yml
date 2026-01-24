@@ -1,0 +1,6 @@
+version: "0.0.1"
+license: "MIT"
+description: "24LC08B EEPROM component for MacDap's projects"
+url: https://github.com/jmdapozzo/components/tree/main/eeprom
+dependencies:
+  idf: ">=5.0"

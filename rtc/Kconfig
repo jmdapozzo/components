@@ -1,0 +1,50 @@
+menu "MacDap RTC Configuration"
+
+    choice RTC_MODEL
+        prompt "RTC model"
+        default RTC_MCP7940
+        help
+            Select RTC model
+
+        config RTC_MCP7940
+            bool "MCP7940"
+    endchoice
+
+    config I2C_RTC_ADDR
+        hex "I2C RTC Address"
+        range 0 0x7f
+        default 0x6F
+        help
+            I2C address of the MCP7940 RTC. Default is 0x6F.
+
+    config I2C_PORT_NUM
+        int "I2C Port Number"
+        range 0 1
+        default 0
+        help
+            I2C port number to use for RTC communication. Default is 0.
+
+    config RTC_AUTO_SYNC_TO_SYSTEM
+        bool "Automatically sync system time from RTC on boot"
+        default y
+        help
+            If enabled, the system time will be synchronized from the RTC
+            during initialization. This is useful to maintain time across
+            reboots when network is not available.
+
+    config RTC_AUTO_SYNC_FROM_NTP
+        bool "Automatically sync RTC from system time after NTP sync"
+        default y
+        help
+            If enabled, the RTC will be synchronized from the system time
+            whenever NTP synchronization completes successfully. This keeps
+            the RTC accurate when network is available.
+
+    config RTC_ENABLE_BATTERY_BACKUP
+        bool "Enable battery backup by default"
+        default y
+        help
+            If enabled, battery backup will be enabled during initialization.
+            This allows the RTC to maintain time when main power is lost.
+
+endmenu
