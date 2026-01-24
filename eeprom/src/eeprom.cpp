@@ -17,7 +17,7 @@ EEPROM::EEPROM()
     ESP_LOGI(TAG, "Initializing 24LC08B EEPROM...");
 
     m_is_present = false;
-    m_base_address = CONFIG_I2C_EEPROM_BASE_ADDR;
+    m_base_address = CONFIG_EEPROM_I2C_BASE_ADDR;
 
     // Initialize device handles to NULL
     for (int i = 0; i < EEPROM_NUM_BLOCKS; i++) {
@@ -26,7 +26,7 @@ EEPROM::EEPROM()
 
     // Get I2C master bus handle
     i2c_master_bus_handle_t i2c_master_bus_handle;
-    ESP_ERROR_CHECK(i2c_master_get_bus_handle(CONFIG_I2C_PORT_NUM, &i2c_master_bus_handle));
+    ESP_ERROR_CHECK(i2c_master_get_bus_handle(CONFIG_EEPROM_I2C_PORT_NUM, &i2c_master_bus_handle));
 
     // Probe for the EEPROM at base address
     if (i2c_master_probe(i2c_master_bus_handle, m_base_address, 100) != ESP_OK)

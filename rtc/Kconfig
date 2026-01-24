@@ -10,15 +10,15 @@ menu "MacDap RTC Configuration"
             bool "MCP7940"
     endchoice
 
-    config I2C_RTC_ADDR
+    config RTC_I2C_ADDR
         hex "I2C RTC Address"
         range 0 0x7f
         default 0x6F
         help
             I2C address of the MCP7940 RTC. Default is 0x6F.
 
-    config I2C_PORT_NUM
-        int "I2C Port Number"
+    config RTC_I2C_PORT_NUM
+        int "I2C RTC Port Number"
         range 0 1
         default 0
         help

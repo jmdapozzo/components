@@ -10,7 +10,7 @@ menu "MacDap I/O Expander Configuration"
             bool "PCF8574/PCF8574A"
     endchoice
 
-    config I2C_IO_EXPANDER_ADDR
+    config IO_EXPANDER_I2C_ADDR
         hex "I2C I/O Expander Address"
         range 0 0x7f
         default 0x20
@@ -20,8 +20,8 @@ menu "MacDap I/O Expander Configuration"
             PCF8574A: 0x38-0x3F (depending on A0-A2 pins)
             Default is 0x20.
 
-    config I2C_PORT_NUM
-        int "I2C Port Number"
+    config IO_EXPANDER_I2C_PORT_NUM
+        int "I2C I/O Expander Port Number"
         range 0 1
         default 0
         help

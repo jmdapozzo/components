@@ -10,7 +10,7 @@ menu "MacDap EEPROM Configuration"
             bool "24LC08B (1KB / 8Kbit)"
     endchoice
 
-    config I2C_EEPROM_BASE_ADDR
+    config EEPROM_I2C_BASE_ADDR
         hex "I2C EEPROM Base Address"
         range 0 0x7f
         default 0x50
@@ -19,8 +19,8 @@ menu "MacDap EEPROM Configuration"
             The 24LC08B uses 4 consecutive addresses (0x50-0x53) for its 4 blocks.
             Default is 0x50.
 
-    config I2C_PORT_NUM
-        int "I2C Port Number"
+    config EEPROM_I2C_PORT_NUM
+        int "I2C EEPROM Port Number"
         range 0 1
         default 0
         help

@@ -34,16 +34,16 @@ IOExpander::IOExpander()
 
     // Get I2C master bus handle
     i2c_master_bus_handle_t i2c_master_bus_handle;
-    ESP_ERROR_CHECK(i2c_master_get_bus_handle(CONFIG_I2C_PORT_NUM, &i2c_master_bus_handle));
+    ESP_ERROR_CHECK(i2c_master_get_bus_handle(CONFIG_IO_EXPANDER_I2C_PORT_NUM, &i2c_master_bus_handle));
 
     // Probe for the I/O Expander device
-    if (i2c_master_probe(i2c_master_bus_handle, CONFIG_I2C_IO_EXPANDER_ADDR, 100) != ESP_OK)
+    if (i2c_master_probe(i2c_master_bus_handle, CONFIG_IO_EXPANDER_I2C_ADDR, 100) != ESP_OK)
     {
-        ESP_LOGW(TAG, "PCF8574 not found at address 0x%02X", CONFIG_I2C_IO_EXPANDER_ADDR);
+        ESP_LOGW(TAG, "PCF8574 not found at address 0x%02X", CONFIG_IO_EXPANDER_I2C_ADDR);
         return;
     }
 
-    ESP_LOGI(TAG, "Found PCF8574 at address 0x%02X", CONFIG_I2C_IO_EXPANDER_ADDR);
+    ESP_LOGI(TAG, "Found PCF8574 at address 0x%02X", CONFIG_IO_EXPANDER_I2C_ADDR);
     m_is_present = true;
 
     // Create semaphore for thread safety
@@ -60,7 +60,7 @@ IOExpander::IOExpander()
     // Configure I2C device
     i2c_device_config_t i2c_device_config = {
         .dev_addr_length = I2C_ADDR_BIT_LEN_7,
-        .device_address = CONFIG_I2C_IO_EXPANDER_ADDR,
+        .device_address = CONFIG_IO_EXPANDER_I2C_ADDR,
         .scl_speed_hz = 100000,  // 100 kHz
         .scl_wait_us = 0,
         .flags = {}
