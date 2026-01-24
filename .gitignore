@@ -13,5 +13,3 @@ sdkconfig.old
 .clangd
 
 build*
-!build_all_examples.py
-!build_all_examples.sh
