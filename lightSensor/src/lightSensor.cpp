@@ -115,7 +115,6 @@ LightSensor::LightSensor()
 
     xSemaphoreTake(m_semaphore_handle, 0);
 
-    ESP_LOGI(TAG, "Found device at 0x%x", CONFIG_LIGHT_SENSOR_I2C_ADDR);
     i2c_device_config_t i2c_device_config = {
         .dev_addr_length = I2C_ADDR_BIT_LEN_7,
         .device_address = CONFIG_LIGHT_SENSOR_I2C_ADDR,
