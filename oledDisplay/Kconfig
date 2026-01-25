@@ -30,7 +30,7 @@ menu "MacDap Display Configuration"
         default 64 if OLED_DISPLAY_HEIGHT_CHOICE_64
         default 32 if OLED_DISPLAY_HEIGHT_CHOICE_32
 
-    config OLED_DISPLAY_I2C_CONTROLLER_ADDR
+    config OLED_DISPLAY_I2C_ADDR
         hex "I2C LCD Controller Address"
         range 0 0x7f
         default 0x3C

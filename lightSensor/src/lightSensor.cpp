@@ -89,57 +89,62 @@ LightSensor::LightSensor()
 {
     ESP_LOGI(TAG, "Initializing...");
 
+    m_is_present = false;
+    m_event_loop_handle = nullptr;
+    m_periodic_timer = nullptr;
+
     i2c_master_bus_handle_t i2c_master_bus_handle;
     ESP_ERROR_CHECK(i2c_master_get_bus_handle(0, &i2c_master_bus_handle));
-    if (i2c_master_probe(i2c_master_bus_handle, CONFIG_I2C_LIGHT_SENSOR_ADDR, 100) != ESP_OK)
+
+    if (i2c_master_probe(i2c_master_bus_handle, CONFIG_LIGHT_SENSOR_I2C_ADDR, 100) != ESP_OK)
     {
-        ESP_LOGW(TAG, "I2C device not found");
-        m_is_present = false;
+        ESP_LOGW(TAG, "BH1750 not found at address 0x%02X", CONFIG_LIGHT_SENSOR_I2C_ADDR);
         return;
     }
+
+    ESP_LOGI(TAG, "Found BH1750 at address 0x%02X", CONFIG_LIGHT_SENSOR_I2C_ADDR);
     m_is_present = true;
 
     m_semaphore_handle = xSemaphoreCreateMutex();
-
-    if (m_semaphore_handle != nullptr)
+    if (m_semaphore_handle == nullptr)
     {
-        xSemaphoreTake(m_semaphore_handle, 0);
+        ESP_LOGE(TAG, "Failed to create semaphore");
+        m_is_present = false;
+        return;
+    }
 
-        ESP_LOGI(TAG, "Found device at 0x%x", CONFIG_I2C_LIGHT_SENSOR_ADDR);
-        i2c_device_config_t i2c_device_config = {
-            .dev_addr_length = I2C_ADDR_BIT_LEN_7,
-            .device_address = CONFIG_I2C_LIGHT_SENSOR_ADDR,
-            .scl_speed_hz = 100000,
-            .scl_wait_us = 0,
-            .flags = {}
+    xSemaphoreTake(m_semaphore_handle, 0);
+
+    ESP_LOGI(TAG, "Found device at 0x%x", CONFIG_LIGHT_SENSOR_I2C_ADDR);
+    i2c_device_config_t i2c_device_config = {
+        .dev_addr_length = I2C_ADDR_BIT_LEN_7,
+        .device_address = CONFIG_LIGHT_SENSOR_I2C_ADDR,
+        .scl_speed_hz = 100000,
+        .scl_wait_us = 0,
+        .flags = {}
+    };
+
+    ESP_ERROR_CHECK(i2c_master_bus_add_device(i2c_master_bus_handle, &i2c_device_config, &m_i2c_device_handle));
+
+    xSemaphoreGive(m_semaphore_handle);
+
+    ESP_ERROR_CHECK(power_on());
+    ESP_ERROR_CHECK(set_measure_mode(measure_mode_t::ContinuouslyHResolutionMode));
+
+    if (CONFIG_LIGHT_SENSOR_POLLING_INTERVAL_SEC != 0) {
+        ESP_LOGI(TAG, "Light sensor polling interval set to %d Second(s).", CONFIG_LIGHT_SENSOR_POLLING_INTERVAL_SEC);
+        esp_timer_create_args_t timer_args = {
+            .callback = timer_callback,
+            .arg = this,
+            .dispatch_method = ESP_TIMER_TASK,
+            .name = "LightSensorTimer",
+            .skip_unhandled_events = false
         };
 
-        ESP_ERROR_CHECK(i2c_master_bus_add_device(i2c_master_bus_handle, &i2c_device_config, &m_i2c_device_handle));
-
-        xSemaphoreGive(m_semaphore_handle);
-
-        ESP_ERROR_CHECK(power_on());
-        ESP_ERROR_CHECK(set_measure_mode(measure_mode_t::ContinuouslyHResolutionMode));
-
-        if (CONFIG_LIGHT_SENSOR_POLLING_INTERVAL_SEC != 0) {
-            ESP_LOGI(TAG, "Light sensor polling interval set to %d Second(s).", CONFIG_LIGHT_SENSOR_POLLING_INTERVAL_SEC);
-            esp_timer_create_args_t timer_args = {
-                .callback = timer_callback,
-                .arg = this,
-                .dispatch_method = ESP_TIMER_TASK,
-                .name = "LightSensorTimer",
-                .skip_unhandled_events = false
-            };
-
-            esp_timer_create(&timer_args, &m_periodic_timer);
-            esp_timer_start_periodic(m_periodic_timer, CONFIG_LIGHT_SENSOR_POLLING_INTERVAL_SEC * 1000000);
-        } else {
-            ESP_LOGI(TAG, "Light sensor polling disabled");
-        }
-    }
-    else
-    {
-        ESP_LOGE(TAG, "xSemaphoreCreateMutex failed");
+        esp_timer_create(&timer_args, &m_periodic_timer);
+        esp_timer_start_periodic(m_periodic_timer, CONFIG_LIGHT_SENSOR_POLLING_INTERVAL_SEC * 1000000);
+    } else {
+        ESP_LOGI(TAG, "Light sensor polling disabled");
     }
 }
 

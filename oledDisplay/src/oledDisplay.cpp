@@ -22,16 +22,23 @@ Display::Display()
 {
     ESP_LOGI(TAG, "Initializing...");
 
+    m_is_present = false;
+    m_lv_display = nullptr;
+
     i2c_master_bus_handle_t i2c_master_bus_handle;
     ESP_ERROR_CHECK(i2c_master_get_bus_handle(0, &i2c_master_bus_handle));
-    if (i2c_master_probe(i2c_master_bus_handle, CONFIG_OLED_DISPLAY_I2C_CONTROLLER_ADDR, 100) != ESP_OK)
+
+    if (i2c_master_probe(i2c_master_bus_handle, CONFIG_OLED_DISPLAY_I2C_ADDR, 100) != ESP_OK)
     {
-        ESP_LOGW(TAG, "I2C device not found");
+        ESP_LOGW(TAG, "SSD1306 not found at address 0x%02X", CONFIG_OLED_DISPLAY_I2C_ADDR);
         return;
     }
 
+    ESP_LOGI(TAG, "Found SSD1306 at address 0x%02X", CONFIG_OLED_DISPLAY_I2C_ADDR);
+    m_is_present = true;
+
     esp_lcd_panel_io_i2c_config_t i2c_config;
-    i2c_config.dev_addr = CONFIG_OLED_DISPLAY_I2C_CONTROLLER_ADDR;
+    i2c_config.dev_addr = CONFIG_OLED_DISPLAY_I2C_ADDR;
     i2c_config.scl_speed_hz = LCD_PIXEL_CLOCK_HZ;
     i2c_config.control_phase_bytes = 1;               // According to SSD1306 datasheet
     i2c_config.lcd_cmd_bits = LCD_CMD_BITS;           // According to SSD1306 datasheet

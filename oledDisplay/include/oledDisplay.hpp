@@ -10,6 +10,7 @@ namespace macdap
     {
 
     private:
+        bool m_is_present;
         lv_display_t *m_lv_display;
         Display();
         ~Display();
@@ -22,6 +23,7 @@ namespace macdap
             static Display instance;
             return instance;
         }
+        bool is_present() const { return m_is_present; }
         lv_display_t *get_lv_display();
     };
 }
