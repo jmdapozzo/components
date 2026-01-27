@@ -32,6 +32,10 @@ extern "C" void app_main(void)
         ESP_LOGI(TAG, "Status::OtaUpdating");
         vTaskDelay(pdMS_TO_TICKS(5000));
 
+        statusLed.set_status(macdap::Status::Erasing);
+        ESP_LOGI(TAG, "Status::Erasing");
+        vTaskDelay(pdMS_TO_TICKS(5000));
+
         statusLed.set_status(macdap::Status::Error);
         ESP_LOGI(TAG, "Status::Error");
         vTaskDelay(pdMS_TO_TICKS(5000));

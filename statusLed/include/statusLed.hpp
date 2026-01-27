@@ -12,6 +12,7 @@ namespace macdap
         Connecting,
         Running,
         OtaUpdating,
+        Erasing,
         Error,
         Count
     };
