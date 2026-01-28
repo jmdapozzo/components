@@ -41,9 +41,15 @@ static const blink_step_t blink_step_ota_updating[] = { // Yellow breathe
     {LED_BLINK_LOOP, 0, 0},
 };
 
-static const blink_step_t blink_step_erasing[] = { // Red fast flash
+static const blink_step_t blink_step_request_factory_reset[] = { // Red fast flash
     {LED_BLINK_HSV, SET_HSV(0, MAX_SATURATION, MAX_BRIGHTNESS), 250},
     {LED_BLINK_HOLD, LED_STATE_OFF, 250},
+    {LED_BLINK_LOOP, 0, 0},
+};
+
+static const blink_step_t blink_step_confirm_factory_reset[] = { // Red/Green fast flash
+    {LED_BLINK_HSV, SET_HSV(0, MAX_SATURATION, MAX_BRIGHTNESS), 500},
+    {LED_BLINK_HSV, SET_HSV(240, MAX_SATURATION, MAX_BRIGHTNESS), 500},
     {LED_BLINK_LOOP, 0, 0},
 };
 
@@ -59,7 +65,8 @@ blink_step_t const *blink_step_list[] = {
     [static_cast<int>(Status::Connecting)] = blink_step_connecting,
     [static_cast<int>(Status::Running)] = blink_step_running,
     [static_cast<int>(Status::OtaUpdating)] = blink_step_ota_updating,
-    [static_cast<int>(Status::Erasing)] = blink_step_erasing,
+    [static_cast<int>(Status::RequestFactoryReset)] = blink_step_request_factory_reset,
+    [static_cast<int>(Status::ConfirmFactoryReset)] = blink_step_confirm_factory_reset,
     [static_cast<int>(Status::Error)] = blink_step_error,
     [static_cast<int>(Status::Count)] = nullptr
 };
