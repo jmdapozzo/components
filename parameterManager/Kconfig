@@ -1,0 +1,25 @@
+menu "Parameter Manager"
+
+    config PARAMETER_MANAGER_MAX_PARAMS
+        int "Maximum number of parameters"
+        default 50
+        range 1 200
+        help
+            Maximum number of parameters that can be registered.
+            Each parameter consumes memory for metadata storage.
+
+    config PARAMETER_MANAGER_NVS_NAMESPACE
+        string "NVS namespace for parameters"
+        default "app_params"
+        help
+            NVS namespace used for storing parameters.
+            Must be unique and max 15 characters.
+
+    config PARAMETER_MANAGER_ENABLE_LOGGING
+        bool "Enable detailed parameter logging"
+        default y
+        help
+            Enable detailed logging for parameter operations (create, set, get, delete).
+            Useful for debugging but adds code size.
+
+endmenu

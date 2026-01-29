@@ -1,0 +1,6 @@
+version: "1.0.0"
+description: "Parameter management with NVS storage and change callbacks"
+url: https://github.com/jmdapozzo/parameterManager
+dependencies:
+  idf:
+    version: ">=5.0.0"
