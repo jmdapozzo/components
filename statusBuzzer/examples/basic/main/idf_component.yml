@@ -1,0 +1,3 @@
+dependencies:
+  jmdapozzo/statusBuzzer:
+    override_path: "../../../"

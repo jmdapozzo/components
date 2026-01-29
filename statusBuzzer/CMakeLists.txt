@@ -1,0 +1,9 @@
+idf_component_register(
+    SRCS
+        "src/statusBuzzer.cpp"
+    PRIV_REQUIRES
+        esp_timer
+        driver
+    INCLUDE_DIRS
+        "include"
+)

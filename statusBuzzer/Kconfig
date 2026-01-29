@@ -1,0 +1,26 @@
+menu "MacDap Status Buzzer"
+
+	config STATUS_BUZZER_GPIO_RANGE_MAX
+		int
+		default 33 if IDF_TARGET_ESP32
+		default 46 if IDF_TARGET_ESP32S2
+		default 48 if IDF_TARGET_ESP32S3
+		default 18 if IDF_TARGET_ESP32C2
+		default 19 if IDF_TARGET_ESP32C3
+		default 30 if IDF_TARGET_ESP32C6
+
+	config STATUS_BUZZER_GPIO
+		int "Status Buzzer GPIO number"
+		default 3
+		range 0 STATUS_BUZZER_GPIO_RANGE_MAX
+        help
+            GPIO pin number to be used for Status Buzzer (SMT-0540).
+
+	config STATUS_BUZZER_FREQUENCY
+		int "Status Buzzer Frequency (Hz)"
+		default 4000
+		range 1000 10000
+		help
+			Status Buzzer operating frequency in Hz. SMT-0540 optimal frequency is 4000Hz.
+
+endmenu
