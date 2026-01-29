@@ -1,0 +1,96 @@
+menu "MacDap BLE Parameter Service Configuration"
+
+    config BLE_PARAM_SERVICE_ENABLE
+        bool "Enable BLE Parameter Service"
+        default n
+        help
+            Enable Bluetooth LE parameter management service.
+            Note: BLE requires significant memory (~60-80KB for Bluedroid, ~25-30KB for NimBLE).
+
+    choice BLE_PARAM_SERVICE_STACK
+        prompt "BLE Stack Selection"
+        depends on BLE_PARAM_SERVICE_ENABLE
+        default BLE_PARAM_SERVICE_USE_NIMBLE
+        help
+            Select which BLE stack to use. NimBLE uses much less memory than Bluedroid.
+
+        config BLE_PARAM_SERVICE_USE_BLUEDROID
+            bool "Use Bluedroid Stack (Higher Memory)"
+            help
+                Use ESP-IDF's Bluedroid BLE stack. More features but uses ~60-80KB RAM.
+
+        config BLE_PARAM_SERVICE_USE_NIMBLE
+            bool "Use NimBLE Stack (Lower Memory - Recommended)"
+            help
+                Use Apache NimBLE stack. Lighter weight, uses ~25-30KB RAM.
+                This is recommended for memory-constrained applications.
+    endchoice
+
+    config BLE_PARAM_SERVICE_MTU_SIZE
+        int "Preferred MTU size"
+        depends on BLE_PARAM_SERVICE_ENABLE
+        default 256
+        range 23 512
+        help
+            Preferred MTU size for BLE communication.
+            Lower values use less memory. 256 is a good balance.
+            Use 512 for maximum throughput (default in design).
+
+    config BLE_PARAM_SERVICE_MAX_PARAMS_IN_LIST
+        int "Maximum parameters in single list response"
+        depends on BLE_PARAM_SERVICE_ENABLE
+        default 20
+        range 5 100
+        help
+            Maximum number of parameters to include in a single list response.
+            Lower values use less stack memory. Use chunking for larger lists.
+
+    config BLE_PARAM_SERVICE_TASK_STACK_SIZE
+        int "BLE service task stack size"
+        depends on BLE_PARAM_SERVICE_ENABLE
+        default 3072
+        range 2048 8192
+        help
+            Stack size for BLE service tasks. Reduce if memory constrained.
+            Minimum: 2048 bytes
+            Default: 3072 bytes
+
+    config BLE_PARAM_SERVICE_AUTO_START
+        bool "Auto-start BLE service on boot"
+        depends on BLE_PARAM_SERVICE_ENABLE
+        default n
+        help
+            Automatically start BLE service during initialization.
+            Disable to start BLE only when needed (on-demand).
+
+    config BLE_PARAM_SERVICE_NOTIFICATIONS
+        bool "Enable parameter change notifications"
+        depends on BLE_PARAM_SERVICE_ENABLE
+        default y
+        help
+            Enable real-time notifications for parameter changes.
+            Disable to save memory if notifications are not needed.
+
+endmenu
+
+menu "BLE Memory Optimization (Bluedroid)"
+    depends on BLE_PARAM_SERVICE_ENABLE && BLE_PARAM_SERVICE_USE_BLUEDROID
+
+    config BTDM_CTRL_BLE_MAX_CONN
+        int "Maximum number of BLE connections"
+        default 1
+        range 1 9
+        help
+            Reduce to 1 for single connection (saves memory).
+
+    config BTDM_CTRL_BLE_MAX_CONN_EFF
+        int
+        default BTDM_CTRL_BLE_MAX_CONN
+
+    # config BT_BLE_DYNAMIC_ENV_MEMORY
+    #     bool "Use dynamic memory for BLE environment"
+    #     default y
+    #     help
+    #         Enable to use heap instead of static memory for BLE.
+
+endmenu

@@ -1,0 +1,11 @@
+version: "0.0.1"
+license: "MIT"
+description: "BLE GATT service for parameter management"
+url: "https://github.com/jmdapozzo/components/tree/main/ble"
+dependencies:
+  idf:
+    version: ">=5.0.0"
+  jmdapozzo/parameterManager:
+      version: main
+      git: https://github.com/jmdapozzo/components.git
+      path: parameterManager

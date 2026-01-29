@@ -1,4 +1,4 @@
-menu "Parameter Manager"
+menu "MacDap Parameter Manager Configuration"
 
     config PARAMETER_MANAGER_MAX_PARAMS
         int "Maximum number of parameters"
