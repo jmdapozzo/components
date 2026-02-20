@@ -24,9 +24,14 @@ extern "C" void app_main(void)
         .sda_io_num = static_cast<gpio_num_t>(CONFIG_GPIO_I2C_SDA),
         .scl_io_num = static_cast<gpio_num_t>(CONFIG_GPIO_I2C_SCL),
         .clk_source = I2C_CLK_SRC_DEFAULT,
-        .glitch_ignore_cnt = 7
+        .glitch_ignore_cnt = 7,
+        .intr_priority = 0,
+        .trans_queue_depth = 0,
+        .flags = {
+            .enable_internal_pullup = true,
+            .allow_pd = 0
+        }
     };
-    i2c_master_bus_config.flags.enable_internal_pullup = true;
 
     i2c_master_bus_handle_t i2c_master_bus_handle = NULL;
     ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_master_bus_config, &i2c_master_bus_handle));
