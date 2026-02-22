@@ -1,0 +1,35 @@
+menu "MacDap ATECC608B Configuration"
+
+    config ATECC608B_I2C_PORT_NUM
+        int "I2C Port Number"
+        range 0 1
+        default 0
+        help
+            I2C port number for ATECC608B communication. Must match the bus
+            initialized by i2c_manager. Default is 0.
+
+    config ATECC608B_I2C_ADDRESS
+        hex "I2C Device Address (7-bit)"
+        range 0x00 0x7F
+        default 0x60
+        help
+            7-bit I2C address of the ATECC608B. The factory default for the
+            ATECC608B is 0x60 (8-bit write address 0xC0). The address field
+            is customer-configurable and can vary between 0x00 and 0x7F.
+            Probe the I2C bus at boot if unsure.
+
+    config ATECC608B_I2C_SPEED_HZ
+        int "I2C Clock Speed (Hz)"
+        range 100000 1000000
+        default 400000
+        help
+            I2C clock speed for ATECC608B. Default is 400000 (400 kHz).
+
+    config ATECC608B_OTP_MAGIC
+        hex "OTP Zone Magic Number"
+        default 0xACD42000
+        help
+            Magic number stored at offset 0 of the OTP zone to identify
+            provisioned boards. Change this to a value unique to your product.
+
+endmenu

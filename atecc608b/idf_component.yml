@@ -1,0 +1,7 @@
+version: "0.0.1"
+license: "MIT"
+description: "ATECC608B secure element component for MacDap's projects"
+url: https://github.com/jmdapozzo/components/tree/main/atecc608b
+dependencies:
+  idf: ">=5.0"
+  espressif/esp-cryptoauthlib: ">=3.0.3"

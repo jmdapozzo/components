@@ -1,0 +1,10 @@
+idf_component_register(
+    SRCS
+        "src/atecc608b.cpp"
+        "src/atca_trace_helper.c"
+    REQUIRES
+        espressif__esp-cryptoauthlib
+        mbedtls
+        driver
+    INCLUDE_DIRS
+        "include")
