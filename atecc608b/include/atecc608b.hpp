@@ -11,9 +11,9 @@ namespace macdap
 {
     // ATECC608B slot numbers
     static constexpr uint8_t ATECC608B_SLOT_PRIVATE_KEY   = 0;   // ECC P-256 private key (never readable)
-    static constexpr uint8_t ATECC608B_SLOT_DEVICE_CERT   = 10;  // Device certificate (DER)
-    static constexpr uint8_t ATECC608B_SLOT_SIGNER_CERT   = 11;  // Signer / intermediate cert (DER)
-    static constexpr uint8_t ATECC608B_SLOT_ROOT_CERT     = 12;  // Root CA cert (optional)
+    static constexpr uint8_t ATECC608B_SLOT_DEVICE_CERT   = 8;   // Device certificate (DER, 416 bytes — only slot 8 is 416 bytes; slots 9-15 are 72 bytes)
+    static constexpr uint8_t ATECC608B_SLOT_SIGNER_CERT   = 11;  // Signer / intermediate cert (DER, 72-byte slot — use compressed/truncated form)
+    static constexpr uint8_t ATECC608B_SLOT_ROOT_CERT     = 12;  // Root CA cert (optional, 72-byte slot)
 
     // OTP zone size
     static constexpr size_t ATECC608B_OTP_SIZE = 64;

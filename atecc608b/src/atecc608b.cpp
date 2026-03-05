@@ -341,7 +341,7 @@ esp_err_t SecureElement::read_cert(uint8_t slot, uint8_t* der, size_t* len)
     }
 
     xSemaphoreTake(m_semaphore_handle, portMAX_DELAY);
-    // Large data slots (8-15) can hold up to 416 bytes
+    // Only slot 8 can hold up to 416 bytes; slots 9-15 are 72 bytes each
     ATCA_STATUS status = atcab_read_bytes_zone(ATCA_ZONE_DATA, slot, 0, der,
                                                static_cast<uint16_t>(*len));
     xSemaphoreGive(m_semaphore_handle);
