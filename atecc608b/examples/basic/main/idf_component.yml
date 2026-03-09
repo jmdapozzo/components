@@ -1,0 +1,3 @@
+dependencies:
+  jmdapozzo/atecc608b:
+    override_path: "../../../"

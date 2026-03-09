@@ -1,0 +1,11 @@
+# This file was generated using idf.py save-defconfig. It can be edited manually.
+# Espressif IoT Development Framework (ESP-IDF) 5.5.1 Project Minimal Configuration
+#
+CONFIG_IDF_TARGET="esp32s3"
+CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y
+CONFIG_NMEA_STATEMENT_ZDA=n
+
+CONFIG_ATCA_MBEDTLS_ECDSA=y
+CONFIG_ATCA_I2C_SDA_PIN=8
+CONFIG_ATCA_I2C_SCL_PIN=9
+CONFIG_ATCA_I2C_ADDRESS=0x60
