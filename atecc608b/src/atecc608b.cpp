@@ -13,12 +13,6 @@
 
 // ESP-IDF I2C driver — needed to release the bus created by i2c_manager
 #include <driver/i2c_master.h>
-#include <stdio.h>
-
-// C-linkage wrapper for atecc608b_trace_suppress() — see atca_trace_helper.c for
-// the rationale. Calling atecc608b_trace_suppress directly from C++ causes a linker
-// error because atca_debug.h lacks extern "C" guards.
-extern "C" void atecc608b_trace_suppress(FILE* fp);
 
 using namespace macdap;
 
@@ -74,26 +68,15 @@ SecureElement::SecureElement()
 
     // Build cryptoauthlib I2C config.
     // atcai2c.address is the 8-bit write address (7-bit << 1).
-    ATCAIfaceCfg cfg = cfg_ateccx08a_i2c_default;
-    cfg.atcai2c.address  = static_cast<uint8_t>(CONFIG_ATECC608B_I2C_ADDRESS << 1);
-    cfg.atcai2c.bus      = CONFIG_ATECC608B_I2C_PORT_NUM;
-    cfg.atcai2c.baud     = CONFIG_ATECC608B_I2C_SPEED_HZ;
+    m_config = cfg_ateccx08a_i2c_default;
+    m_config.atcai2c.address  = static_cast<uint8_t>(CONFIG_ATECC608B_I2C_ADDRESS << 1);
+    m_config.atcai2c.bus      = CONFIG_ATECC608B_I2C_PORT_NUM;
+    m_config.atcai2c.baud     = CONFIG_ATECC608B_I2C_SPEED_HZ;
 
-    // Suppress i2c.master error logs and cryptoauthlib internal traces during
-    // chip detection — NACKs from an absent chip would otherwise flood the
-    // boot log. Keep i2c.master suppressed through restore_i2c_bus() to also
-    // prevent the spurious "port not initialized" line.
-    FILE* null_fp = fopen("/dev/null", "w");
-    atecc608b_trace_suppress(null_fp);
-    esp_log_level_set("i2c.master", ESP_LOG_NONE);
-
-    ATCA_STATUS status = atcab_init(&cfg);
+    ATCA_STATUS status = atcab_init(&m_config);
     if (status != ATCA_SUCCESS)
     {
         restore_i2c_bus(CONFIG_ATECC608B_I2C_PORT_NUM);
-        atecc608b_trace_suppress(NULL);
-        if (null_fp) fclose(null_fp);
-        esp_log_level_set("i2c.master", ESP_LOG_ERROR);
         ESP_LOGW(TAG, "atcab_init failed (0x%02x) — chip not found or I2C error", status);
         return;
     }
@@ -105,18 +88,9 @@ SecureElement::SecureElement()
     {
         atcab_release();
         restore_i2c_bus(CONFIG_ATECC608B_I2C_PORT_NUM);
-        atecc608b_trace_suppress(NULL);
-        if (null_fp) fclose(null_fp);
-        esp_log_level_set("i2c.master", ESP_LOG_ERROR);
         ESP_LOGW(TAG, "atcab_info failed (0x%02x) — chip not responding", status);
         return;
     }
-
-    atecc608b_trace_suppress(NULL);
-    if (null_fp) fclose(null_fp);
-    // Keep i2c.master suppressed (NONE) through check_lock_status so the
-    // wake-sequence NACKs from atcab_is_locked don't appear in the log.
-    // Restored to ERROR after all constructor work is done below.
 
     ESP_LOGI(TAG, "ATECC608B found, revision: %02X %02X %02X %02X",
              revision[0], revision[1], revision[2], revision[3]);
@@ -130,7 +104,6 @@ SecureElement::SecureElement()
         m_is_present = false;
         atcab_release();
         restore_i2c_bus(CONFIG_ATECC608B_I2C_PORT_NUM);
-        esp_log_level_set("i2c.master", ESP_LOG_ERROR);
         return;
     }
 
@@ -144,8 +117,8 @@ SecureElement::SecureElement()
              m_config_locked ? "LOCKED" : "unlocked",
              m_data_locked   ? "LOCKED" : "unlocked");
 
+
     ESP_LOGI(TAG, "Initialization complete");
-    esp_log_level_set("i2c.master", ESP_LOG_ERROR);
 }
 
 SecureElement::~SecureElement()
@@ -192,15 +165,9 @@ esp_err_t SecureElement::get_chip_serial(uint8_t serial[ATECC608B_CHIP_SERIAL_SI
         return ESP_ERR_INVALID_ARG;
     }
 
-    FILE* null_fp = fopen("/dev/null", "w");
-    atecc608b_trace_suppress(null_fp);
-    esp_log_level_set("i2c.master", ESP_LOG_NONE);
     xSemaphoreTake(m_semaphore_handle, portMAX_DELAY);
     ATCA_STATUS status = atcab_read_serial_number(serial);
     xSemaphoreGive(m_semaphore_handle);
-    esp_log_level_set("i2c.master", ESP_LOG_ERROR);
-    atecc608b_trace_suppress(NULL);
-    if (null_fp) fclose(null_fp);
 
     if (status != ATCA_SUCCESS)
     {
@@ -219,16 +186,10 @@ esp_err_t SecureElement::read_otp(uint8_t data[ATECC608B_OTP_SIZE])
         return ESP_ERR_INVALID_ARG;
     }
 
-    FILE* null_fp = fopen("/dev/null", "w");
-    atecc608b_trace_suppress(null_fp);
-    esp_log_level_set("i2c.master", ESP_LOG_NONE);
     xSemaphoreTake(m_semaphore_handle, portMAX_DELAY);
     ATCA_STATUS status = atcab_read_bytes_zone(ATCA_ZONE_OTP, 0, 0,
                                                data, ATECC608B_OTP_SIZE);
     xSemaphoreGive(m_semaphore_handle);
-    esp_log_level_set("i2c.master", ESP_LOG_ERROR);
-    atecc608b_trace_suppress(NULL);
-    if (null_fp) fclose(null_fp);
 
     if (status != ATCA_SUCCESS)
     {

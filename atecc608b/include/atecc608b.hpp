@@ -6,6 +6,7 @@
 #include <mbedtls/pk.h>
 #include <cstdint>
 #include <cstddef>
+#include "cryptoauthlib.h"
 
 namespace macdap
 {
@@ -68,6 +69,7 @@ namespace macdap
     class SecureElement
     {
     private:
+        ATCAIfaceCfg m_config;
         bool m_is_present;
         bool m_config_locked;
         bool m_data_locked;
