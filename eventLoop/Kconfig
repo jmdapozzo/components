@@ -6,10 +6,17 @@ menu "MacDap Event Loop Configuration"
         help
             Enabling this option will log Event Loop events to console.
 
+    config EVENT_LOOP_USE_DEDICATED_TASK
+        bool "Use Dedicated Task for Event Loop"
+        default n
+        help
+            Enabling this option will create a dedicated task for the event loop.
+
     config EVENT_LOOP_QUEUE_SIZE
         int "Queue Size"
-        range 0 2048
-        default 1024
+        range 0 100
+        default 10
+            
         help
             Size of the event loop buffer.
 
@@ -17,6 +24,7 @@ menu "MacDap Event Loop Configuration"
         int "Event Loop Task Stack Size"
         range 0 4096
         default 4096
+        depends on EVENT_LOOP_USE_DEDICATED_TASK
         help
             Stack size for the event loop task.
 
@@ -24,6 +32,7 @@ menu "MacDap Event Loop Configuration"
         int "Event Loop Task Priority"
         range 0 24
         default 2
+        depends on EVENT_LOOP_USE_DEDICATED_TASK
         help
             Priority of local task.
 

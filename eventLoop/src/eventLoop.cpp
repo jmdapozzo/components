@@ -21,10 +21,17 @@ EventLoop::EventLoop()
 
     esp_event_loop_args_t loop_args = {
         .queue_size = CONFIG_EVENT_LOOP_QUEUE_SIZE,
+#if CONFIG_EVENT_LOOP_USE_DEDICATED_TASK
         .task_name = TAG,
         .task_priority = CONFIG_EVENT_LOOP_LOCAL_TASK_PRIORITY,
         .task_stack_size = CONFIG_EVENT_LOOP_TASK_STACK_SIZE,
         .task_core_id = tskNO_AFFINITY
+#else
+        .task_name = NULL,
+        .task_priority = 0,
+        .task_stack_size = 0,
+        .task_core_id = 0
+#endif
     };
 
     esp_event_loop_create(&loop_args, &m_event_loop_handle);
