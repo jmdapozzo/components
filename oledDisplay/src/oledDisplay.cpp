@@ -81,8 +81,6 @@ Display::Display()
             .mirror_y = true,
         },
         .color_format = LV_COLOR_FORMAT_NATIVE,
-        .full_refresh = true,
-        .direct_mode = true,
         .flags = {}
     };
 
