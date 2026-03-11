@@ -8,4 +8,6 @@ idf_component_register(
         nvs_flash
         json
         esp_timer
+        app_update
+        esp_wifi
 )

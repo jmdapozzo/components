@@ -8,8 +8,11 @@
 #include <cJSON.h>
 #include <string.h>
 #include <esp_system.h>
+#include <esp_app_desc.h>
+#include <esp_wifi.h>
 #include <nvs_flash.h>
 #include <esp_timer.h>
+#include <ctype.h>
 
 static const char *TAG = "ble_param_service";
 
@@ -197,19 +200,34 @@ esp_err_t BLE::start() {
 
     // Configure advertising parameters
     memset(&m_adv_params, 0, sizeof(m_adv_params));
-    m_adv_params.adv_int_min = 0x20;
-    m_adv_params.adv_int_max = 0x40;
+    m_adv_params.adv_int_min = 0x0100;  // 160 ms — satisfies BLE 5.0 controller minimum
+    m_adv_params.adv_int_max = 0x0200;  // 320 ms
     m_adv_params.adv_type = ADV_TYPE_IND;
     m_adv_params.own_addr_type = BLE_ADDR_TYPE_PUBLIC;
     m_adv_params.channel_map = ADV_CHNL_ALL;
     m_adv_params.adv_filter_policy = ADV_FILTER_ALLOW_SCAN_ANY_CON_ANY;
 
-    // Set device name
-    const char* device_name = "FlexCore Params";
-    esp_ble_gap_set_device_name(device_name);
+    // Set device name matching mDNS hostname: {lowercase-project-name}-{mac4}{mac5}
+    {
+        const char *pn = esp_app_get_description()->project_name;
+        char prefix[24] = {};
+        for (size_t i = 0; pn[i] && i < sizeof(prefix) - 1; i++) {
+            prefix[i] = (char)tolower((unsigned char)pn[i]);
+        }
+        uint8_t mac[6];
+        esp_wifi_get_mac(WIFI_IF_STA, mac);
+        char device_name[32];
+        snprintf(device_name, sizeof(device_name), "%s-%02x%02x", prefix, mac[4], mac[5]);
+        esp_ble_gap_set_device_name(device_name);
+    }
 
-    // Start advertising (will be done in GAP event handler)
+    // Mark as running first so the GAP event handler will proceed.
     m_running = true;
+
+    // Re-configure advertising data now that params are set. This triggers
+    // ESP_GAP_BLE_ADV_DATA_SET_COMPLETE_EVT which will call esp_ble_gap_start_advertising.
+    esp_ble_gap_config_adv_data(&m_adv_data);
+
     ESP_LOGI(TAG, "BLE Parameter Service started");
     return ESP_OK;
 }
@@ -243,7 +261,10 @@ void BLE::gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t
     switch (event) {
         case ESP_GAP_BLE_ADV_DATA_SET_COMPLETE_EVT:
             ESP_LOGI(TAG, "Advertising data set complete");
-            if (s_instance) {
+            // Guard on m_running: init() may still be blocking when this fires,
+            // meaning m_adv_params are still zero. start() will re-trigger via
+            // esp_ble_gap_config_adv_data once the params are properly set.
+            if (s_instance && s_instance->m_running) {
                 esp_ble_gap_start_advertising(&s_instance->m_adv_params);
             }
             break;
