@@ -5,5 +5,8 @@ idf_component_register(
         esp_event
         esp_timer
         driver
+    REQUIRES
+        lvgl
+        esp_lvgl_port
     INCLUDE_DIRS
         "include")
