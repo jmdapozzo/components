@@ -1,7 +1,6 @@
 #pragma once
 
 #include "esp_err.h"
-#include "esp_lcd_panel_ops.h"
 #include "esp_lvgl_port.h"
 
 namespace macdap
