@@ -196,6 +196,7 @@ esp_err_t TemperatureSensor::get_cpu_temperature(float *temperature, temperature
 
 esp_err_t TemperatureSensor::get_external_temperature(float *temperature, temperature_unit_t unit)
 {
+    if (!m_is_present) return ESP_ERR_NOT_FOUND;
     xSemaphoreTake(m_semaphore_handle, portMAX_DELAY);
 
     uint8_t buf[1] = {PCT2075_REGISTER_TEMP};
