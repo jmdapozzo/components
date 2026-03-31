@@ -24,11 +24,8 @@ static void timer_callback(void* arg)
 
     temperature_unit_t default_unit = instance->get_default_unit();
 
-    float external_temperature;
-    if (instance->get_external_temperature(&external_temperature, default_unit) == ESP_OK) {
-    } else {
-        ESP_LOGE(TAG, "Failed to read external temperature");
-    }
+    float external_temperature = 0.0f;
+    bool external_ok = (instance->get_external_temperature(&external_temperature, default_unit) == ESP_OK);
 
     float cpu_temperature;
     if (instance->get_cpu_temperature(&cpu_temperature, default_unit) == ESP_OK) {
@@ -44,16 +41,25 @@ static void timer_callback(void* arg)
             char formatted_text[64];
             switch (user_data) {
                 case both:
-                    snprintf(formatted_text, sizeof(formatted_text), "CPU: %0.1f%s, Ext: %0.1f%s", cpu_temperature, unit_str, external_temperature, unit_str);
+                    if (external_ok)
+                        snprintf(formatted_text, sizeof(formatted_text), "CPU: %0.1f%s, Ext: %0.1f%s", cpu_temperature, unit_str, external_temperature, unit_str);
+                    else
+                        snprintf(formatted_text, sizeof(formatted_text), "CPU: %0.1f%s", cpu_temperature, unit_str);
                     break;
                 case external:
-                    snprintf(formatted_text, sizeof(formatted_text), "%0.1f%s", external_temperature, unit_str);
+                    if (external_ok)
+                        snprintf(formatted_text, sizeof(formatted_text), "%0.1f%s", external_temperature, unit_str);
+                    else
+                        snprintf(formatted_text, sizeof(formatted_text), "N/A");
                     break;
                 case cpu:
                     snprintf(formatted_text, sizeof(formatted_text), "%0.1f%s", cpu_temperature, unit_str);
                     break;
                 default:
-                    snprintf(formatted_text, sizeof(formatted_text), "CPU: %0.1f%s, Ext: %0.1f%s", cpu_temperature, unit_str, external_temperature, unit_str);
+                    if (external_ok)
+                        snprintf(formatted_text, sizeof(formatted_text), "CPU: %0.1f%s, Ext: %0.1f%s", cpu_temperature, unit_str, external_temperature, unit_str);
+                    else
+                        snprintf(formatted_text, sizeof(formatted_text), "CPU: %0.1f%s", cpu_temperature, unit_str);
                     break;
             }
             lv_label_set_text(label, formatted_text);
