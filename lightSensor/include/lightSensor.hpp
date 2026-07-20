@@ -44,6 +44,10 @@ namespace macdap
     class LightSensor
     {
 
+    public:
+        static constexpr float BH_1750_MEASUREMENT_ACCURACY = 1.2f;
+        static constexpr uint16_t MAX_ILLUMINANCE_LX = static_cast<uint16_t>(UINT16_MAX / BH_1750_MEASUREMENT_ACCURACY); // ~54612 lx
+
     private:
         bool m_is_present;
         i2c_master_dev_handle_t m_i2c_device_handle;

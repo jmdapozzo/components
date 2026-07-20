@@ -6,8 +6,6 @@
 
 using namespace macdap;
 
-#define BH_1750_MEASUREMENT_ACCURACY    1.2
-
 #define BH1750_POWER_DOWN   0x00
 #define BH1750_POWER_ON     0x01
 #define BH1750_POWER_RESET  0x07
@@ -205,16 +203,17 @@ esp_err_t LightSensor::get_illuminance(uint16_t *illuminance, intensity_status_t
         ESP_RETURN_ON_ERROR(result, TAG, "Failed to read illuminance");
     }
 
-    *illuminance = (buffer[0] << 8) | buffer[1];
+    uint16_t raw = (buffer[0] << 8) | buffer[1];
+    *illuminance = static_cast<uint16_t>(raw / BH_1750_MEASUREMENT_ACCURACY);
 
     if (intensity_status != nullptr) {
-        if (*illuminance <= UINT16_MAX / 5) {  // 0-20%
+        if (*illuminance <= MAX_ILLUMINANCE_LX / 5) {  // 0-20%
             *intensity_status = Lowest;
-        } else if (*illuminance <= (UINT16_MAX * 2) / 5) {  // 20-40%
+        } else if (*illuminance <= (MAX_ILLUMINANCE_LX * 2) / 5) {  // 20-40%
             *intensity_status = Low;
-        } else if (*illuminance <= (UINT16_MAX * 3) / 5) {  // 40-60%
+        } else if (*illuminance <= (MAX_ILLUMINANCE_LX * 3) / 5) {  // 40-60%
             *intensity_status = Medium;
-        } else if (*illuminance <= (UINT16_MAX * 4) / 5) {  // 60-80%
+        } else if (*illuminance <= (MAX_ILLUMINANCE_LX * 4) / 5) {  // 60-80%
             *intensity_status = High;
         } else {                                            // 80-100%
             *intensity_status = Highest;
