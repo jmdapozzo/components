@@ -25,6 +25,9 @@
 #include <esp_bt_main.h>
 #include <esp_gatt_common_api.h>
 #include <parameterManager.hpp>
+#include <freertos/FreeRTOS.h>
+#include <freertos/queue.h>
+#include <freertos/task.h>
 
 namespace macdap {
 
@@ -161,6 +164,19 @@ private:
 
     // Temporary storage for parameter access (write param name, then read value)
     char m_current_param_name[BLE_PARAM_MAX_PARAM_NAME_LEN];
+
+    // Deferred read request (posted from BT callback, handled by worker task)
+    struct ReadRequest {
+        esp_gatt_if_t gatts_if;
+        uint16_t conn_id;
+        uint32_t trans_id;
+        uint16_t handle;
+    };
+
+    static void read_worker_task(void* arg);
+
+    QueueHandle_t m_read_queue;
+    TaskHandle_t  m_read_worker_handle;
 
     // Singleton instance pointer for static callbacks
     static BLE* s_instance;

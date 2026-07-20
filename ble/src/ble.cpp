@@ -86,7 +86,9 @@ BLE::BLE()
       m_char_control_handle(0),
       m_char_control_val_handle(0),
       m_char_list_cccd_handle(0),
-      m_char_notify_cccd_handle(0) {
+      m_char_notify_cccd_handle(0),
+      m_read_queue(nullptr),
+      m_read_worker_handle(nullptr) {
     memset(m_current_param_name, 0, sizeof(m_current_param_name));
     ESP_LOGI(TAG, "BLE created");
 }
@@ -165,6 +167,19 @@ esp_err_t BLE::init() {
         ESP_LOGE(TAG, "Failed to set local MTU: %s", esp_err_to_name(ret));
     }
 
+    // Create the read-response worker queue and task so GATTS callbacks return immediately
+    m_read_queue = xQueueCreate(4, sizeof(ReadRequest));
+    if (!m_read_queue) {
+        ESP_LOGE(TAG, "Failed to create read queue");
+        return ESP_ERR_NO_MEM;
+    }
+    if (xTaskCreate(read_worker_task, "ble_read", 4096, this, 5, &m_read_worker_handle) != pdPASS) {
+        ESP_LOGE(TAG, "Failed to create read worker task");
+        vQueueDelete(m_read_queue);
+        m_read_queue = nullptr;
+        return ESP_ERR_NO_MEM;
+    }
+
     m_initialized = true;
     ESP_LOGI(TAG, "BLE Parameter Service initialized");
     return ESP_OK;
@@ -241,6 +256,16 @@ esp_err_t BLE::stop() {
 
     esp_ble_gap_stop_advertising();
     m_running = false;
+
+    if (m_read_worker_handle) {
+        vTaskDelete(m_read_worker_handle);
+        m_read_worker_handle = nullptr;
+    }
+    if (m_read_queue) {
+        vQueueDelete(m_read_queue);
+        m_read_queue = nullptr;
+    }
+
     ESP_LOGI(TAG, "BLE Parameter Service stopped");
     return ESP_OK;
 }
@@ -425,50 +450,67 @@ esp_err_t BLE::add_characteristics() {
     return ESP_OK;
 }
 
-// Handle GATTS read event
+// Handle GATTS read event — must return immediately; offload work to worker task
 void BLE::handle_gatts_read_event(esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param) {
     ESP_LOGI(TAG, "Read event, handle: %d", param->read.handle);
 
-    esp_gatt_rsp_t rsp;
-    memset(&rsp, 0, sizeof(esp_gatt_rsp_t));
-    rsp.attr_value.handle = param->read.handle;
+    ReadRequest req = {
+        .gatts_if = gatts_if,
+        .conn_id  = param->read.conn_id,
+        .trans_id = param->read.trans_id,
+        .handle   = param->read.handle,
+    };
 
-    // Determine which characteristic is being read
-    if (param->read.handle == m_char_list_val_handle) {
-        // Parameter List characteristic
-        char* json = encode_parameter_list();
-        if (json) {
-            size_t len = strlen(json);
-            if (len > ESP_GATT_MAX_ATTR_LEN) {
-                len = ESP_GATT_MAX_ATTR_LEN;
-            }
-            memcpy(rsp.attr_value.value, json, len);
-            rsp.attr_value.len = len;
-            free(json);
+    if (xQueueSend(m_read_queue, &req, 0) != pdTRUE) {
+        ESP_LOGE(TAG, "Read queue full, dropping request");
+        esp_ble_gatts_send_response(gatts_if, param->read.conn_id, param->read.trans_id,
+                                    ESP_GATT_INTERNAL_ERROR, nullptr);
+    }
+}
+
+// Worker task: builds response outside of BT callback context
+void BLE::read_worker_task(void* arg) {
+    BLE* self = static_cast<BLE*>(arg);
+
+    ReadRequest req;
+    while (true) {
+        if (xQueueReceive(self->m_read_queue, &req, portMAX_DELAY) != pdTRUE) {
+            continue;
         }
-    } else if (param->read.handle == m_char_access_val_handle) {
-        // Parameter Access characteristic - return current parameter value
-        if (strlen(m_current_param_name) > 0) {
-            char* json = encode_parameter(m_current_param_name);
+
+        esp_gatt_rsp_t rsp;
+        memset(&rsp, 0, sizeof(esp_gatt_rsp_t));
+        rsp.attr_value.handle = req.handle;
+
+        if (req.handle == self->m_char_list_val_handle) {
+            char* json = self->encode_parameter_list();
             if (json) {
                 size_t len = strlen(json);
-                if (len > ESP_GATT_MAX_ATTR_LEN) {
-                    len = ESP_GATT_MAX_ATTR_LEN;
-                }
+                if (len > ESP_GATT_MAX_ATTR_LEN) len = ESP_GATT_MAX_ATTR_LEN;
                 memcpy(rsp.attr_value.value, json, len);
-                rsp.attr_value.len = len;
+                rsp.attr_value.len = (uint16_t)len;
                 free(json);
             }
-        } else {
-            // No parameter selected
-            const char* error = "{\"status\":\"error\",\"message\":\"No parameter selected\"}";
-            size_t len = strlen(error);
-            memcpy(rsp.attr_value.value, error, len);
-            rsp.attr_value.len = len;
+        } else if (req.handle == self->m_char_access_val_handle) {
+            if (strlen(self->m_current_param_name) > 0) {
+                char* json = self->encode_parameter(self->m_current_param_name);
+                if (json) {
+                    size_t len = strlen(json);
+                    if (len > ESP_GATT_MAX_ATTR_LEN) len = ESP_GATT_MAX_ATTR_LEN;
+                    memcpy(rsp.attr_value.value, json, len);
+                    rsp.attr_value.len = (uint16_t)len;
+                    free(json);
+                }
+            } else {
+                const char* error = "{\"status\":\"error\",\"message\":\"No parameter selected\"}";
+                size_t len = strlen(error);
+                memcpy(rsp.attr_value.value, error, len);
+                rsp.attr_value.len = (uint16_t)len;
+            }
         }
-    }
 
-    esp_ble_gatts_send_response(gatts_if, param->read.conn_id, param->read.trans_id, ESP_GATT_OK, &rsp);
+        esp_ble_gatts_send_response(req.gatts_if, req.conn_id, req.trans_id, ESP_GATT_OK, &rsp);
+    }
 }
 
 // Handle GATTS write event
@@ -807,11 +849,14 @@ void BLE::send_notification(uint16_t char_handle, const uint8_t* data, uint16_t 
 char* BLE::encode_parameter_list() {
     ParameterManager &paramMgr = ParameterManager::get_instance();
 
-    char param_ids[100][33];
+    static const size_t MAX_PARAMS = 100;
+    char (*param_ids)[33] = static_cast<char(*)[33]>(malloc(MAX_PARAMS * 33));
+    if (!param_ids) return nullptr;
     size_t count = 0;
 
-    esp_err_t err = paramMgr.list_parameters(param_ids, 100, &count);
+    esp_err_t err = paramMgr.list_parameters(param_ids, MAX_PARAMS, &count);
     if (err != ESP_OK) {
+        free(param_ids);
         return nullptr;
     }
 
@@ -842,6 +887,7 @@ char* BLE::encode_parameter_list() {
 
     char *json_str = cJSON_PrintUnformatted(root);
     cJSON_Delete(root);
+    free(param_ids);
 
     return json_str;
 }
