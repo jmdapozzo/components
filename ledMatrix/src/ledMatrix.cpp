@@ -247,6 +247,7 @@ LedMatrix::LedMatrix()
 
     // Create and start driver
     Hub75Driver *driver = new Hub75Driver(config);
+    esp_log_level_set("GdmaDma", ESP_LOG_WARN);  // Silence GDMA init chatter, keep
     driver->begin();
     driver->clear();
 
